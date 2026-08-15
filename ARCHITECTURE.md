@@ -94,6 +94,28 @@ Regras:
 - **favorites** — eventos salvos pelo cliente.
 - **stats** — painel do organizador: ocupação por sessão, ingressos vendidos por categoria e receita.
 
+**Mapeamento para o scaffold atual (`server/src/`, sem lógica de negócio):**
+
+| Módulo | Pasta | Observações |
+|---|---|---|
+| auth | `auth/` | `strategy/` (JWT + local), `dto/` |
+| usuario | `usuario/` | `usuario.repository.ts` |
+| catalog | `catalog/` | `providers/` (`CatalogProvider` + `TmdbAdapter`) |
+| evento | `evento/` | `evento.repository.ts` |
+| sessao | `sessao/` | `sessao.repository.ts` |
+| assento | `assento/` | `assento.repository.ts` |
+| reserva | `reserva/` | `reserva.repository.ts` |
+| pagamento | `pagamento/` | `pagamento.repository.ts` + `providers/` (gateway mock) |
+| ingresso | `ingresso/` | `ingresso.repository.ts` |
+| validacao | `validacao/` | reutiliza `IngressoRepository` |
+| favorito | `favorito/` | `favorito.repository.ts` |
+| stats | `stats/` | reutiliza `EventoRepository`/`SessaoRepository` |
+| infra | `common/` | decorators `@Roles`/`@Public`, guards JWT/papéis |
+| infra | `prisma/` | `PrismaService`/`PrismaModule` (global) |
+| infra | `utils/` | utilitários (HMAC do QR, código curto, OTP, centavos) |
+
+Repositories existem nos **8 módulos com tabelas**; `validacao`/`stats` reutilizam repositórios alheios e `auth`/`catalog` não tocam o banco. Acompanham a interface `dto/` por módulo (a preencher conforme as rotas forem implementadas).
+
 ### Autenticação e papéis
 
 - JWT assinado pelo servidor com `role` no payload: `ORGANIZER`, `CLIENT`, `VENUE` (portaria).
