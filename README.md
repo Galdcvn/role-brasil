@@ -18,6 +18,8 @@ Plataforma de eventos e ingressos (desafio Elite Dev). Um **organizador** monta 
 ```
 Seatly/
 ├── README.md          # Resumo + linha do tempo de decisões
+├── ARCHITECTURE.md    # Conceito da arquitetura (contexto do projeto para IA e revisores)
+├── AGENTS.md          # Instruções de processo de execução para agentes de IA
 ├── package.json       # raiz: scripts dev/build/lint (client + server)
 ├── client/            # Front-end React + Vite
 └── server/            # Back-end NestJS + Prisma
@@ -52,6 +54,10 @@ DATABASE_URL=postgresql://...
 
 > Registro das decisões tomadas ao longo do desenvolvimento, com o contexto de cada uma. Inserida em ordem cronológica; decisões novas são adicionadas no topo.
 
+### 15/08/2026 — Boas práticas de uso de IA
+
+- **Arquivos de contexto para IA (`AGENTS.md` e `ARCHITECTURE.md`)**: decisão de fixar no repositório dois arquivos que documentam como a IA deve trabalhar no projeto — `ARCHITECTURE.md` entrega o contexto/conceito da arquitetura, e `AGENTS.md` entrega o processo de execução (stack, regras negativas, desenvolvimento modular, TDD com cobertura mínima de 85% e checkpoints de typecheck/lint/build/testes entre módulos). A intenção é que a IA opere dentro das mesmas regras e do mesmo entendimento que qualquer desenvolvedor do time, sem "adivinhar" convenções — e que isso seja versionado junto com o código.
+
 ### 15/08/2026 — Configuração inicial (scaffold)
 
 - **Gerador Prisma `prisma-client-js` (clássico) em vez do `prisma-client` (novo)**: o `prisma init` 6.19 gera por padrão o gerador novo, que escreve o client em TS dentro do repo (`server/generated/`). Como o tsconfig do Nest compila tudo que está fora de `node_modules`, esse código gerado entrava no build e deslocava a raiz de compilação — resultado: `dist/src/main.js` em vez do `dist/main.js` esperado pelo NestJS (e o `start:prod` quebrava). Trocar para `prisma-client-js` mantém o client em `node_modules`, fora do build, e o layout `dist/main.js` padrão. Custo aceito: ao migrar para Prisma 7 no futuro, o gerador novo será o caminho.
@@ -73,3 +79,5 @@ DATABASE_URL=postgresql://...
 ## Uso de IA
 
 Todas as decisões de arquitetura e escopo deste projeto foram tomadas por mim (humano) e registradas acima. A IA foi usada como parada técnica: scaffoldeou a estrutura de acordo com o plano aprovado e não implementou nenhuma funcionalidade. O detalhamento de cada parte é descrito nesta linha do tempo.
+
+Para garantir que a IA trabalhe dentro das regras e do contexto do projeto, o repositório inclui dois arquivos: **`AGENTS.md`** (processo de execução — stack, regras negativas, desenvolvimento modular, TDD com cobertura ≥ 85% e checkpoints de validação entre módulos) e **`ARCHITECTURE.md`** (conceito da arquitetura). Ambos são lidos e seguidos pelos agentes de IA durante o desenvolvimento.
