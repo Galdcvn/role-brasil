@@ -45,8 +45,10 @@ npm run dev
 Variáveis de ambiente (`server/.env`):
 
 ```env
-DATABASE_URL=postgresql://...
+DATABASE_URL=postgresql://postgres.<ref>:<senha>@aws-0-sa-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connect_timeout=20
 ```
+
+> O `connect_timeout=20` é obrigatório na conexão com o pooler do Supabase nesta rede — sem ele o Prisma estoura o timeout no handshake TLS e falha com `P1001`.
 
 Validação automática (husky, instalado pelo `npm install`):
 
@@ -64,6 +66,23 @@ npm run test:cov
 ## Linha do tempo das decisões
 
 > Registro das decisões tomadas ao longo do desenvolvimento, com o contexto de cada uma. Inserida em ordem cronológica; decisões novas são adicionadas no topo.
+
+### 15/08/2026 — Conexão com o Supabase (Postgres via pooler)
+
+- **Supabase = Postgres apenas, sem RLS**: confirmada a decisão de manter **JWT próprio no NestJS** como camada de identidade; o RLS fica desligado (o cliente nunca acessa o Postgres direto e o papel `postgres` do Supabase burlaria as policies). A lib `@supabase/server` foi instalada em `server/` (movida da raiz), mas **fica sem uso** por enquanto.
+- **Causa raiz do `P1001 Can't reach database server`**: o cert do pooler é emitido pela **CA privada do Supabase** (`Supabase Intermediate 2021 CA` — não confiada pelo store público, por isso Node/Prisma rejeitam em verificação estrita), mas a falha real era **timeout do engine**: o handshake TLS com o pooler na minha rede ultrapassa o timeout de conexão padrão do Prisma. Solução: **`&connect_timeout=20`** na `DATABASE_URL` (nenhum outro param foi necessário — `sslmode`/`sslaccept` não resolviam porque não era verificação).
+- **Migration inicial reconciliada sem re-rodar SQL**: as 13 tabelas + enums + índices foram aplicadas **manualmente no dashboard** (SQL editor), mas sem a tabela `_prisma_migrations` — o Prisma via a migration como pendente. Como o SQL usa `CREATE TABLE` puro, re-aplicar falharia; usei **`prisma migrate resolve --applied 20260815000000_init`** para registrar a aplicação. `prisma migrate status` → "Database schema is up to date!".
+- **Endpoints da conexão**: só o **transaction pooler** (`aws-0-sa-east-1.pooler.supabase.com:6543`) responde nesta rede — o session pooler (`:5432`) reseta/expira e o host direto `db.<ref>.supabase.co` não existe para o projeto (ENOTFOUND). Por isso `DIRECT_URL` fica documentada mas sem uso: o CLI (`prisma.config.ts`) usa a `DATABASE_URL` (pooler de transação) e o `migrate status` funciona, porém **lento (~5 min**, muitas queries de drift-check sobre handshakes TLS lentos).
+- **Como a IA refinou**: o diagnóstico foi conduzido por sondagem sistemática — TCP, DNS (A/AAAA), handshake TLS com verificação estrita e com `rejectUnauthorized:false` (extraindo a cadeia de certs e o issuer), startup packet bruto no protocolo PG e varredura de params de URL via runtime client. Isso descartou senha (o `@` da senha parseia OK), IPv6, proxy e MITM antes de isolar o `connect_timeout`. Fica registrado o atalho mental errado que quase me levou a "trocar a senha": o sintoma de cert não confiado não era a causa.
+
+### 15/08/2026 — Estrutura do backend (14 módulos + infra)
+
+- **Estrutura de pastas/arquivos do backend (sem lógica)**: decisão de montar primeiro o esqueleto completo antes de qualquer funcionalidade — 12 módulos Nest gerados (`auth`, `usuario`, `catalog`, `evento`, `sessao`, `assento`, `reserva`, `pagamento`, `ingresso`, `validacao`, `favorito`, `stats`) + infra manual (`prisma/`, `common/`, `utils/`). Controllers/services são stubs compiláveis com specs de fumaça ("should be defined") — nenhuma regra de negócio implementada.
+- **Repositories nos 8 módulos com tabela** (`usuario`, `evento`, `sessao`, `assento`, `reserva`, `pagamento`, `ingresso`, `favorito`): separar o acesso ao banco do service desde já (decisão minha); `validacao`/`stats` reutilizam repositórios alheios e `auth`/`catalog` não tocam tabelas.
+- **`src/common/` para decorators e guards** (`@Roles`, `@Public`, `JwtAuthGuard`, `RolesGuard`) e **`src/utils/` para utilitários** (HMAC do QR, código curto, OTP, centavos — decisão minha, com avaliação da IA sobre não criar factory genérico, que seria sobre-engenharia).
+- **Login com passport-local (autorizado)**: além do `passport-jwt` já planejado, entrou `passport-local` + `@types/passport-local` para autenticação por credenciais.
+- **Cobertura do scaffold**: com specs em cada arquivo novo e exclusão padrão do wiring (`*.module.ts`, `main.ts`), o server mede **100% stmts / 75% branch / 100% funcs / 100% lines** — thresholds subidos no ramp-up para **85/70/85/85** (antes 45/45/70/40).
+- **Como a IA refinou**: detectou e corrigiu o caminho relativo errado do `PrismaService` nos repositories (`../../` → `../`), o `require-await` de stubs async sem `await`, a falta de `getHandler`/`getClass` no mock do context (RolesGuard), o `switchToHttp().getRequest` sem tipo (`no-unsafe`) e o lançamento síncrono do TMDbAdapter (teste usa `toThrow`, não `rejects`).
 
 ### 15/08/2026 — Pipeline de validação local (Husky)
 
