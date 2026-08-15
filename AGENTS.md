@@ -16,6 +16,7 @@
 - Execute tarefas de forma estritamente modularizada passo a passo.
 - **NÃO** crie blocos muito extensos de desenvolvimento de uma só vez. 
 - Divida funcionalidades em fatias pequenas (ex: 1. Schema/Prisma -> 2. Lógica de Serviço -> 3. Componentes React -> 4. Integração). Aguarde aprovação ou sucesso da etapa antes de codificar a próxima.
+- **NÃO** rode nenhuma migartion sem autorização explícita.
 
 ### 2. Desenvolvimento Guiado a Testes
 - Para CADA bloco de execução desenvolvido, crie ou atualize os testes automatizados em **Jest**.

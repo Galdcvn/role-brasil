@@ -1,6 +1,6 @@
 # Seatly — Arquitetura
 
-> Documento de conceito. Define os princípios, o formato e os limites do sistema **antes** do modelo de dados — que será desenhado à parte.
+> Documento de conceito. Define os princípios, o formato e os limites do sistema. O modelo de dados concreto vive no schema Prisma (seção 5).
 > Para decisões com contexto (o porquê de cada escolha) e como rodar, ver o [README](./README.md).
 
 ## 1. Visão geral
@@ -99,7 +99,36 @@ Regras:
 - Verificação de email e reset de senha usam **OTP de 6 dígitos**. Em dev (`ALLOW_OTP_FALLBACK`), o código `000000` sempre funciona e o código "enviado" é devolvido na resposta — simulando o email sem infraestrutura real.
 - Login exige email verificado.
 
-## 5. Segurança do ingresso
+## 5. Modelo de dados (Prisma)
+
+> Fonte da verdade: `server/prisma/schema.prisma` (migração inicial versionada em `server/prisma/migrations/`). Tabelas em snake_case, enums nativos no banco.
+
+**Tabelas (13):**
+
+| Grupo | Tabelas | Papel |
+|---|---|---|
+| Identidade | `Usuarios`, `Papeis`, `Papeis_Usuario` | conta com papéis N:N (Organizador/Cliente/Portaria); `verificado` + campos de OTP |
+| Catálogo do organizador | `Eventos`, `Enderecos_Eventos`, `Categorias_Evento` | evento snapshotado do TMDb; endereço 1:1; catálogo de preços por categoria (INTEIRA/MEIA/GRATUIDADE) |
+| Sessão e assentos | `Sessao_Eventos`, `Assentos_Sessao` | sessões múltiplas por evento; mapa de assentos com estado por sessão |
+| Venda | `Reservas`, `Reservas_Itens`, `Pagamentos` | hold de 15 min; um item por assento com preço congelado; pagamento mock determinístico |
+| Pós-venda | `Ingressos`, `Favoritos` | ingresso com código curto + token do QR; favoritos por cliente |
+
+**Constraints que sustentam a integridade:**
+
+- `UNIQUE(sessao_id, fileira, numero)` — um lugar existe uma única vez por sessão; dupla-venda é impossível por constraint, não por lógica de aplicação.
+- `UNIQUE(assento_sessao_id)` em `Reservas_Itens` e `Ingressos` — um assento não entra em duas reservas nem vira dois ingressos.
+- `UNIQUE(email)`, `UNIQUE(Papeis_Usuario.usuario_id, papel_id)`, `UNIQUE(Ingressos.codigo)`, `UNIQUE(Favoritos.usuario_id, evento_id)` e `UNIQUE(Categorias_Evento.evento_id, nome)` (uma categoria de cada por evento).
+- `categoria`/`preco_centavos` são **denormalizados** em itens e ingressos: congelam o valor na compra e evitam join na validação da portaria.
+
+**Enums:** `EventoStatus`, `CategoriaIngresso`, `AssentoStatus`, `ReservaStatus`, `IngressoStatus`, `ComprovanteStatus`, `PagamentoTipo`, `PagamentoStatus`.
+
+**Notas de desenho:**
+
+- `PagamentoStatus` só tem `APROVADO`/`RECUSADO`: o pagamento é síncrono e determinístico no mock — não existe estado intermediário de processamento.
+- `ComprovanteStatus` materializa o fluxo de 2 fases da portaria (`PENDENTE` → `CONFIRMADO`/`RECUSADO`).
+- A migração inicial foi gerada com `prisma migrate diff` e está versionada; a aplicação ao banco fica pendente da `DATABASE_URL` real.
+
+## 6. Segurança do ingresso
 
 ```
                         ┌─────────────────────────────┐
@@ -150,7 +179,7 @@ Regras:
 - Ingressos `INTEIRA` são validados de uma vez.
 - Ingressos `MEIA`/`GRATUIDADE`: o scan sinaliza `PROOF_REQUIRED` e **não** consome o ingresso; a portaria confere o comprovante e decide **Confirmado** (consome atomicamente) ou **Recusado** (não consome, fica registrado para auditoria).
 
-## 6. Fluxos que moldam a arquitetura
+## 7. Fluxos que moldam a arquitetura
 
 ### Reserva → pagamento → ingresso
 
@@ -210,7 +239,7 @@ ingressos emitidos reserva cancelada
   qualquer pessoa vê o ingresso + QR (sem dados de conta)
 ```
 
-## 7. Catálogo externo
+## 8. Catálogo externo
 
 ```
         ┌───────────────────┐
@@ -227,7 +256,7 @@ ingressos emitidos reserva cancelada
 - O organizador monta o evento a partir de um item do catálogo. O item é **snapshotado** para o banco no momento da criação — o evento sobrevive e é exibido mesmo se a API externa falhar ou a chave expirar.
 - A interface `CatalogProvider` isola o TMDb; plugar Ticketmaster no futuro é criar um novo adapter.
 
-## 8. Fora do escopo (deliberado)
+## 9. Fora do escopo (deliberado)
 
 | Item | Por quê |
 |---|---|
@@ -239,7 +268,7 @@ ingressos emitidos reserva cancelada
 | Nota fiscal, revenda, app nativo | Fora do enunciado |
 | Banco não-relacional ou cache distribuído | Sem caso de uso que justifique |
 
-## 9. Ligações
+## 10. Ligações
 
 - **Decisões com contexto e linha do tempo** → [README](./README.md)
-- **Modelo de dados** → desenhado à parte (este documento não define schema).
+- **Modelo de dados e migração** → `server/prisma/schema.prisma` + `server/prisma/migrations/`

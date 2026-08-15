@@ -1,8 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// Schema do Seatly — modelo de dados (desenhado à parte e convertido para Prisma).
+// Colunas seguem o desenho (snake_case) via @map; campos Prisma em camelCase.
 
 generator client {
   provider = "prisma-client-js"
@@ -11,4 +8,253 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+// ---------- Enums ----------
+
+enum EventoStatus {
+  RASCUNHO
+  PUBLICADO
+  CANCELADO
+}
+
+enum CategoriaIngresso {
+  INTEIRA
+  MEIA
+  GRATUIDADE
+}
+
+enum AssentoStatus {
+  DISPONIVEL
+  RESERVADO
+  VENDIDO
+}
+
+enum ReservaStatus {
+  PENDENTE
+  PAGO
+  EXPIRADO
+  CANCELADO
+}
+
+enum IngressoStatus {
+  EMITIDO
+  USADO
+}
+
+enum ComprovanteStatus {
+  NAO_NECESSARIO
+  PENDENTE
+  CONFIRMADO
+  RECUSADO
+}
+
+enum PagamentoTipo {
+  PIX
+  CARTAO
+}
+
+enum PagamentoStatus {
+  APROVADO
+  RECUSADO
+}
+
+// ---------- Modelos ----------
+
+model Usuario {
+  id                        Int             @id @default(autoincrement())
+  nome                      String          @db.VarChar(255)
+  email                     String          @unique @db.VarChar(255)
+  senha                     String          @db.VarChar(255)
+  verificado                Boolean         @default(false)
+  codigoVerificacao         Int?
+  codigoVerificacaoExpiraEm DateTime?
+  criadoEm                  DateTime        @default(now()) @map("criado_em")
+  papeis                    PapeisUsuario[]
+  eventosCriados            Evento[]        @relation("EventoOrganizador")
+  reservas                  Reserva[]
+  ingressos                 Ingresso[]
+  favoritos                 Favorito[]
+
+  @@map("Usuarios")
+}
+
+model Papel {
+  id       Int             @id @default(autoincrement())
+  nome     String          @db.VarChar(255)
+  usuarios PapeisUsuario[]
+
+  @@map("Papeis")
+}
+
+model PapeisUsuario {
+  id        Int     @id @default(autoincrement())
+  usuarioId Int     @map("usuario_id")
+  papelId   Int     @map("papel_id")
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+  papel     Papel   @relation(fields: [papelId], references: [id])
+
+  @@unique([usuarioId, papelId])
+  @@index([papelId])
+  @@map("Papeis_Usuario")
+}
+
+model Evento {
+  id              Int                @id @default(autoincrement())
+  organizadorId   Int                @map("organizador_id")
+  tmdbId          Int?               @map("tmdb_id")
+  titulo          String             @db.VarChar(255)
+  descricao       String?            @db.Text
+  posterUrl       String?            @map("poster_url") @db.VarChar(500)
+  telefoneSuporte String?            @map("telefone_suporte") @db.VarChar(20)
+  emailSuporte    String?            @map("email_suporte") @db.VarChar(255)
+  status          EventoStatus       @default(RASCUNHO)
+  criadoEm        DateTime           @default(now()) @map("criado_em")
+  atualizadoEm    DateTime?          @updatedAt @map("atualizado_em")
+  organizador     Usuario            @relation("EventoOrganizador", fields: [organizadorId], references: [id])
+  endereco        EnderecosEvento?
+  categorias      CategoriasEvento[]
+  sessoes         SessaoEvento[]
+  favoritos       Favorito[]
+
+  @@index([organizadorId])
+  @@index([status])
+  @@map("Eventos")
+}
+
+model EnderecosEvento {
+  id       Int    @id @default(autoincrement())
+  eventoId Int    @unique @map("evento_id")
+  cep      String @db.VarChar(9)
+  rua      String @db.VarChar(255)
+  numero   Int?
+  bairro   String @db.VarChar(255)
+  cidade   String @db.VarChar(255)
+  estado   String @db.VarChar(2)
+  evento   Evento @relation(fields: [eventoId], references: [id])
+
+  @@map("Enderecos_Eventos")
+}
+
+model CategoriasEvento {
+  id                Int               @id @default(autoincrement())
+  eventoId          Int               @map("evento_id")
+  nome              CategoriaIngresso
+  precoCentavos     Int               @map("preco_centavos")
+  requerComprovante Boolean           @default(false) @map("requer_comprovante")
+  evento            Evento            @relation(fields: [eventoId], references: [id])
+
+  @@unique([eventoId, nome])
+  @@map("Categorias_Evento")
+}
+
+model SessaoEvento {
+  id       Int              @id @default(autoincrement())
+  eventoId Int              @map("evento_id")
+  dataHora DateTime         @map("data_hora")
+  criadoEm DateTime         @default(now()) @map("criado_em")
+  evento   Evento           @relation(fields: [eventoId], references: [id])
+  assentos AssentosSessao[]
+  reservas Reserva[]
+
+  @@index([eventoId])
+  @@map("Sessao_Eventos")
+}
+
+model AssentosSessao {
+  id          Int            @id @default(autoincrement())
+  sessaoId    Int            @map("sessao_id")
+  fileira     String         @db.VarChar(10)
+  numero      Int
+  status      AssentoStatus  @default(DISPONIVEL)
+  sessao      SessaoEvento   @relation(fields: [sessaoId], references: [id])
+  reservaItem ReservasItens?
+  ingresso    Ingresso?
+
+  @@unique([sessaoId, fileira, numero])
+  @@index([sessaoId])
+  @@map("Assentos_Sessao")
+}
+
+model Reserva {
+  id               Int             @id @default(autoincrement())
+  usuarioId        Int             @map("usuario_id")
+  sessaoId         Int             @map("sessao_id")
+  status           ReservaStatus   @default(PENDENTE)
+  subtotalCentavos Int             @default(0) @map("subtotal_centavos")
+  expiraEm         DateTime?       @map("expira_em")
+  criadoEm         DateTime        @default(now()) @map("criado_em")
+  pagoEm           DateTime?       @map("pago_em")
+  usuario          Usuario         @relation(fields: [usuarioId], references: [id])
+  sessao           SessaoEvento    @relation(fields: [sessaoId], references: [id])
+  itens            ReservasItens[]
+  ingressos        Ingresso[]
+  pagamentos       Pagamento[]
+
+  @@index([usuarioId])
+  @@index([sessaoId])
+  @@map("Reservas")
+}
+
+model ReservasItens {
+  id              Int               @id @default(autoincrement())
+  reservaId       Int               @map("reserva_id")
+  assentoSessaoId Int               @unique @map("assento_sessao_id")
+  categoria       CategoriaIngresso
+  precoCentavos   Int               @map("preco_centavos")
+  reserva         Reserva           @relation(fields: [reservaId], references: [id])
+  assento         AssentosSessao    @relation(fields: [assentoSessaoId], references: [id])
+
+  @@index([reservaId])
+  @@map("Reservas_Itens")
+}
+
+model Ingresso {
+  id                Int               @id @default(autoincrement())
+  reservaId         Int               @map("reserva_id")
+  assentoSessaoId   Int               @unique @map("assento_sessao_id")
+  usuarioId         Int               @map("usuario_id")
+  categoria         CategoriaIngresso
+  codigo            String            @unique @db.VarChar(16)
+  qrToken           String            @map("qr_token") @db.VarChar(255)
+  status            IngressoStatus    @default(EMITIDO)
+  usadoEm           DateTime?         @map("usado_em")
+  comprovanteStatus ComprovanteStatus @default(NAO_NECESSARIO) @map("comprovante_status")
+  criadoEm          DateTime          @default(now()) @map("criado_em")
+  reserva           Reserva           @relation(fields: [reservaId], references: [id])
+  assento           AssentosSessao    @relation(fields: [assentoSessaoId], references: [id])
+  usuario           Usuario           @relation(fields: [usuarioId], references: [id])
+
+  @@index([reservaId])
+  @@index([usuarioId])
+  @@map("Ingressos")
+}
+
+model Pagamento {
+  id            Int             @id @default(autoincrement())
+  reservaId     Int             @map("reserva_id")
+  valorCentavos Int             @map("valor_centavos")
+  tipo          PagamentoTipo
+  status        PagamentoStatus
+  finalCartao   String?         @map("final_cartao") @db.VarChar(4)
+  codigoPix     String?         @map("codigo_pix") @db.VarChar(255)
+  criadoEm      DateTime        @default(now()) @map("criado_em")
+  processadoEm  DateTime?       @map("processado_em")
+  reserva       Reserva         @relation(fields: [reservaId], references: [id])
+
+  @@index([reservaId])
+  @@map("Pagamentos")
+}
+
+model Favorito {
+  id        Int      @id @default(autoincrement())
+  usuarioId Int      @map("usuario_id")
+  eventoId  Int      @map("evento_id")
+  criadoEm  DateTime @default(now()) @map("criado_em")
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id])
+  evento    Evento   @relation(fields: [eventoId], references: [id])
+
+  @@unique([usuarioId, eventoId])
+  @@index([eventoId])
+  @@map("Favoritos")
 }

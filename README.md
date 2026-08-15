@@ -54,6 +54,20 @@ DATABASE_URL=postgresql://...
 
 > Registro das decisões tomadas ao longo do desenvolvimento, com o contexto de cada uma. Inserida em ordem cronológica; decisões novas são adicionadas no topo.
 
+### 15/08/2026 — Node.js atualizado para 24.19.0 (LTS)
+
+- **Execução da decisão anterior (Node >= 22.12)**: o Node 22.11.0 foi desinstalado (MSI) e o **Node.js 24.19.0 (LTS)** instalado via winget (`OpenJS.NodeJS.LTS`). Com o *engine check* satisfeito, o `npm install` voltou a instalar corretamente os bindings opcionais (`@oxlint/binding-win32-x64-msvc`, `@rolldown/binding-*`), eliminando a necessidade do workaround de pin por plataforma.
+- **Checkpoint de validação pós-atualização (client + server)**: `lint`, `build` (typecheck + bundle) e testes passando nos dois lados — o client, que estava bloqueado, agora builda e lint limpo. Nenhum workaround manual de binding permanece no `package.json`.
+
+### 15/08/2026 — Schema do banco (Prisma)
+
+- **Modelo de dados consolidado no `schema.prisma`**: 13 modelos mapeados em snake_case (`Usuarios`, `Papeis`, `Papeis_Usuario`, `Eventos`, `Enderecos_Eventos`, `Categorias_Evento`, `Sessao_Eventos`, `Assentos_Sessao`, `Reservas`, `Reservas_Itens`, `Ingressos`, `Pagamentos`, `Favoritos`) + 8 enums (`EventoStatus`, `CategoriaIngresso`, `AssentoStatus`, `ReservaStatus`, `IngressoStatus`, `ComprovanteStatus`, `PagamentoTipo`, `PagamentoStatus`).
+- **Integridade garantida no banco**: `UNIQUE(email)`, `UNIQUE(Papeis_Usuario.usuario_id + papel_id)`, `UNIQUE(Categorias_Evento.evento_id + nome)` (uma categoria por evento), `UNIQUE(Assentos_Sessao.sessao_id + fileira + numero)` (assento único por sessão — resolve o "mesmo lugar não pode ser vendido duas vezes" no nível de constraint, como planejado), `UNIQUE(Reservas_Itens.assento_sessao_id)` e `UNIQUE(Ingressos.assento_sessao_id)` (um item/ingresso por assento), `UNIQUE(Ingressos.codigo)` (código curto de digitação manual) e `UNIQUE(Favoritos.usuario_id + evento_id)`.
+- **Preço e comprovante denormalizados nos itens/ingressos**: `Reservas_Itens` e `Ingressos` guardam cópia de `categoria` e `preco_centavos`. A tabela `Categorias_Evento` é o catálogo de preços vigente por evento; a cópia congela o valor na hora da compra (não muda se o organizador reajustar) e evita joins na validação da portaria.
+- **Migração inicial versionada sem banco**: como a `DATABASE_URL` real (Supabase) ainda não foi configurada, o SQL foi gerado com `prisma migrate diff --from-empty --to-schema-datamodel --script` e salvo em `server/prisma/migrations/20260815000000_init/migration.sql` + `migration_lock.toml`. Quando a URL estiver disponível, basta `prisma migrate deploy` para aplicar.
+- **`verificado`/`codigoVerificacao` na tabela `Usuarios`**: verificação de email e reset de senha por código OTP com fallback `000000` em dev (`ALLOW_OTP_FALLBACK`) — coerente com o que foi decidido no planejamento.
+- **`pagamentos.status` sem estado de processamento pendente**: decisão do desenho — o pagamento é síncrono e determinístico no mock (cartão dígito par aprova, ímpar recusa; Pix sempre aprova), então só existem `APROVADO` e `RECUSADO`. A confirmação só ocorre após o gateway "aprovar".
+
 ### 15/08/2026 — Boas práticas de uso de IA
 
 - **Arquivos de contexto para IA (`AGENTS.md` e `ARCHITECTURE.md`)**: decisão de fixar no repositório dois arquivos que documentam como a IA deve trabalhar no projeto — `ARCHITECTURE.md` entrega o contexto/conceito da arquitetura, e `AGENTS.md` entrega o processo de execução (stack, regras negativas, desenvolvimento modular, TDD com cobertura mínima de 85% e checkpoints de typecheck/lint/build/testes entre módulos). A intenção é que a IA opere dentro das mesmas regras e do mesmo entendimento que qualquer desenvolvedor do time, sem "adivinhar" convenções — e que isso seja versionado junto com o código.
