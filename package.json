@@ -1,0 +1,16 @@
+{
+  "name": "seatly",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Plataforma de eventos e ingressos (desafio Elite Dev)",
+  "scripts": {
+    "dev": "concurrently -n server,client -c blue,magenta \"npm run start:dev --prefix server\" \"npm run dev --prefix client\"",
+    "dev:server": "npm run start:dev --prefix server",
+    "dev:client": "npm run dev --prefix client",
+    "build": "npm run build --prefix server && npm run build --prefix client",
+    "lint": "npm run lint --prefix server && npm run lint --prefix client"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
