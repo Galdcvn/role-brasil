@@ -48,11 +48,36 @@ Variáveis de ambiente (`server/.env`):
 DATABASE_URL=postgresql://...
 ```
 
+Validação automática (husky, instalado pelo `npm install`):
+
+- `pre-commit` → lint, typecheck e build dos dois pacotes.
+- `pre-push` → testes com cobertura (thresholds configuráveis; meta 85%).
+
+```bash
+# Executar os mesmos checks manualmente
+npm run lint:check && npm run typecheck && npm run build
+npm run test:cov
+```
+
 ---
 
 ## Linha do tempo das decisões
 
 > Registro das decisões tomadas ao longo do desenvolvimento, com o contexto de cada uma. Inserida em ordem cronológica; decisões novas são adicionadas no topo.
+
+### 15/08/2026 — Pipeline de validação local (Husky)
+
+- **Decisão: hooks de git no repositório (sem CI externo)** — o `husky` foi instalado na raiz e os hooks rodam via `npm install` (script `prepare`). **`pre-commit`** executa lint (sem `--fix`), typecheck e build dos **dois** pacotes; **`pre-push`** executa os testes com cobertura e **bloqueia o push** se o threshold não for atingido. Nada de lint-staged: rodamos o projeto inteiro a cada hook (monorepo pequeno, builds rápidos — decisão minha, IA avaliou o trade-off).
+- **Vitest no client (autorizado)**: o client não tinha framework de teste; entrou `vitest` + `@vitest/coverage-v8` + `jsdom` (DOM para componentes) com teste de fumaça do `App` usando `react-dom/client` + `act` — sem lib extra de testing (KISS). `AGENTS.md` atualizado: **Jest (server) + Vitest (client)**.
+- **Cobertura com ramp-up (decisão: começar abaixo da meta)**: thresholds iniciais **abaixo do medido** — server ≈ 48% stmts / 43% lines / 75% funcs / 50% branch; client ≈ 75% — com **meta final de 85%** (regra do AGENTS.md). O plano é subir os thresholds por milestone até 85%. O pre-push já bloqueia abaixo do threshold atual.
+- **Como a IA refinou**: na medição real, detectou que o relatório do Vitest v8 "escondia" arquivos 100% cobertos (agregado correto: 3/4 statements = App/Home/NotFound + main.tsx 0%); identificou que o **Vitest v4 não tem a opção `all`** (redundante, `include` já cobre arquivos não testados) — o que teria quebrado o typecheck; e **validou o enforcement com teste negativo** (threshold 90 → `exit 1` no Jest e no Vitest) antes de fixar os valores iniciais.
+
+### 15/08/2026 — AGENTS.md: Princípios & Qualidade de Código
+
+- **Atualização do `AGENTS.md` feita por mim**: nova seção **Princípios & Qualidade de Código** fixa a doutrina de código do projeto — **KISS** (simples e direto, sem sobre-engenharia), **DRY** (cada regra de negócio com representação única), **Clean Code** (nomes autoexplicativos, funções pequenas, sem comentários redundantes), **SOLID** (SRP, OCP, LSP, ISP, DIP) e **Design Patterns (GoF)** como vocabulário para problemas recorrentes.
+- **Composição sobre herança**: nova regra negativa — **NÃO** usar herança de classes para reaproveitar código; preferir composição (props, render props, custom hooks no React; injeção de dependências/composição no Nest). Reforça a **Lei de Demeter** (sem encadeamentos profundos como `a.getB().doSomething()`).
+- **Migrations**: nova regra — **NÃO rodar nenhuma migration sem autorização explícita** no chat (coerente com a migração inicial ainda não aplicada).
+- **Como a IA refinou**: a atualização foi revisada com a IA, que apontou sobreposições (ex.: composição sobre herança já implicava o `I` e o `D` de SOLID) e sugeriu formatação que deixa cada princípio acionável e verificável — mas a decisão de adotá-los é minha. A partir daqui, todo código implementado segue esses princípios.
 
 ### 15/08/2026 — Node.js atualizado para 24.19.0 (LTS)
 

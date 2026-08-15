@@ -2,6 +2,7 @@
 
 > Documento de conceito. Define os princípios, o formato e os limites do sistema. O modelo de dados concreto vive no schema Prisma (seção 5).
 > Para decisões com contexto (o porquê de cada escolha) e como rodar, ver o [README](./README.md).
+> Princípios de qualidade de código (KISS, DRY, Clean Code, SOLID, composição sobre herança, Lei de Demeter, padrões GoF) e o pipeline de validação local (husky) são governados pelo [AGENTS.md](./AGENTS.md).
 
 ## 1. Visão geral
 
@@ -39,6 +40,7 @@ O Seatly é uma plataforma de eventos e ingressos com três papéis:
 
 - **Monorepo sem npm workspaces**: `client` e `server` são pacotes independentes, com lockfiles próprios. O root apenas sobe os dois juntos (`npm run dev`). Evita hoisting de dependências (surpresas com NestJS/Vite) e mantém cada lado versionável isolado.
 - **Comunicação**: o client fala com o server sempre via `/api`. Em dev, o Vite proxeia `/api` para `:3000`; em produção, o mesmo prefixo garante URLs consistentes.
+- **Qualidade local (husky)**: hooks de git na raiz — `pre-commit` roda lint, typecheck e build dos dois pacotes; `pre-push` roda testes + cobertura (Jest no server, Vitest no client) com thresholds que bloqueiam o push. Meta de 85%, início em ramp-up (valores no `README`).
 
 ## 3. Client (React + Vite)
 

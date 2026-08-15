@@ -8,9 +8,15 @@
     "dev:server": "npm run start:dev --prefix server",
     "dev:client": "npm run dev --prefix client",
     "build": "npm run build --prefix server && npm run build --prefix client",
-    "lint": "npm run lint --prefix server && npm run lint --prefix client"
+    "lint": "npm run lint --prefix server && npm run lint --prefix client",
+    "prepare": "husky",
+    "typecheck": "npm run typecheck --prefix server && npm run typecheck --prefix client",
+    "lint:check": "npm run lint:check --prefix server && npm run lint:check --prefix client",
+    "test": "npm run test --prefix server && npm run test --prefix client",
+    "test:cov": "npm run test:cov --prefix server && npm run test:cov --prefix client"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2"
+    "concurrently": "^9.1.2",
+    "husky": "^9.1.7"
   }
 }

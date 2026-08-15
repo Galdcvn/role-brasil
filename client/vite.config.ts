@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
@@ -10,6 +10,19 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:3000',
         changeOrigin: true,
+      },
+    },
+  },
+  test: {
+    environment: 'jsdom',
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.{ts,tsx}'],
+      thresholds: {
+        statements: 70,
+        branches: 80,
+        functions: 90,
+        lines: 70,
       },
     },
   },

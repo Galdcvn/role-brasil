@@ -4,11 +4,30 @@
 - **Frontend/UI:** React, Tailwind CSS
 - **Linguagem:** TypeScript
 - **Database/ORM:** PostgreSQL (Supabase), Prisma
-- **Testes:** Jest
+- **Testes:** Jest (server) + Vitest (client)
 
 ## Regras Inegociáveis (Regras Negativas)
 - **NÃO** instale bibliotecas `npm`, `yarn` ou `pnpm` adicionais sem autorização prévia e explícita no chat.
 - **NÃO** utilize `any` nas definições de tipos do TypeScript. Use tipagem estrita, `unknown` ou Generics quando a tipagem exata for dinâmica.
+- **NÃO** utilize Herança de classes para reaproveitamento de código; prefira **Composição**.
+
+## Princípios & Qualidade de Código
+
+- **KISS (Keep It Simple, Stupid):** O código deve ser simples e direto. Evite sobre-engenharia, abstrações prematuras ou soluções desnecessariamente complexas.
+- **DRY (Don't Repeat Yourself):** Cada regra de negócio ou lógica central deve ter uma representação única. Extraia rotinas repetidas para custom hooks, utilitários ou serviços reutilizáveis.
+- **Clean Code:** 
+  - Nomes de variáveis, funções e componentes devem ser autoexplicativos.
+  - Funções pequenas e focadas em fazer apenas uma coisa bem feita.
+  - Elimine comentários redundantes (o código deve se explicar sozinho).
+- **SOLID:**
+  - **S (Single Responsibility):** Módulos, componentes e serviços devem ter apenas um motivo para mudar.
+  - **O (Open/Closed):** Código aberto para extensão, mas fechado para modificação.
+  - **L (Liskov Substitution):** Tipos derivados devem ser totalmente substituíveis pelos seus tipos base.
+  - **I (Interface Segregation):** Crie interfaces/types enxutos e específicos em vez de interfaces monolíticas.
+  - **D (Dependency Inversion):** Módulos de alto nível não devem depender de módulos de baixo nível; ambos devem depender de abstrações (interfaces/types).
+- **Composição sobre Herança:** Dê preferência absoluta à composição de objetos e componentes React (via props, render props ou custom hooks) em vez de hierarquias de herança.
+- **Lei de Demeter (Princípio do Menor Conhecimento):** Reduza o acoplamento em cadeia. Um método ou função deve interagir apenas com suas dependências diretas (evite encadeamentos profundos como `objeto.getA().getB().doSomething()`).
+- **Design Patterns (GoF):** Utilize padrões de projeto consagrados (ex: *Strategy, Factory, Adapter, Observer*) para resolver problemas estruturais recorrentes em vez de reinventar a roda.
 
 ## Fluxo de Trabalho (Workflow Modularizado)
 
@@ -16,7 +35,7 @@
 - Execute tarefas de forma estritamente modularizada passo a passo.
 - **NÃO** crie blocos muito extensos de desenvolvimento de uma só vez. 
 - Divida funcionalidades em fatias pequenas (ex: 1. Schema/Prisma -> 2. Lógica de Serviço -> 3. Componentes React -> 4. Integração). Aguarde aprovação ou sucesso da etapa antes de codificar a próxima.
-- **NÃO** rode nenhuma migartion sem autorização explícita.
+- **NÃO** rode nenhuma migration sem autorização explícita.
 
 ### 2. Desenvolvimento Guiado a Testes
 - Para CADA bloco de execução desenvolvido, crie ou atualize os testes automatizados em **Jest**.
@@ -32,4 +51,4 @@
 - Avance para a próxima etapa/módulo **apenas** quando os testes passarem com sucesso e a cobertura de 85% for confirmada.
 
 ### 4. Registro das atividades
-- Sempre que terminar uma implementação lembre de atualizar o ARCHTECTURE.md, se for cabível, e adicionar ao README atualizações sobre o sistema e sobre as decisões tomadas na linha do tempo, Deixando claro minhas as minhas decisões e como usei a IA para melhorar refinar elas.
+- Sempre que terminar uma implementação lembre de atualizar o `ARCHITECTURE.md`, se for cabível, e adicionar ao `README.md` atualizações sobre o sistema e sobre as decisões tomadas na linha do tempo, deixando claro as minhas decisões e como usei a IA para melhorar/refinar elas.
