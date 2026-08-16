@@ -48,13 +48,14 @@ describe('TmdbAdapter', () => {
 
       const filmes = await adapter.search('fight club');
 
-      const chamadas = fetchMock.mock.calls as unknown as [
-        [url: string, init?: RequestInit],
-      ][];
+      const chamadas = fetchMock.mock.calls as unknown as {
+        0: string;
+        1: RequestInit;
+      }[];
       expect(chamadas[0][0]).toContain('/search/movie');
       expect(chamadas[0][0]).toContain('query=fight%20club');
       expect(chamadas[0][0]).toContain('api_key=chave-teste');
-      expect(chamadas[0][1]?.signal).toBeInstanceOf(AbortSignal);
+      expect(chamadas[0][1].signal).toBeInstanceOf(AbortSignal);
       expect(filmes).toEqual([
         {
           id: 550,

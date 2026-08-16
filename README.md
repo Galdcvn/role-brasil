@@ -1,4 +1,4 @@
-# Seatly
+# Primeira Fila
 
 Plataforma de eventos e ingressos (desafio Elite Dev). Um **organizador** monta um evento a partir de um catálogo de filmes do TMDb, define data, local, capacidade e preço, e publica. O **cliente** navega pelos eventos, escolhe o assento num mapa, paga de forma simulada e recebe um ingresso com QR assinado, que pode compartilhar por link. Na entrada, a **portaria** valida o ingresso lendo o QR pela câmera ou digitando o código.
 
@@ -16,7 +16,7 @@ Plataforma de eventos e ingressos (desafio Elite Dev). Um **organizador** monta 
 ## Estrutura
 
 ```
-Seatly/
+primeira-fila/
 ├── README.md          # Resumo + linha do tempo de decisões
 ├── ARCHITECTURE.md    # Conceito da arquitetura (contexto do projeto para IA e revisores)
 ├── AGENTS.md          # Instruções de processo de execução para agentes de IA
@@ -69,6 +69,14 @@ npm run test:cov
 ## Linha do tempo das decisões
 
 > Registro das decisões tomadas ao longo do desenvolvimento, com o contexto de cada uma. Inserida em ordem cronológica; decisões novas são adicionadas no topo.
+
+### 16/08/2026 — Renomeado: Seatly → Primeira Fila
+
+- **Motivo**: descobri que o nome "Seatly" já é usado por um projeto muito semelhante publicado na Vercel — descartado para evitar colisão de marca.
+- **Novo nome — Primeira Fila**: a fila da frente é o "lugar garantido" — exatamente a promessa central do produto (assento garantido). Único no nicho, fácil de lembrar e em PT-BR (idioma do produto).
+- **Formatos adotados**: display **Primeira Fila**; slug/package/repo/pasta `primeira-fila`.
+- **Alcance da mudança**: `package.json`/`package-lock.json` (raiz), `README.md`, `ARCHITECTURE.md`, `client/README.md`, `server/README.md`, `client/index.html` (título), `client/src/pages/HomePage.tsx`, `client/src/App.spec.tsx`, comentário no `schema.prisma` e `DESIGN_SYSTEM.md`. Pasta local `Seatly/` → `primeira-fila/`; repositório GitHub `Galdcvn/Seatly` → `Galdcvn/primeira-fila` (histórico preservado) e remote atualizado.
+- **Nada de "seatly" resta no código** (checado por grep); o histórico git mantém a menção antiga.
 
 ### 15/08/2026 — Módulo Organizador (catálogo TMDb + eventos + sessões)
 
@@ -146,7 +154,7 @@ npm run test:cov
 - **Gerador Prisma `prisma-client-js` (clássico) em vez do `prisma-client` (novo)**: o `prisma init` 6.19 gera por padrão o gerador novo, que escreve o client em TS dentro do repo (`server/generated/`). Como o tsconfig do Nest compila tudo que está fora de `node_modules`, esse código gerado entrava no build e deslocava a raiz de compilação — resultado: `dist/src/main.js` em vez do `dist/main.js` esperado pelo NestJS (e o `start:prod` quebrava). Trocar para `prisma-client-js` mantém o client em `node_modules`, fora do build, e o layout `dist/main.js` padrão. Custo aceito: ao migrar para Prisma 7 no futuro, o gerador novo será o caminho.
 - **Node.js >= 22.12.0 exigido pelo Vite 8 (rolldown) e pelo oxlint**: na primeira instalação, o build e o lint do client quebraram com "Cannot find native binding". A causa não é um bug do npm nesta máquina, e sim o *engine check*: os bindings nativos (`@rolldown/binding-*`, `@oxlint/binding-*`) declaram `node: ^20.19.0 || >=22.12.0`, e o Node instalado (22.11.0) não atendia — npm pula dependência opcional que falha no engine de forma silenciosa, sem erro. **Decisão: atualizar o Node para a versão LTS mais recente** em vez de fazer workaround no package.json (pin de binding por plataforma), que exigiria manter versão sincronizada manualmente a cada update. Fica registrado aqui porque um erro enigmático de "binding" costuma ser mal diagnosticado.
 - **Stack obrigatória + monorepo `client`/`server`**: React com TypeScript no front, NestJS no back, Supabase (Postgres) como banco. Escolha direta do enunciado.
-- **Nome do projeto — Seatly**: remete ao "assento garantido" — a garantia de que o lugar escolhido é seu é o coração do produto. Nome curto, fácil de lembrar e que marca o domínio sem soar genérico.
+- **Nome do projeto — inicialmente "Seatly"**: remetia ao "assento garantido" — a garantia de que o lugar escolhido é seu é o coração do produto. Nome curto, fácil de lembrar e que marca o domínio sem soar genérico. **Posteriormente renomeado para "Primeira Fila"** (16/08/2026) por colisão de marca com projeto semelhante na Vercel — ver entrada no topo da timeline.
 - **Vite em vez de Next.js**: o projeto não precisa de SSR; Vite entrega um dev loop mais simples e rápido, e o link compartilhado de ingresso pode ser uma rota comum do SPA. Consistente com o Route_Manager_RJ (stack que já usei e validei).
 - **Monorepo sem npm workspaces**: `client` e `server` são pacotes independentes com lockfiles próprios. O root só orquestra com `concurrently`. Evita o hoisting de dependências (que costuma gerar surpresas com NestJS/Vite) e mantém cada lado versionável de forma isolada.
 - **Supabase apenas como PostgreSQL via Prisma**: o Supabase entra como banco gerenciado; toda a lógica de negócio, autenticação e regras de integridade ficam no NestJS. A escolha da ferramenta não engessa o projeto — trocar de banco é trocar a `DATABASE_URL`.

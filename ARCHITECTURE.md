@@ -1,4 +1,4 @@
-# Seatly — Arquitetura
+# Primeira Fila — Arquitetura
 
 > Documento de conceito. Define os princípios, o formato e os limites do sistema. O modelo de dados concreto vive no schema Prisma (seção 5).
 > Para decisões com contexto (o porquê de cada escolha) e como rodar, ver o [README](./README.md).
@@ -6,7 +6,7 @@
 
 ## 1. Visão geral
 
-O Seatly é uma plataforma de eventos e ingressos com três papéis:
+O Primeira Fila é uma plataforma de eventos e ingressos com três papéis:
 
 - **Organizador** — monta eventos a partir de um catálogo externo, define sessões, preços por categoria, mapa de assentos e publica. Acompanha ocupação e vendas.
 - **Cliente** — busca eventos, escolhe sessão, assento e categoria, paga de forma simulada (Pix ou cartão) e recebe um ingresso com QR assinado, que pode compartilhar por link.
@@ -24,7 +24,7 @@ O Seatly é uma plataforma de eventos e ingressos com três papéis:
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│                          Seatly (repo)                       │
+│                     Primeira Fila (repo)                      │
 │                                                              │
 │   package.json (raiz)  —  orquestra com concurrently         │
 │        │                                                      │

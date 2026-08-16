@@ -1,4 +1,4 @@
-// Schema do Seatly — modelo de dados (desenhado à parte e convertido para Prisma).
+// Schema do Primeira Fila — modelo de dados (desenhado à parte e convertido para Prisma).
 // Colunas seguem o desenho (snake_case) via @map; campos Prisma em camelCase.
 
 generator client {

@@ -1,4 +1,4 @@
-# Seatly — server
+# Primeira Fila — server
 
 Back-end NestJS + Prisma (Supabase PostgreSQL).
 
