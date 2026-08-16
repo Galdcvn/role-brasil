@@ -83,7 +83,7 @@ Regras:
         └─────────┘
 ```
 
-- **auth** — registro com verificação de email, login, verificação e reset de senha (OTP), estratégia JWT e guards por papel.
+- **auth** — registro com verificação de email, login (passport-local + JWT), estratégias e guards por papel. **Implementado**.
 - **catalog** — adapter para o TMDb (`CatalogProvider`): busca e detalhe de filmes, normalizados para um formato próprio; extensível para Ticketmaster.
 - **events** — CRUD do organizador: montar evento a partir do catálogo, definir local, categorias de ingresso e preços, publicar/cancelar.
 - **sessions / seats** — um evento tem várias sessões (data/hora). Cada sessão tem seu mapa de assentos, gerado a partir da configuração de fileiras. A unicidade de um lugar por sessão é garantida por constraint de banco.
@@ -98,8 +98,8 @@ Regras:
 
 | Módulo | Pasta | Observações |
 |---|---|---|
-| auth | `auth/` | `strategy/` (JWT + local), `dto/` |
-| usuario | `usuario/` | `usuario.repository.ts` |
+| auth | `auth/` | **implementado** — `auth.service.ts`, `auth.controller.ts`, `strategy/` (JWT + local), `dto/`, `types/` |
+| usuario | `usuario/` | **implementado** — `usuario.repository.ts`, `usuario.service.ts`, `usuario.controller.ts`, `dto/` |
 | catalog | `catalog/` | `providers/` (`CatalogProvider` + `TmdbAdapter`) |
 | evento | `evento/` | `evento.repository.ts` |
 | sessao | `sessao/` | `sessao.repository.ts` |
@@ -114,14 +114,15 @@ Regras:
 | infra | `prisma/` | `PrismaService`/`PrismaModule` (global) |
 | infra | `utils/` | utilitários (HMAC do QR, código curto, OTP, centavos) |
 
-Repositories existem nos **8 módulos com tabelas**; `validacao`/`stats` reutilizam repositórios alheios e `auth`/`catalog` não tocam o banco. Acompanham a interface `dto/` por módulo (a preencher conforme as rotas forem implementadas).
+Repositories existem nos **8 módulos com tabelas**; `validacao`/`stats` reutilizam repositórios alheios e `catalog` não toca o banco. **`auth` e `usuario` foram implementados primeiro** (primeira fatia funcional); os demais módulos seguem o mesmo padrão (controller → service → repository → `dto/`).
 
 ### Autenticação e papéis
 
-- JWT assinado pelo servidor com `role` no payload: `ORGANIZER`, `CLIENT`, `VENUE` (portaria).
-- `RolesGuard` + decorator `@Roles(...)` restringem cada rota. Ex.: criar evento exige `ORGANIZER`; validar ingresso exige `VENUE`; reservar exige `CLIENT`.
-- Verificação de email e reset de senha usam **OTP de 6 dígitos**. Em dev (`ALLOW_OTP_FALLBACK`), o código `000000` sempre funciona e o código "enviado" é devolvido na resposta — simulando o email sem infraestrutura real.
-- Login exige email verificado.
+- JWT assinado pelo servidor com payload `{ sub, email, roles[] }` — papéis: `ORGANIZER`, `CLIENT`, `VENUE` (portaria). Expiram em 7 dias.
+- **Guards globais** (`APP_GUARD`): `JwtAuthGuard` exige token por padrão e respeita `@Public`; `RolesGuard` + decorator `@Roles(...)` restringem rotas por papel (ex.: criar evento exige `ORGANIZER`; validar ingresso exige `VENUE`; reservar exige `CLIENT`).
+- **Registro cria o papel `CLIENT` sob demanda** (`Papeis` vazia) na mesma `$transaction` do usuário; senha com `bcrypt` (custo 10).
+- Verificação de email por **OTP de 6 dígitos (TTL 10 min)**. Em dev (`ALLOW_OTP_FALLBACK`), o código `000000` sempre funciona e o código "enviado" é devolvido na resposta — simulando o email sem infraestrutura real.
+- **Login exige email verificado e conta ativa**; usuário desativado (coluna `ativo`) não autentica.
 
 ## 5. Modelo de dados (Prisma)
 
@@ -131,7 +132,7 @@ Repositories existem nos **8 módulos com tabelas**; `validacao`/`stats` reutili
 
 | Grupo | Tabelas | Papel |
 |---|---|---|
-| Identidade | `Usuarios`, `Papeis`, `Papeis_Usuario` | conta com papéis N:N (Organizador/Cliente/Portaria); `verificado` + campos de OTP |
+| Identidade | `Usuarios`, `Papeis`, `Papeis_Usuario` | conta com papéis N:N (Organizador/Cliente/Portaria); `verificado` + campos de OTP + `ativo` (desativação de conta) |
 | Catálogo do organizador | `Eventos`, `Enderecos_Eventos`, `Categorias_Evento` | evento snapshotado do TMDb; endereço 1:1; catálogo de preços por categoria (INTEIRA/MEIA/GRATUIDADE) |
 | Sessão e assentos | `Sessao_Eventos`, `Assentos_Sessao` | sessões múltiplas por evento; mapa de assentos com estado por sessão |
 | Venda | `Reservas`, `Reservas_Itens`, `Pagamentos` | hold de 15 min; um item por assento com preço congelado; pagamento mock determinístico |
@@ -151,6 +152,7 @@ Repositories existem nos **8 módulos com tabelas**; `validacao`/`stats` reutili
 - `PagamentoStatus` só tem `APROVADO`/`RECUSADO`: o pagamento é síncrono e determinístico no mock — não existe estado intermediário de processamento.
 - `ComprovanteStatus` materializa o fluxo de 2 fases da portaria (`PENDENTE` → `CONFIRMADO`/`RECUSADO`).
 - A migração inicial foi gerada com `prisma migrate diff` e está versionada; a aplicação ao banco fica pendente da `DATABASE_URL` real.
+- `20260815000001_usuario_ativo` adiciona `Usuarios.ativo` (`Boolean @default(true)`) — aplicada manualmente no dashboard do Supabase e registrada com `prisma migrate resolve`.
 
 ## 6. Segurança do ingresso
 

@@ -27,7 +27,7 @@ Seatly/
 
 ## Como rodar
 
-> **Estado atual: configuração inicial.** O scaffold dos dois lados está pronto, mas nenhuma funcionalidade foi implementada ainda. Este README será atualizado conforme o projeto avança.
+> **Estado atual: autenticação implementada no server** — registro com verificação de email por OTP, login (JWT) e rotas autenticadas de usuário funcionando com o banco no Supabase. O client ainda está em scaffold.
 
 ### Pré-requisitos
 
@@ -46,9 +46,11 @@ Variáveis de ambiente (`server/.env`):
 
 ```env
 DATABASE_URL=postgresql://postgres.<ref>:<senha>@aws-0-sa-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connect_timeout=20
+JWT_SECRET=<segredo aleatório para assinar os tokens>
+ALLOW_OTP_FALLBACK=true
 ```
 
-> O `connect_timeout=20` é obrigatório na conexão com o pooler do Supabase nesta rede — sem ele o Prisma estoura o timeout no handshake TLS e falha com `P1001`.
+> O `connect_timeout=20` é obrigatório na conexão com o pooler do Supabase nesta rede — sem ele o Prisma estoura o timeout no handshake TLS e falha com `P1001`. O `JWT_SECRET` assina os tokens de acesso (gere um valor aleatório e não o compartilhe). Com `ALLOW_OTP_FALLBACK=true`, o código OTP de verificação "enviado por email" é devolvido na resposta de registro e o código `000000` sempre funciona — simula o email sem infraestrutura real (desligue em produção).
 
 Validação automática (husky, instalado pelo `npm install`):
 
@@ -66,6 +68,16 @@ npm run test:cov
 ## Linha do tempo das decisões
 
 > Registro das decisões tomadas ao longo do desenvolvimento, com o contexto de cada uma. Inserida em ordem cronológica; decisões novas são adicionadas no topo.
+
+### 15/08/2026 — Autenticação e usuário (registro + verificação de email + login)
+
+- **Fluxo de identidade implementado (primeira funcionalidade do backend)**, escopo aprovado: `POST /api/auth/registro`, `POST /api/auth/verificar-email` e `POST /api/auth/login` (públicos) + `GET/PATCH /api/usuario/me` e `PATCH /api/usuario/me/desativar` (autenticados). Reset de senha fica fora do escopo.
+- **Registro já cria o papel `CLIENT` sob demanda** dentro da mesma `$transaction` do usuário (a tabela `Papeis` está vazia; o papel é procurado e criado se ausente). Senha com `bcrypt.hash` (custo 10) — o hash mora no AuthService; o repository não hasheia.
+- **JWT com `roles: string[]` no payload** (`sub` + `email` + `roles`), expiração de 7 dias. Guards globais via `APP_GUARD` (`JwtAuthGuard` + `RolesGuard`); o `JwtAuthGuard` foi atualizado para respeitar o decorator `@Public` (usado nas rotas de auth). `main.ts` ganhou `ValidationPipe({ whitelist, transform })` global.
+- **Verificação de email por OTP de 6 dígitos com TTL de 10 min** e fallback dev (`ALLOW_OTP_FALLBACK=true`): o código "enviado" é devolvido na resposta e `000000` sempre funciona. **Login exige email verificado e conta ativa.**
+- **Desativação de conta**: coluna `ativo` (`Boolean @default(true)`) em `Usuarios`, via migration `20260815000001_usuario_ativo` — usuário desativado não consegue logar.
+- **Cobertura mantida**: 84 testes / 45 suites; **99.7% stmts / 76.7% branch / 100% funcs / 99.6% lines** — thresholds 85/70/85/85 garantidos.
+- **Como a IA refinou**: resolveu incompatibilidades de tipagem do tipo-check/lint (erro Prisma via namespace `Prisma.PrismaClientKnownRequestError`; `Reflector` sem `set` na versão do core → teste do `@Public` com `Reflect.defineMetadata`; casts de `expect.any`/`expect.objectContaining` no spec do repository) e consolidou os tipos `UsuarioAutenticado` (do JWT) e `UsuarioLogado` (do login local).
 
 ### 15/08/2026 — Conexão com o Supabase (Postgres via pooler)
 
