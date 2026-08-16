@@ -90,6 +90,9 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
+    "setupFiles": [
+      "<rootDir>/../jest.setup.ts"
+    ],
     "coverageThreshold": {
       "global": {
         "statements": 85,

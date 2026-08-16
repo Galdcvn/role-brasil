@@ -57,14 +57,14 @@ describe('AuthService', () => {
       });
 
       const resultado = await service.registrar(dto);
-
       expect(repositoryMock.create).toHaveBeenCalledWith({
         nome: 'Ana',
         email: 'ana@example.com',
         senha: expect.any(String) as string,
+        papel: 'CLIENT',
       });
       const chamadas = repositoryMock.create.mock.calls as unknown as [
-        RegistrarDto & { senha: string },
+        RegistrarDto & { senha: string; papel: string },
       ][];
       const { senha } = chamadas[0][0];
       expect(senha).not.toBe('segredo1');
@@ -95,6 +95,16 @@ describe('AuthService', () => {
       const resultado = await service.registrar(dto);
 
       expect(resultado).not.toHaveProperty('codigo');
+    });
+
+    it('usa o papel informado no registro', async () => {
+      repositoryMock.create.mockResolvedValue({ id: 2, verificado: false });
+
+      await service.registrar({ ...dto, papel: 'ORGANIZER' });
+
+      expect(repositoryMock.create).toHaveBeenCalledWith(
+        expect.objectContaining({ papel: 'ORGANIZER' }),
+      );
     });
 
     it('lança ConflictException quando o e-mail já existe', async () => {

@@ -1,4 +1,11 @@
-import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsIn,
+  IsOptional,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 export class RegistrarDto {
   @IsString()
@@ -14,4 +21,8 @@ export class RegistrarDto {
   @MinLength(6)
   @MaxLength(255)
   senha!: string;
+
+  @IsOptional()
+  @IsIn(['CLIENT', 'ORGANIZER'])
+  papel?: 'CLIENT' | 'ORGANIZER';
 }

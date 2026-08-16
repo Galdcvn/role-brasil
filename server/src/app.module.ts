@@ -4,9 +4,12 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { CatalogModule } from './catalog/catalog.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
+import { EventoModule } from './evento/evento.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { SessaoModule } from './sessao/sessao.module';
 import { UsuarioModule } from './usuario/usuario.module';
 
 @Module({
@@ -15,6 +18,9 @@ import { UsuarioModule } from './usuario/usuario.module';
     PrismaModule,
     UsuarioModule,
     AuthModule,
+    CatalogModule,
+    EventoModule,
+    SessaoModule,
   ],
   controllers: [AppController],
   providers: [

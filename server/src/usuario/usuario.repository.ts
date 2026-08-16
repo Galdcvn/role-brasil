@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 export const NOME_PAPEL_CLIENT = 'CLIENT';
+export const NOME_PAPEL_ORGANIZER = 'ORGANIZER';
 
 const SELECT_PAPEIS = {
   id: true,
@@ -33,14 +34,19 @@ const SELECT_BASICO = {
 export class UsuarioRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(dados: { nome: string; email: string; senha: string }) {
+  async create(dados: {
+    nome: string;
+    email: string;
+    senha: string;
+    papel: string;
+  }) {
     return this.prisma.$transaction(async (tx) => {
       const papel = await tx.papel.findFirst({
-        where: { nome: NOME_PAPEL_CLIENT },
+        where: { nome: dados.papel },
       });
       const papelId =
         papel?.id ??
-        (await tx.papel.create({ data: { nome: NOME_PAPEL_CLIENT } })).id;
+        (await tx.papel.create({ data: { nome: dados.papel } })).id;
 
       return tx.usuario.create({
         data: {

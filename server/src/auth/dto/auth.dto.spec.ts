@@ -8,6 +8,7 @@ describe('Auth DTOs', () => {
     registrar.nome = 'Ana';
     registrar.email = 'ana@example.com';
     registrar.senha = 'segredo1';
+    registrar.papel = 'ORGANIZER';
 
     const verificar = new VerificarEmailDto();
     verificar.email = 'ana@example.com';

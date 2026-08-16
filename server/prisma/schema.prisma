@@ -19,6 +19,11 @@ enum EventoStatus {
   CANCELADO
 }
 
+enum SessaoStatus {
+  ATIVA
+  CANCELADA
+}
+
 enum CategoriaIngresso {
   INTEIRA
   MEIA
@@ -111,6 +116,7 @@ model Evento {
   telefoneSuporte String?            @map("telefone_suporte") @db.VarChar(20)
   emailSuporte    String?            @map("email_suporte") @db.VarChar(255)
   status          EventoStatus       @default(RASCUNHO)
+  excluidoEm      DateTime?          @map("excluido_em")
   criadoEm        DateTime           @default(now()) @map("criado_em")
   atualizadoEm    DateTime?          @updatedAt @map("atualizado_em")
   organizador     Usuario            @relation("EventoOrganizador", fields: [organizadorId], references: [id])
@@ -151,10 +157,12 @@ model CategoriasEvento {
 }
 
 model SessaoEvento {
-  id       Int              @id @default(autoincrement())
-  eventoId Int              @map("evento_id")
-  dataHora DateTime         @map("data_hora")
-  criadoEm DateTime         @default(now()) @map("criado_em")
+  id         Int              @id @default(autoincrement())
+  eventoId   Int              @map("evento_id")
+  dataHora   DateTime         @map("data_hora")
+  status     SessaoStatus     @default(ATIVA)
+  excluidoEm DateTime?        @map("excluido_em")
+  criadoEm   DateTime         @default(now()) @map("criado_em")
   evento   Evento           @relation(fields: [eventoId], references: [id])
   assentos AssentosSessao[]
   reservas Reserva[]

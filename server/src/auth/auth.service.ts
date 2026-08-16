@@ -8,7 +8,10 @@ import { JwtService } from '@nestjs/jwt';
 import { Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { gerarCodigoOtp } from '../utils/otp.util';
-import { UsuarioRepository } from '../usuario/usuario.repository';
+import {
+  NOME_PAPEL_CLIENT,
+  UsuarioRepository,
+} from '../usuario/usuario.repository';
 import { RegistrarDto } from './dto/registrar.dto';
 import { VerificarEmailDto } from './dto/verificar-email.dto';
 
@@ -39,6 +42,7 @@ export class AuthService {
         nome: dto.nome,
         email: dto.email,
         senha,
+        papel: dto.papel ?? NOME_PAPEL_CLIENT,
       });
     } catch (erro) {
       if (

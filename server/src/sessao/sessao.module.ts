@@ -6,5 +6,6 @@ import { SessaoService } from './sessao.service';
 @Module({
   controllers: [SessaoController],
   providers: [SessaoService, SessaoRepository],
+  exports: [SessaoRepository],
 })
 export class SessaoModule {}

@@ -27,7 +27,7 @@ Seatly/
 
 ## Como rodar
 
-> **Estado atual: autenticação implementada no server** — registro com verificação de email por OTP, login (JWT) e rotas autenticadas de usuário funcionando com o banco no Supabase. O client ainda está em scaffold.
+> **Estado atual: autenticação + módulo organizador implementados no server** — registro com verificação de email por OTP, login (JWT), rotas autenticadas de usuário e, mais recentemente, o módulo organizador (catálogo TMDb, CRUD de eventos e sessões com regras de reservas e soft delete). O client ainda está em scaffold.
 
 ### Pré-requisitos
 
@@ -46,6 +46,7 @@ Variáveis de ambiente (`server/.env`):
 
 ```env
 DATABASE_URL=postgresql://postgres.<ref>:<senha>@aws-0-sa-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connect_timeout=20
+TMDB_API_KEY=<chave da API do TMDb — catálogo de filmes>
 JWT_SECRET=<segredo aleatório para assinar os tokens>
 ALLOW_OTP_FALLBACK=true
 ```
@@ -68,6 +69,18 @@ npm run test:cov
 ## Linha do tempo das decisões
 
 > Registro das decisões tomadas ao longo do desenvolvimento, com o contexto de cada uma. Inserida em ordem cronológica; decisões novas são adicionadas no topo.
+
+### 15/08/2026 — Módulo Organizador (catálogo TMDb + eventos + sessões)
+
+- **Fatia 1 — schema e migration `20260815000002_organizador_fluxo`**: `Evento.excluidoEm`, enum `SessaoStatus {ATIVA, CANCELADA}` e `SessaoEvento.{status, excluidoEm}` — soft delete e cancelamento de evento/sessão sem apagar linhas. **SQL escrito à mão**: o `prisma migrate diff` contra o pooler do Supabase falha com um bug do Prisma/PgBouncer (`prepared statement "s5" already exists`), então migrations simples passam a ser gravadas manualmente. **A aplicação no dashboard ainda depende de mim.**
+- **Fatia 2 — papel dinâmico no registro**: `RegistrarDto.papel` (`CLIENT | ORGANIZER`, default `CLIENT`). O `UsuarioRepository.create` recebe o papel e o procura/cria sob demanda na mesma `$transaction` — mesmo padrão que já existia para o `CLIENT`, sem novo acoplamento.
+- **Fatia 3 — catálogo TMDb (módulo `catalog`)**: `TmdbAdapter` real com `fetch` (`search`/`getById`, `AbortSignal.timeout(10s)`, 404 → `null`) normalizando para `{id, titulo, descricao, posterUrl, ano}`; `CatalogService` e `GET /api/catalog/buscar?q=` restrito a `ORGANIZER` via `@Roles`. Exige `TMDB_API_KEY` no `.env`.
+- **Fatia 4 — eventos (módulo `evento`)**: `POST/GET /api/eventos`, `GET/PATCH/DELETE /api/eventos/:id` e `POST /api/eventos/:id/cancelar|publicar`. Criação nasce `RASCUNHO`; com `tmdbId`, título/sinopse/pôster são snapshotados do catálogo (e podem ser sobrescritos). **Regras de reserva**: evento com qualquer reserva (mesmo cancelada/expirada) só permite editar a `descricao` e só pode ser cancelado; sem reservas edita tudo e permite soft delete. **Cancelar evento cancela as sessões ativas junto** (transação). `GET :id` (dono) devolve métricas — reservas totais/por sessão, valor arrecadado (`Σ subtotalCentavos` de reservas `PAGO`, total e por sessão) e ingressos por categoria — computadas em TS no service a partir das reservas.
+- **Fatia 5 — sessões (módulo `sessao`)**: `POST/GET /api/eventos/:eventoId/sessoes` e `PATCH/DELETE /api/sessoes/:id` + `POST /api/sessoes/:id/cancelar`. Sessão com reservas não edita `dataHora` nem é excluída (só cancelada); sem reservas edita e exclui. Evento cancelado não recebe novas sessões.
+- **Ownership = 404**: evento/sessão de outro organizador responde `404` (não vaza existência), mesma regra adotada no auth.
+- **Infra de testes**: novo `server/jest.setup.ts` (`import 'reflect-metadata'`) referenciado em `setupFiles` — a ordem de imports dos specs quebrava `Reflect.getMetadata` nos DTOs. Detecção de campos enviados no PATCH passou de `Object.keys(dto)` para checagem `!== undefined`: o `target ES2023` emite class fields (todos os campos aparecem como próprios), o que quebraria também em produção.
+- **Checkpoint**: typecheck, lint e build limpos; **154 testes / 46 suites — 98.64% stmts / 80.84% branch / 95.96% funcs / 98.4% lines** (thresholds 85/70/85/85).
+- **Como a IA refinou**: detectou e corrigiu o bug de `Object.keys` com class fields emitidos (afetaria requests reais), o `Reflect.getMetadata` fora de ordem nos specs, a tipagem de `mock.calls` (array de argumentos) num spec, e ajustou o fluxo de cancelamento para transação única (sessões + evento). Sem novas libs instaladas.
 
 ### 15/08/2026 — Autenticação e usuário (registro + verificação de email + login)
 
@@ -148,6 +161,6 @@ npm run test:cov
 
 ## Uso de IA
 
-Todas as decisões de arquitetura e escopo deste projeto foram tomadas por mim (humano) e registradas acima. A IA foi usada como parada técnica: scaffoldeou a estrutura de acordo com o plano aprovado e não implementou nenhuma funcionalidade. O detalhamento de cada parte é descrito nesta linha do tempo.
+Todas as decisões de arquitetura e escopo deste projeto foram tomadas por mim (humano) e registradas acima. A IA foi usada como parada técnica: implementou as fatias aprovadas (autenticação/usuário e, depois, o módulo organizador), sempre dentro das regras e padrões fixados no projeto, e não decidiu escopo.
 
 Para garantir que a IA trabalhe dentro das regras e do contexto do projeto, o repositório inclui dois arquivos: **`AGENTS.md`** (processo de execução — stack, regras negativas, desenvolvimento modular, TDD com cobertura ≥ 85% e checkpoints de validação entre módulos) e **`ARCHITECTURE.md`** (conceito da arquitetura). Ambos são lidos e seguidos pelos agentes de IA durante o desenvolvimento.

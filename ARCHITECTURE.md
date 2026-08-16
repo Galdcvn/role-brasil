@@ -84,9 +84,9 @@ Regras:
 ```
 
 - **auth** — registro com verificação de email, login (passport-local + JWT), estratégias e guards por papel. **Implementado**.
-- **catalog** — adapter para o TMDb (`CatalogProvider`): busca e detalhe de filmes, normalizados para um formato próprio; extensível para Ticketmaster.
-- **events** — CRUD do organizador: montar evento a partir do catálogo, definir local, categorias de ingresso e preços, publicar/cancelar.
-- **sessions / seats** — um evento tem várias sessões (data/hora). Cada sessão tem seu mapa de assentos, gerado a partir da configuração de fileiras. A unicidade de um lugar por sessão é garantida por constraint de banco.
+- **catalog** — adapter para o TMDb (`CatalogProvider`): busca e detalhe de filmes, normalizados para um formato próprio; extensível para Ticketmaster. **Implementado** (`TmdbAdapter` com `fetch`, `GET /api/catalog/buscar`).
+- **events** — CRUD do organizador: montar evento a partir do catálogo, definir local, categorias de ingresso e preços, publicar/cancelar. **Implementado** — com reservas só edita a descrição e só cancela; sem reservas edita tudo e soft-deleta; `GET :id` devolve métricas.
+- **sessions / seats** — um evento tem várias sessões (data/hora). Cada sessão tem seu mapa de assentos, gerado a partir da configuração de fileiras. A unicidade de um lugar por sessão é garantida por constraint de banco. **Sessions implementado** — sessão com reservas não edita `dataHora` e só cancela; assentos ficam para a fatia seguinte.
 - **reservations** — hold de assentos com validade (15 min): o cliente seleciona lugares e categorias, vê o subtotal, e os assentos ficam `reservados` até o pagamento ou expiração.
 - **payments** — provedor **simulado** com regra determinística: cartão com último dígito ímpar é recusado; Pix sempre aprovado após delay simulado. Nenhuma transação financeira real.
 - **tickets** — emissão do ingresso com token assinado (QR não-forjável) e código curto para digitação manual; listagem "Meus ingressos" e link público de compartilhamento.
@@ -100,9 +100,9 @@ Regras:
 |---|---|---|
 | auth | `auth/` | **implementado** — `auth.service.ts`, `auth.controller.ts`, `strategy/` (JWT + local), `dto/`, `types/` |
 | usuario | `usuario/` | **implementado** — `usuario.repository.ts`, `usuario.service.ts`, `usuario.controller.ts`, `dto/` |
-| catalog | `catalog/` | `providers/` (`CatalogProvider` + `TmdbAdapter`) |
-| evento | `evento/` | `evento.repository.ts` |
-| sessao | `sessao/` | `sessao.repository.ts` |
+| catalog | `catalog/` | **implementado** — `providers/` (`TmdbAdapter` + `CatalogProvider`), `catalog.service.ts`, `catalog.controller.ts`, `dto/` |
+| evento | `evento/` | **implementado** — `evento.repository.ts`, `evento.service.ts`, `evento.controller.ts`, `dto/` |
+| sessao | `sessao/` | **implementado** — `sessao.repository.ts`, `sessao.service.ts`, `sessao.controller.ts`, `dto/` |
 | assento | `assento/` | `assento.repository.ts` |
 | reserva | `reserva/` | `reserva.repository.ts` |
 | pagamento | `pagamento/` | `pagamento.repository.ts` + `providers/` (gateway mock) |
@@ -114,7 +114,16 @@ Regras:
 | infra | `prisma/` | `PrismaService`/`PrismaModule` (global) |
 | infra | `utils/` | utilitários (HMAC do QR, código curto, OTP, centavos) |
 
-Repositories existem nos **8 módulos com tabelas**; `validacao`/`stats` reutilizam repositórios alheios e `catalog` não toca o banco. **`auth` e `usuario` foram implementados primeiro** (primeira fatia funcional); os demais módulos seguem o mesmo padrão (controller → service → repository → `dto/`).
+Repositories existem nos **8 módulos com tabelas**; `validacao`/`stats` reutilizam repositórios alheios e `catalog` não toca o banco. **Implementados até aqui: `auth`, `usuario`, `catalog`, `evento` e `sessao`** — sempre no padrão controller → service → repository → `dto/`, com specs Jest por camada.
+
+### Módulo organizador (catalog + evento + sessao)
+
+- **Ownership = 404**: qualquer id de evento/sessão de outro organizador responde `404` (não vaza existência) — mesmo padrão usado no auth.
+- **Regras de reserva**: evento/sessão **com qualquer reserva** (qualquer status) só permite cancelar — no evento ainda cabe editar apenas a `descricao`; **sem reservas** edita tudo e permite soft delete (`excluidoEm`, some da plataforma sem apagar a linha). Evento `CANCELADO` não recebe novas sessões e não volta a `PUBLICADO`.
+- **Cancelar evento = transação**: sessões `ATIVA` viram `CANCELADA` e o evento vira `CANCELADO` numa única `$transaction`.
+- **Métricas em `GET /api/eventos/:id`** (dono): `reservasTotais`, `reservasPorSessao`, `valorArrecadado` (= `Σ subtotalCentavos` de reservas `PAGO`), `valorArrecadadoPorSessao`, `ingressosPorCategoria` e `ingressosPorCategoriaPorSessao` — computadas em TS no `EventoService` a partir de um `findMany` enxuto de reservas (KISS, sem SQL raw).
+- **Snapshot do TMDb**: com `tmdbId`, título/sinopse/pôster vêm do catálogo e podem ser sobrescritos pelo organizador; o evento sobrevive se a API externa cair.
+- **Papel dinâmico**: o registro aceita `papel: 'CLIENT' | 'ORGANIZER'` — o papel é buscado/criado sob demanda na mesma transação do usuário.
 
 ### Autenticação e papéis
 
@@ -153,6 +162,7 @@ Repositories existem nos **8 módulos com tabelas**; `validacao`/`stats` reutili
 - `ComprovanteStatus` materializa o fluxo de 2 fases da portaria (`PENDENTE` → `CONFIRMADO`/`RECUSADO`).
 - A migração inicial foi gerada com `prisma migrate diff` e está versionada; a aplicação ao banco fica pendente da `DATABASE_URL` real.
 - `20260815000001_usuario_ativo` adiciona `Usuarios.ativo` (`Boolean @default(true)`) — aplicada manualmente no dashboard do Supabase e registrada com `prisma migrate resolve`.
+- `20260815000002_organizador_fluxo` adiciona `Eventos.excluido_em` e `Sessao_Eventos.{status, excluido_em}` (enum `SessaoStatus`) — SQL escrito manualmente (o `prisma migrate diff` falha contra o pooler com bug de prepared statement); **aguardando aplicação no dashboard + `migrate resolve`**.
 
 ## 6. Segurança do ingresso
 

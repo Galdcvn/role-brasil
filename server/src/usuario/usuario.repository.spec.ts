@@ -1,5 +1,9 @@
 import { PrismaService } from '../prisma/prisma.service';
-import { NOME_PAPEL_CLIENT, UsuarioRepository } from './usuario.repository';
+import {
+  NOME_PAPEL_CLIENT,
+  NOME_PAPEL_ORGANIZER,
+  UsuarioRepository,
+} from './usuario.repository';
 describe('UsuarioRepository', () => {
   let repository: UsuarioRepository;
   let prismaMock: {
@@ -34,6 +38,7 @@ describe('UsuarioRepository', () => {
         nome: 'Ana',
         email: 'ana@example.com',
         senha: 'hash',
+        papel: NOME_PAPEL_CLIENT,
       });
       expect(txMock.papel.create).not.toHaveBeenCalled();
       expect(txMock.usuario.create).toHaveBeenCalledWith({
@@ -47,17 +52,21 @@ describe('UsuarioRepository', () => {
       });
       expect(resultado).toEqual({ id: 1, nome: 'Ana' });
     });
-    it('cria o papel CLIENT quando ele ainda não existe', async () => {
+    it('cria o papel informado quando ele ainda não existe', async () => {
       txMock.papel.findFirst.mockResolvedValue(null);
-      txMock.papel.create.mockResolvedValue({ id: 9, nome: NOME_PAPEL_CLIENT });
+      txMock.papel.create.mockResolvedValue({
+        id: 9,
+        nome: NOME_PAPEL_ORGANIZER,
+      });
       txMock.usuario.create.mockResolvedValue({ id: 2 });
       await repository.create({
         nome: 'Bruno',
         email: 'bruno@example.com',
         senha: 'hash',
+        papel: NOME_PAPEL_ORGANIZER,
       });
       expect(txMock.papel.create).toHaveBeenCalledWith({
-        data: { nome: NOME_PAPEL_CLIENT },
+        data: { nome: NOME_PAPEL_ORGANIZER },
       });
       expect(txMock.usuario.create).toHaveBeenCalledWith(
         expect.objectContaining({
