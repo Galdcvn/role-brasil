@@ -30,7 +30,7 @@ role-brasil/
 | Serviço | O que roda | Config |
 |---------|-----------|--------|
 | **Vercel** | Client (React SPA) | `vercel.json` — builda client com deps, SPA routing |
-| **Railway** | Server (NestJS + Prisma) | `railway.json` + `nixpacks.toml` (Node 22) |
+| **Railway** | Server (NestJS + Prisma) | `Dockerfile` + `railway.json` (Node 22, prisma generate, nest build) |
 | **Supabase** | PostgreSQL (banco de dados) | — |
 
 ### Variáveis de ambiente
@@ -116,12 +116,14 @@ npm run test:cov
 ### 17/08/2026 — Deploy (Vercel + Railway)
 
 - **`vercel.json`**: builda o client com instalação de deps (`npm install --prefix client && npm run build --prefix client`), output `client/dist`, SPA routing via rewrites para React Router.
-- **`nixpacks.toml`**: força Node 22 (`nodejs_22`) no Nixpacks do Railway — o padrão (Node 18) não atende os engines do projeto (`>=22.12.0`).
-- **`railway.json`**: build com `NODE_ENV=development npm install` (garante instalação de devDependencies como `@nestjs/cli`), `prisma generate`, `nest build`, start com `node dist/main`, restart on failure (máx 10 tentativas).
-- **Railway**: server NestJS com Prisma, expõe via `PORT` env var (já lido no `main.ts`). `DATABASE_URL` precisa estar disponível tanto em runtime quanto em build (marcar "Available during build" no dashboard).
+- **`Dockerfile`**: multi-step build no Railway (substitui Nixpacks) — `COPY . .` antes do `nest build` garante que o `dist/` gerado permanece na imagem. Nixpacks fazia `COPY . /app` como último passo, sobrescrevendo o `dist/` (gitignored) e apagando o build.
+- **`railway.json`**: builder `DOCKERFILE`, start com `cd server && node dist/main`, restart on failure (máx 10 tentativas).
+- **`.dockerignore`**: exclui `node_modules`, `dist`, `coverage`, `.git` etc. para manter a imagem enxuta.
+- **`nixpacks.toml`** removido — não necessário com Dockerfile customizado.
+- **Railway**: server NestJS com Prisma, Node 22 via `FROM node:22-slim`, devDeps instaladas para build e depois removidas com `npm prune --omit=dev`.
 - **Vercel**: client React SPA, `VITE_API_URL` como env var apontando pro Railway.
 - **Migrations pendentes**: `20260817000001_cliente_schema` e `20260817010000_portaria_schema` precisam ser aplicadas no SQL Editor do Supabase antes do deploy.
-- **Como a IA refinou**: diagnosticou dois erros de build — Vercel não instalava deps do client (`tsc: command not found`) e Railway usava Node 18 (Nixpacks default) + `prisma.config.ts` falhava sem `DATABASE_URL` no build. Corrigiu com `--prefix client` no vercel.json e `nixpacks.toml` com Node 22.
+- **Como a IA refinou**: diagnosticou que o Nixpacks gerava um Dockerfile com `COPY . /app` como step final, que sobrescrevia o `dist/` gerado pelo `nest build` (pois `dist/` está no `.gitignore` e não está no build context). A solução foi migrar de Nixpacks para um `Dockerfile` customizado com controle total da ordem das operações.
 
 ### 17/08/2026 — Design System atualizado
 
