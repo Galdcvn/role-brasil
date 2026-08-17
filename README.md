@@ -70,6 +70,17 @@ npm run test:cov
 
 > Registro das decisões tomadas ao longo do desenvolvimento, com o contexto de cada uma. Inserida em ordem cronológica; decisões novas são adicionadas no topo.
 
+### 17/08/2026 — Design System atualizado
+
+- **Nova paleta de cores**: Primary Teal `#00A8B5` substituído por Brand Primary Verde Elétrico `#00FF88` — identidade mais ousada e alinhada ao nome "Rolê Brasil".
+- **Tipografia definida**: `Space Grotesk` ou `Syne` para headings (vibe urbana/festiva), `Inter` para body (legibilidade).
+- **Dual theme**: Dark Mode para B2C (vitrine/cliente), Light Mode para B2B (dashboard organizador), Dark Mode Extremo para Portaria.
+- **Componentes documentados com classes Tailwind**: `<EventCard />`, `<TicketQR />`, `<KpiCard />`, `<SalesChart />`, `<Scanner />`, `<SuccessOverlay />`, `<ErrorOverlay />`, `<PendingDocsOverlay />`.
+- **Portaria simplificada**: câmera + input manual + feedback full-screen + haptic feedback, sem PWA offline/IndexedDB.
+- **Stack corrigida**: referências a Next.js substituídas por React + Vite (nosso stack real).
+- **Libs novas** (Recharts, Chart.js, @tanstack/react-virtual, html5-qrcode) documentadas como requerendo autorização.
+- **Como a IA refinou**: manteve a proposta do usuário e aplicou as correções solicitadas (Next.js → React + Vite, remover PWA offline, manter paleta nova).
+
 ### 17/08/2026 — Módulo Portaria (backend)
 
 - **Módulo completo**: `portaria/` (repository, service, controller, DTO, specs) — renomeado do stub vazio `validacao/`.
