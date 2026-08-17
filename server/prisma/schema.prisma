@@ -67,6 +67,14 @@ enum PagamentoStatus {
   ESTORNADO
 }
 
+enum ResultadoScan {
+  APROVADO
+  REJEITADO
+  PENDENTE_DOCUMENTACAO
+  DOCUMENTACAO_CONFIRMADA
+  DOCUMENTACAO_RECUSADA
+}
+
 // ---------- Modelos ----------
 
 model Usuario {
@@ -85,6 +93,7 @@ model Usuario {
   ingressos                 Ingresso[]
   favoritos                 Favorito[]
   mensagensEnviadas         Mensagem[]
+  portariaScans             PortariaScan[]
 
   @@map("Usuarios")
 }
@@ -238,6 +247,7 @@ model Ingresso {
   reserva           Reserva           @relation(fields: [reservaId], references: [id])
   assento           AssentosSessao    @relation(fields: [assentoSessaoId], references: [id])
   usuario           Usuario           @relation(fields: [usuarioId], references: [id])
+  portariaScans     PortariaScan[]
 
   @@index([reservaId])
   @@index([usuarioId])
@@ -286,4 +296,19 @@ model Mensagem {
   @@index([eventoId])
   @@index([remetenteId])
   @@map("Mensagens")
+}
+
+model PortariaScan {
+  id         Int          @id @default(autoincrement())
+  portariaId Int          @map("portaria_id")
+  ingressoId Int          @map("ingresso_id")
+  resultado  ResultadoScan
+  observacao String?      @db.Text
+  criadoEm   DateTime     @default(now()) @map("criado_em")
+  portaria   Usuario      @relation(fields: [portariaId], references: [id])
+  ingresso   Ingresso     @relation(fields: [ingressoId], references: [id])
+
+  @@index([portariaId])
+  @@index([ingressoId])
+  @@map("Portaria_Scans")
 }

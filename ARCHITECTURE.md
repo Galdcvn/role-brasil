@@ -65,56 +65,55 @@ Regras:
                         │   Prisma   │  acesso ao Postgres (Supabase)
                         └─────┬──────┘
                               ▲
-        ┌────────┬────────┬────┴────┬────────┬──────────┬──────┐
-        │        │        │         │        │          │      │
-     ┌──┴──┐ ┌──┴──┐ ┌───┴────┐ ┌───┴────┐ ┌┴───┐ ┌────┴───┐ ┌┴────┐
-     │Auth │ │Catalog│ │ Events │ │Sessions│ │Seats│ │Reserv. │ │Paym.│
-     └──┬──┘ └──┬──┘ └───┬────┘ │ Seats   │ └────┘ └───┬────┘ └──┬──┘
-        │       │        │      └────────┘             │         │
-        │       │        │                             │         │
-        └───┬───┘        │                     ┌───────┴─────────┘
-            │            │                     │
-        ┌───┴────┐   ┌───┴────┐          ┌─────┴─────┐
-        │ Tickets │   │Validation│        │  Stats    │
-        └───┬────┘   └─────────┘        └───────────┘
-            │
-        ┌───┴─────┐
-        │Favorites│
-        └─────────┘
+        ┌────────┬────────┬───┴───┬────────┬─────────┬──────────┬──────┐
+        │        │        │       │        │         │          │      │
+     ┌──┴──┐ ┌──┴──┐ ┌───┴──┐ ┌──┴───┐ ┌──┴──┐ ┌───┴───┐ ┌───┴──┐ ┌──┴───┐
+     │Auth │ │Catalog│ │Evento│ │Sessao│ │Assento│ │Reserv.│ │Pagam.│ │Portar.│
+     └──┬──┘ └──┬──┘ └───┬──┘ └──┬───┘ └──┬──┘ └───┬───┘ └───┬──┘ └───┬──┘
+        │       │        │       │        │        │         │        │
+        └───────┴────────┴───────┴────────┴────────┴────┬────┴────────┘
+                                                         │
+                                              ┌──────────┼──────────┐
+                                              ▼          ▼          ▼
+                                         Ingresso   Favorito   Mensagem
+                                              │
+                                         ┌────┴────┐
+                                         │         │
+                                    Portaria   (Stats)
 ```
 
 - **auth** — registro com verificação de email, login (passport-local + JWT), estratégias e guards por papel. **Implementado**.
 - **catalog** — adapter para o TMDb (`CatalogProvider`): busca e detalhe de filmes, normalizados para um formato próprio; extensível para Ticketmaster. **Implementado** (`TmdbAdapter` com `fetch`, `GET /api/catalog/buscar`).
-- **events** — CRUD do organizador: montar evento a partir do catálogo, definir local, categorias de ingresso e preços, publicar/cancelar. **Implementado** — com reservas só edita a descrição e só cancela; sem reservas edita tudo e soft-deleta; `GET :id` devolve métricas.
-- **sessions / seats** — um evento tem várias sessões (data/hora). Cada sessão tem seu mapa de assentos, gerado a partir da configuração de fileiras. A unicidade de um lugar por sessão é garantida por constraint de banco. **Sessions implementado** — sessão com reservas não edita `dataHora` e só cancela; assentos ficam para a fatia seguinte.
-- **reservations** — hold de assentos com validade (15 min): o cliente seleciona lugares e categorias, vê o subtotal, e os assentos ficam `reservados` até o pagamento ou expiração.
-- **payments** — provedor **simulado** com regra determinística: cartão com último dígito ímpar é recusado; Pix sempre aprovado após delay simulado. Nenhuma transação financeira real.
-- **tickets** — emissão do ingresso com token assinado (QR não-forjável) e código curto para digitação manual; listagem "Meus ingressos" e link público de compartilhamento.
-- **validation** — portaria: valida por QR (token) ou código manual; consumo atômico impede uso duplo; fluxo em 2 fases para meia-entrada/gratuidade.
-- **favorites** — eventos salvos pelo cliente.
-- **stats** — painel do organizador: ocupação por sessão, ingressos vendidos por categoria e receita.
+- **events** — CRUD do organizador: montar evento a partir do catálogo, definir local, categorias de ingresso e preços, publicar/cancelar. **Implementado** — com reservas só edita a descrição e só cancela; sem reservas edita tudo e soft-deleta; `GET :id` devolve métricas; `GET /api/eventos/publicos` para busca pública com filtros ILIKE.
+- **sessions / seats** — um evento tem várias sessões (data/hora). Cada sessão tem seu mapa de assentos, gerado a partir da configuração de fileiras. A unicidade de um lugar por sessão é garantida por constraint de banco. **Implementado** — CRUD de sessões com regras de reserva; mapa de assentos agrupados por fileira.
+- **reservations** — hold de assentos com validade (15 min): o cliente seleciona lugares e categorias, vê o subtotal, e os assentos ficam `reservados` até o pagamento ou expiração. **Implementado** — criação com `$transaction` e lock de assentos; expiração automática; listagem/detalhe com ownership.
+- **payments** — provedor **simulado** com regra determinística: cartão com CVV "000" é recusado; Pix sempre aprovado. **Implementado** — transação ao aprovar (reserva→PAGO, assentos→VENDIDO, ingressos gerados); transação ao recusar (reserva→CANCELADO, assentos→DISPONIVEL).
+- **tickets** — emissão do ingresso com código de 16 chars (base64url) e `qrToken` de 32 chars (hex). **Implementado** — listar por usuário, detalhe com ownership, cancelamento (até 7 dias antes do evento) com estorno simulado.
+- **portaria** — valida por código (16 chars) ou qrToken; consumo atômico impede uso duplo; fluxo em 2 fases para meia-entrada/gratuidade. **Implementado** — registro de scan, confirmação/rejeição de comprovante, histórico global e por evento.
+- **favorites** — eventos salvos pelo cliente. **Implementado** — toggle (adicionar/remover), listar IDs favoritados.
+- **messages** — mensagens por evento (bidirectional cliente ↔ organizador); leitura e contagem de não lidas. **Implementado** — envio, listagem, marcar como lida, contagem de não lidas.
+- **stats** — painel do organizador: ocupação por sessão, ingressos vendidos por categoria e receita. Pendente.
 
-**Mapeamento para o scaffold atual (`server/src/`, sem lógica de negócio):**
+**Mapeamento para o scaffold atual (`server/src/`):**
 
 | Módulo | Pasta | Observações |
 |---|---|---|
 | auth | `auth/` | **implementado** — `auth.service.ts`, `auth.controller.ts`, `strategy/` (JWT + local), `dto/`, `types/` |
 | usuario | `usuario/` | **implementado** — `usuario.repository.ts`, `usuario.service.ts`, `usuario.controller.ts`, `dto/` |
 | catalog | `catalog/` | **implementado** — `providers/` (`TmdbAdapter` + `CatalogProvider`), `catalog.service.ts`, `catalog.controller.ts`, `dto/` |
-| evento | `evento/` | **implementado** — `evento.repository.ts`, `evento.service.ts`, `evento.controller.ts`, `dto/` |
+| evento | `evento/` | **implementado** — `evento.repository.ts`, `evento.service.ts`, `evento.controller.ts`, `evento-publico.controller.ts`, `dto/` |
 | sessao | `sessao/` | **implementado** — `sessao.repository.ts`, `sessao.service.ts`, `sessao.controller.ts`, `dto/` |
-| assento | `assento/` | `assento.repository.ts` |
-| reserva | `reserva/` | `reserva.repository.ts` |
-| pagamento | `pagamento/` | `pagamento.repository.ts` + `providers/` (gateway mock) |
-| ingresso | `ingresso/` | `ingresso.repository.ts` |
-| validacao | `validacao/` | reutiliza `IngressoRepository` |
-| favorito | `favorito/` | `favorito.repository.ts` |
-| stats | `stats/` | reutiliza `EventoRepository`/`SessaoRepository` |
-| infra | `common/` | decorators `@Roles`/`@Public`, guards JWT/papéis |
+| assento | `assento/` | **implementado** — `assento.repository.ts`, `assento.service.ts`, `assento.controller.ts` |
+| reserva | `reserva/` | **implementado** — `reserva.repository.ts`, `reserva.service.ts`, `reserva.controller.ts`, `dto/` |
+| pagamento | `pagamento/` | **implementado** — `pagamento.repository.ts`, `pagamento.service.ts`, `pagamento.controller.ts`, `dto/` |
+| ingresso | `ingresso/` | **implementado** — `ingresso.repository.ts`, `ingresso.service.ts`, `ingresso.controller.ts` |
+| portaria | `portaria/` | **implementado** — `portaria.repository.ts`, `portaria.service.ts`, `portaria.controller.ts`, `dto/` |
+| favorito | `favorito/` | **implementado** — `favorito.repository.ts`, `favorito.service.ts`, `favorito.controller.ts` |
+| mensagem | `mensagem/` | **implementado** — `mensagem.repository.ts`, `mensagem.service.ts`, `mensagem.controller.ts`, `mensagem-global.controller.ts` |
+| stats | `stats/` | pendente — reutiliza `EventoRepository`/`SessaoRepository` |
+| infra | `common/` | decorators `@Roles`/`@Public`, guards JWT/papéis, `NotificationService` |
 | infra | `prisma/` | `PrismaService`/`PrismaModule` (global) |
-| infra | `utils/` | utilitários (HMAC do QR, código curto, OTP, centavos) |
-
-Repositories existem nos **8 módulos com tabelas**; `validacao`/`stats` reutilizam repositórios alheios e `catalog` não toca o banco. **Implementados até aqui: `auth`, `usuario`, `catalog`, `evento` e `sessao`** — sempre no padrão controller → service → repository → `dto/`, com specs Jest por camada.
+| infra | `utils/` | utilitários (OTP, centavos) |
 
 ### Módulo organizador (catalog + evento + sessao)
 
@@ -123,13 +122,13 @@ Repositories existem nos **8 módulos com tabelas**; `validacao`/`stats` reutili
 - **Cancelar evento = transação**: sessões `ATIVA` viram `CANCELADA` e o evento vira `CANCELADO` numa única `$transaction`.
 - **Métricas em `GET /api/eventos/:id`** (dono): `reservasTotais`, `reservasPorSessao`, `valorArrecadado` (= `Σ subtotalCentavos` de reservas `PAGO`), `valorArrecadadoPorSessao`, `ingressosPorCategoria` e `ingressosPorCategoriaPorSessao` — computadas em TS no `EventoService` a partir de um `findMany` enxuto de reservas (KISS, sem SQL raw).
 - **Snapshot do TMDb**: com `tmdbId`, título/sinopse/pôster vêm do catálogo e podem ser sobrescritos pelo organizador; o evento sobrevive se a API externa cair.
-- **Papel dinâmico**: o registro aceita `papel: 'CLIENT' | 'ORGANIZER'` — o papel é buscado/criado sob demanda na mesma transação do usuário.
+- **Papel dinâmico**: o registro aceita `papel: 'CLIENT' | 'ORGANIZER' | 'PORTARIA'` — o papel é buscado/criado sob demanda na mesma transação do usuário.
 
 ### Autenticação e papéis
 
-- JWT assinado pelo servidor com payload `{ sub, email, roles[] }` — papéis: `ORGANIZER`, `CLIENT`, `VENUE` (portaria). Expiram em 7 dias.
-- **Guards globais** (`APP_GUARD`): `JwtAuthGuard` exige token por padrão e respeita `@Public`; `RolesGuard` + decorator `@Roles(...)` restringem rotas por papel (ex.: criar evento exige `ORGANIZER`; validar ingresso exige `VENUE`; reservar exige `CLIENT`).
-- **Registro cria o papel `CLIENT` sob demanda** (`Papeis` vazia) na mesma `$transaction` do usuário; senha com `bcrypt` (custo 10).
+- JWT assinado pelo servidor com payload `{ sub, email, roles[] }` — papéis: `ORGANIZER`, `CLIENT`, `PORTARIA`. Expiram em 7 dias.
+- **Guards globais** (`APP_GUARD`): `JwtAuthGuard` exige token por padrão e respeita `@Public`; `RolesGuard` + decorator `@Roles(...)` restringem rotas por papel (ex.: criar evento exige `ORGANIZER`; validar ingresso exige `PORTARIA`; reservar exige `CLIENT`).
+- **Registro aceita papel**: `RegistrarDto.papel` (`CLIENT | ORGANIZER | PORTARIA`, default `CLIENT`). O papel é buscado/criado sob demanda na mesma `$transaction` do usuário; senha com `bcrypt` (custo 10).
 - Verificação de email por **OTP de 6 dígitos (TTL 10 min)**. Em dev (`ALLOW_OTP_FALLBACK`), o código `000000` sempre funciona e o código "enviado" é devolvido na resposta — simulando o email sem infraestrutura real.
 - **Login exige email verificado e conta ativa**; usuário desativado (coluna `ativo`) não autentica.
 
@@ -137,7 +136,7 @@ Repositories existem nos **8 módulos com tabelas**; `validacao`/`stats` reutili
 
 > Fonte da verdade: `server/prisma/schema.prisma` (migração inicial versionada em `server/prisma/migrations/`). Tabelas em snake_case, enums nativos no banco.
 
-**Tabelas (13):**
+**Tabelas (15):**
 
 | Grupo | Tabelas | Papel |
 |---|---|---|
@@ -146,6 +145,8 @@ Repositories existem nos **8 módulos com tabelas**; `validacao`/`stats` reutili
 | Sessão e assentos | `Sessao_Eventos`, `Assentos_Sessao` | sessões múltiplas por evento; mapa de assentos com estado por sessão |
 | Venda | `Reservas`, `Reservas_Itens`, `Pagamentos` | hold de 15 min; um item por assento com preço congelado; pagamento mock determinístico |
 | Pós-venda | `Ingressos`, `Favoritos` | ingresso com código curto + token do QR; favoritos por cliente |
+| Comunicação | `Mensagens` | mensagens por evento (bidirectional cliente ↔ organizador) |
+| Portaria | `Portaria_Scans` | log de cada escaneamento na entrada (resultado, data, portaria responsável) |
 
 **Constraints que sustentam a integridade:**
 
@@ -153,67 +154,74 @@ Repositories existem nos **8 módulos com tabelas**; `validacao`/`stats` reutili
 - `UNIQUE(assento_sessao_id)` em `Reservas_Itens` e `Ingressos` — um assento não entra em duas reservas nem vira dois ingressos.
 - `UNIQUE(email)`, `UNIQUE(Papeis_Usuario.usuario_id, papel_id)`, `UNIQUE(Ingressos.codigo)`, `UNIQUE(Favoritos.usuario_id, evento_id)` e `UNIQUE(Categorias_Evento.evento_id, nome)` (uma categoria de cada por evento).
 - `categoria`/`preco_centavos` são **denormalizados** em itens e ingressos: congelam o valor na compra e evitam join na validação da portaria.
+- `Mensagens` indexadas em `evento_id` e `remetente_id` para buscas por evento.
+- `Portaria_Scans` indexadas em `portaria_id` e `ingresso_id` para histórico por portaria e por ingresso.
 
-**Enums:** `EventoStatus`, `CategoriaIngresso`, `AssentoStatus`, `ReservaStatus`, `IngressoStatus`, `ComprovanteStatus`, `PagamentoTipo`, `PagamentoStatus`.
+**Enums:** `EventoStatus`, `SessaoStatus`, `CategoriaIngresso`, `AssentoStatus`, `ReservaStatus`, `IngressoStatus`, `ComprovanteStatus`, `PagamentoTipo`, `PagamentoStatus`, `ResultadoScan`.
 
 **Notas de desenho:**
 
-- `PagamentoStatus` só tem `APROVADO`/`RECUSADO`: o pagamento é síncrono e determinístico no mock — não existe estado intermediário de processamento.
+- `PagamentoStatus` ganhou `ESTORNADO` (além de `APROVADO`/`RECUSADO`): o estorno é simulado no cancelamento de ingresso.
+- `IngressoStatus` ganhou `CANCELADO` (além de `EMITIDO`/`USADO`): ingresso cancelado pelo cliente (até 7 dias antes do evento).
 - `ComprovanteStatus` materializa o fluxo de 2 fases da portaria (`PENDENTE` → `CONFIRMADO`/`RECUSADO`).
+- `ResultadoScan` registra o resultado de cada escaneamento na portaria (`APROVADO`, `REJEITADO`, `PENDENTE_DOCUMENTACAO`, `DOCUMENTACAO_CONFIRMADA`, `DOCUMENTACAO_RECUSADA`).
 - A migração inicial foi gerada com `prisma migrate diff` e está versionada; a aplicação ao banco fica pendente da `DATABASE_URL` real.
 - `20260815000001_usuario_ativo` adiciona `Usuarios.ativo` (`Boolean @default(true)`) — aplicada manualmente no dashboard do Supabase e registrada com `prisma migrate resolve`.
-- `20260815000002_organizador_fluxo` adiciona `Eventos.excluido_em` e `Sessao_Eventos.{status, excluido_em}` (enum `SessaoStatus`) — SQL escrito manualmente (o `prisma migrate diff` falha contra o pooler com bug de prepared statement); **aguardando aplicação no dashboard + `migrate resolve`**.
+- `20260815000002_organizador_fluxo` adiciona `Eventos.excluido_em` e `Sessao_Eventos.{status, excluido_em}` (enum `SessaoStatus`) — SQL escrito manualmente; **aguardando aplicação no dashboard + `migrate resolve`**.
+- `20260817000001_cliente_schema` adiciona tabela `Mensagens` + `IngressoStatus.CANCELADO` + `PagamentoStatus.ESTORNADO` — **aguardando aplicação no dashboard**.
+- `20260817010000_portaria_schema` adiciona tabela `Portaria_Scans` + enum `ResultadoScan` — **aguardando aplicação no dashboard**.
 
 ## 6. Segurança do ingresso
 
 ```
-                        ┌─────────────────────────────┐
-   QR gerado com ──────▶│  token = payload + HMAC     │
-   segredo do servidor  │  (assinado; cliente não     │
-                        │   consegue forjar)          │
-                        └─────────────┬───────────────┘
-                                      │
-      Validação na portaria ──────────┤
-      (token via câmera, ou           │
-       código curto digitado)         │
-                                      ▼
-                    ┌────────────────────────────────┐
-                    │  consumo ATÔMICO              │
-                    │  "marca como usado SÓ se ainda │
-                    │   estiver válido"             │
-                    │  → segundo scan = JÁ_UTILIZADO │
-                    └────────────────────────────────┘
+   QR gerado com ──────▶  token = payload + HMAC
+   segredo do servidor    (assinado; cliente não
+                          consegue forjar)
+                                   │
+       Validação na portaria ──────┤
+       (código de 16 chars ou      │
+        token de 32 chars hex)     │
+                                   ▼
+                  ┌────────────────────────────────┐
+                  │  busca por codigo (único)       │
+                  │  → status do ingresso determina │
+                  │    APROVADO / REJEITADO /       │
+                  │    PENDENTE_DOCUMENTACAO        │
+                  └────────────────────────────────┘
 ```
 
-- O QR codifica um **token assinado por HMAC** com segredo do servidor — impossível de forjar sem o segredo. O token não contém dados sensíveis além de referências.
-- Ao lado do QR existe um **código curto** para digitação manual na portaria (alternativa exigida pelo enunciado à leitura por câmera).
-- A validação consome o ingresso com **operação atômica**: atualiza o estado "só se ainda não usado". Dois dispositivos validando o mesmo ingresso: só o primeiro vence.
+- O ingresso é identificado por um **código de 16 chars** (base64url uppercase) para digitação manual, ou um **qrToken de 32 chars** (hex) se decodificado do QR.
+- A validação busca o ingresso por `codigo` (unique) e verifica o `status`:
+  - `EMITIDO` → pode ser validado
+  - `USADO` → REJEITADO (já utilizado)
+  - `CANCELADO` → REJEITADO (cancelado pelo cliente)
 - A venda dupla de um mesmo lugar é impedida por **constraint de unicidade no banco**, no nível mais forte possível — não por lógica de aplicação.
 
 ### Validação em 2 fases (meia-entrada / gratuidade)
 
 ```
-        scan do QR
-             │
-             ▼
-     ingresso pede comprovante?  ──não──▶  VÁLIDO  (consome agora)
-             │sim
-             ▼
-     PROOF_REQUIRED (não consome)
-             │
-      portaria examina o comprovante
-             │
-        ┌────┴─────┐
-        │          │
-   Confirmado    Recusado
-        │          │
-        ▼          ▼
-    VÁLIDO      não consome;
-  (consome)    registra tentativa
+        scan do ingresso (código ou qrToken)
+                    │
+                    ▼
+      ingresso pede comprovante?  ──não──▶  APROVADO (consome agora)
+                    │sim
+                    ▼
+      PENDENTE_DOCUMENTACAO (não consome; log scan)
+                    │
+       portaria examina o comprovante
+                    │
+           ┌────┴─────┐
+           │          │
+      Confirmado    Recusado
+           │          │
+           ▼          ▼
+      APROVADO    REJEITADO
+    (consome)    (não consome;
+                  registra tentativa)
 ```
 
-- Ingressos `INTEIRA` são validados de uma vez.
-- Ingressos `MEIA`/`GRATUIDADE`: o scan sinaliza `PROOF_REQUIRED` e **não** consome o ingresso; a portaria confere o comprovante e decide **Confirmado** (consome atomicamente) ou **Recusado** (não consome, fica registrado para auditoria).
+- Ingressos `INTEIRA` são validados de uma vez (marca `USADO` + `usadoEm`).
+- Ingressos `MEIA`/`GRATUIDADE`: o scan sinaliza `PENDENTE_DOCUMENTACAO` e **não** consome o ingresso; a portaria confere o comprovante e decide **Confirmado** (consome atomicamente) ou **Recusado** (não consome, fica registrado para auditoria via `Portaria_Scans`).
 
 ## 7. Fluxos que moldam a arquitetura
 
@@ -244,24 +252,51 @@ ingressos emitidos reserva cancelada
 - O pagamento **nunca** toca dinheiro real: é um mock com regra documentada, para que os dois caminhos (sucesso e falha) sejam demonstráveis de forma previsível.
 - Se o cliente abandona o checkout, o hold expira e os assentos voltam a ficar disponíveis.
 
-### Portaria
+### Portaria (implementada)
 
 ```
-  portaria seleciona evento + sessão
-        │
-        ├──▶ câmera lê o QR ──► token
-        │          ou
-        └──▶ código digitado manualmente
-                 │
-                 ▼
-          server valida (assinatura + sessão + estado)
-                 │
-                 ▼
-   VÁLIDO · INVÁLIDO · JÁ_UTILIZADO · EVENTO_ERRADO · SESSÃO_ERRADA · PROOF_REQUIRED
-                 │
-                 ▼
-        feedback visual na tela (verde/vermelho)
+   POST /api/portaria/validar
+   { codigo: "ABC123XYZ789DEFG" }
+              │
+              ▼
+   server busca ingresso por codigo
+              │
+     ┌────────┼────────┬──────────┐
+     ▼        ▼        ▼          ▼
+  não      USADO    CANCELADO   encontrado
+  existe    │        │
+     │      ▼        ▼
+     │   REJEITADO  REJEITADO
+     │   (log)      (log)
+     │
+     ▼
+  categoria?
+  ┌──────┴──────┐
+  ▼             ▼
+INTEIRA    MEIA/GRATUIDADE
+  │             │
+  ▼             ▼
+APROVADO    PENDENTE_DOCUMENTACAO
+(consome)   (não consome)
+  │             │
+  ▼             ▼
+log scan     POST /api/portaria/comprovantes/:id/confirmar
+             POST /api/portaria/comprovantes/:id/rejeitar
+                  │
+                  ▼
+             DOCUMENTACAO_CONFIRMADA → APROVADO (consome)
+             DOCUMENTACAO_RECUSADA  → REJEITADO (não consome)
 ```
+
+- **Rotas** (todas exigem JWT + `@Roles('PORTARIA')`):
+  - `POST /api/portaria/validar` — `{ codigo }` → valida ingresso
+  - `POST /api/portaria/comprovantes/:id/confirmar` — confirma documentação
+  - `POST /api/portaria/comprovantes/:id/rejeitar` — rejeita documentação
+  - `GET /api/portaria/historico` — histórico global do portaria logado
+  - `GET /api/portaria/historico/:eventoId` — histórico filtrado por evento
+- **Cada escaneamento** gera um registro em `Portaria_Scans` com resultado, data e observação (motivo do REJEITADO, etc.).
+- **Ingressos `INTEIRA`** são validados de uma vez (marca `USADO` + `usadoEm`).
+- **Ingressos `MEIA`/`GRATUIDADE`**: o scan sinaliza `PENDENTE_DOCUMENTACAO` e **não** consome o ingresso; a portaria confere o comprovante e decide **Confirmado** (consome) ou **Recusado** (não consome).
 
 ### Compartilhamento
 

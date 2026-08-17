@@ -23,6 +23,6 @@ export class RegistrarDto {
   senha!: string;
 
   @IsOptional()
-  @IsIn(['CLIENT', 'ORGANIZER'])
-  papel?: 'CLIENT' | 'ORGANIZER';
+  @IsIn(['CLIENT', 'ORGANIZER', 'PORTARIA'])
+  papel?: 'CLIENT' | 'ORGANIZER' | 'PORTARIA';
 }

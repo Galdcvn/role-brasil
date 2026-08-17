@@ -27,7 +27,7 @@ role-brasil/
 
 ## Como rodar
 
-> **Estado atual: autenticação + módulo organizador implementados no server** — registro com verificação de email por OTP, login (JWT), rotas autenticadas de usuário e, mais recentemente, o módulo organizador (catálogo TMDb, CRUD de eventos e sessões com regras de reservas e soft delete). O client ainda está em scaffold.
+> **Estado atual: backend completo** — autenticação, módulo organizador (catálogo TMDb, eventos, sessões), módulo cliente (rotas públicas, favoritos, assentos, reservas, pagamentos, ingressos, mensagens) e módulo portaria (validação de ingressos, comprovantes, histórico) implementados no server, com **250 testes** passando. O client ainda está em scaffold (rotas `/` e `/404` apenas).
 
 ### Pré-requisitos
 
@@ -69,6 +69,32 @@ npm run test:cov
 ## Linha do tempo das decisões
 
 > Registro das decisões tomadas ao longo do desenvolvimento, com o contexto de cada uma. Inserida em ordem cronológica; decisões novas são adicionadas no topo.
+
+### 17/08/2026 — Módulo Portaria (backend)
+
+- **Módulo completo**: `portaria/` (repository, service, controller, DTO, specs) — renomeado do stub vazio `validacao/`.
+- **Schema**: enum `ResultadoScan` (`APROVADO`, `REJEITADO`, `PENDENTE_DOCUMENTACAO`, `DOCUMENTACAO_CONFIRMADA`, `DOCUMENTACAO_RECUSADA`) + tabela `Portaria_Scans` (log de cada escaneamento com portaria, ingresso, resultado, observação, data).
+- **Papel PORTARIA**: adicionado ao `RegistrarDto` como opção de papel (`CLIENT | ORGANIZER | PORTARIA`). Rotas protegidas com `@Roles('PORTARIA')`.
+- **Fluxo de validação**: busca por `codigo` (16 chars) → verifica status (`EMITIDO`/`USADO`/`CANCELADO`) → INTEIRA aprova na hora; MEIA/GRATUIDADE sinaliza `PENDENTE_DOCUMENTACAO` → portaria confirma/rejeita comprovante.
+- **Histórico**: global (`GET /api/portaria/historico`) e por evento (`GET /api/portaria/historico/:eventoId`).
+- **Migration `20260817010000_portaria_schema`**: criada manualmente — **aguardando aplicação no dashboard**.
+- **Checkpoint**: 53 suites, 250 testes, typecheck + lint + build limpos.
+- **Como a IA refinou**: detectou que o `$transaction` mock recebia array em vez de callback, corrigiu o mock para tx client; removeu `Prisma` import não usado; adicionou `eslint-disable` para `expect.any(Object)`/`expect.any(Date)` que retornam `any`.
+
+### 17/08/2026 — Módulos cliente B1–B7 (backend)
+
+Implementação de todos os módulos backend que suportam o fluxo do cliente. Cada módulo seguiu o padrão repository → service → controller → DTO → specs, com typecheck + lint + testes como checkpoint.
+
+- **B1 — Rotas públicas evento/sessão**: `EventoPublicoController` com `GET /api/eventos/publicos` (filtros ILIKE: título, data, local, preço; paginação) e `GET /api/eventos/publicos/:id` (detalhe com sessões e vagas). Métodos `listarPublicos`/`buscarPublico` no repository.
+- **B2 — Módulo favorito**: toggle (`POST /api/favoritos/:eventoId`) e listar IDs (`GET /api/favoritos`). Ownership = 404.
+- **B3 — Módulo assento**: mapa de assentos agrupados por fileira (`GET /api/sessoes/:sessaoId/assentos`); busca por IDs.
+- **B4 — Módulo reserva**: criar com lock de assentos (`$transaction`), validações (sessão ativa, assentos disponíveis, máx 10 por compra, duplicados), expiração automática (10 min via job background), listar/detalhe com ownership.
+- **B5 — Módulo pagamento**: simulação de cartão (CVV "000" = recusa) + PIX (sempre aprova). Transação ao aprovar: Reserva→PAGO, assentos→VENDIDO, ingressos gerados (código de 16 chars + qrToken de 32 chars, cada um com categoria).
+- **B6 — Módulo ingresso**: listar por usuário, detalhe com ownership (= 404), cancelamento (até 7 dias antes do evento) com estorno simulado (Pagamento→ESTORNADO, assento→DISPONIVEL, Reserva→CANCELADO).
+- **B7 — Módulo mensagem + notification service**: mensagens por evento (`POST/GET /api/eventos/:eventoId/mensagens`), leitura (`PATCH /api/mensagens/:id/lida`), contagem de não lidas (`GET /api/mensagens/nao-lidas`). `NotificationService` com implementação console.log (email simulado). Verificação de participação (ingresso PAGO ou é organizador do evento).
+- **Schema**: enum `IngressoStatus` + `CANCELADO`, `PagamentoStatus` + `ESTORNADO`, tabela `Mensagens`. Migration `20260817000001_cliente_schema` — **aguardando aplicação no dashboard**.
+- **Checkpoint**: 52 suites, 224 testes (antes dos testes de portaria), typecheck + lint + build limpos.
+- **Como a IA refinou**: corrigiu o repository de ingresso para não usar relation inexistente `pagamento` (acessa via `findFirst` pela reserva); ajustou o `$transaction` do repository de reserva para aceitar a callback correta; resolveu conflito de rotas entre `/:eventoId/mensagens` e `/mensagens/nao-lidas` separando em dois controllers.
 
 ### 16/08/2026 — Renomeado: Seatly → Rolê Brasil
 

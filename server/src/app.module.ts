@@ -14,6 +14,7 @@ import { IngressoModule } from './ingresso/ingresso.module';
 import { MensagemModule } from './mensagem/mensagem.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { PagamentoModule } from './pagamento/pagamento.module';
+import { PortariaModule } from './portaria/portaria.module';
 import { ReservaModule } from './reserva/reserva.module';
 import { SessaoModule } from './sessao/sessao.module';
 import { UsuarioModule } from './usuario/usuario.module';
@@ -32,6 +33,7 @@ import { UsuarioModule } from './usuario/usuario.module';
     AssentoModule,
     ReservaModule,
     PagamentoModule,
+    PortariaModule,
     SessaoModule,
   ],
   controllers: [AppController],
