@@ -6,5 +6,6 @@ import { IngressoService } from './ingresso.service';
 @Module({
   controllers: [IngressoController],
   providers: [IngressoService, IngressoRepository],
+  exports: [IngressoRepository, IngressoService],
 })
 export class IngressoModule {}

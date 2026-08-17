@@ -46,6 +46,7 @@ enum ReservaStatus {
 enum IngressoStatus {
   EMITIDO
   USADO
+  CANCELADO
 }
 
 enum ComprovanteStatus {
@@ -63,6 +64,7 @@ enum PagamentoTipo {
 enum PagamentoStatus {
   APROVADO
   RECUSADO
+  ESTORNADO
 }
 
 // ---------- Modelos ----------
@@ -82,6 +84,7 @@ model Usuario {
   reservas                  Reserva[]
   ingressos                 Ingresso[]
   favoritos                 Favorito[]
+  mensagensEnviadas         Mensagem[]
 
   @@map("Usuarios")
 }
@@ -124,6 +127,7 @@ model Evento {
   categorias      CategoriasEvento[]
   sessoes         SessaoEvento[]
   favoritos       Favorito[]
+  mensagens       Mensagem[]
 
   @@index([organizadorId])
   @@index([status])
@@ -267,4 +271,19 @@ model Favorito {
   @@unique([usuarioId, eventoId])
   @@index([eventoId])
   @@map("Favoritos")
+}
+
+model Mensagem {
+  id          Int      @id @default(autoincrement())
+  eventoId    Int      @map("evento_id")
+  remetenteId Int      @map("remetente_id")
+  conteudo    String   @db.Text
+  lida        Boolean  @default(false)
+  criadoEm    DateTime @default(now()) @map("criado_em")
+  evento      Evento   @relation(fields: [eventoId], references: [id])
+  remetente   Usuario  @relation(fields: [remetenteId], references: [id])
+
+  @@index([eventoId])
+  @@index([remetenteId])
+  @@map("Mensagens")
 }

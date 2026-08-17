@@ -1,18 +1,22 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { PagamentoController } from './pagamento.controller';
+import { PagamentoService } from './pagamento.service';
 
 describe('PagamentoController', () => {
   let controller: PagamentoController;
+  let serviceMock: { processar: jest.Mock };
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [PagamentoController],
-    }).compile();
-
-    controller = module.get<PagamentoController>(PagamentoController);
+  beforeEach(() => {
+    serviceMock = { processar: jest.fn() };
+    controller = new PagamentoController(
+      serviceMock as unknown as PagamentoService,
+    );
   });
 
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
+  it('processar delega com o dto', async () => {
+    serviceMock.processar.mockResolvedValue({ status: 'APROVADO' });
+    const dto = { reservaId: 1, tipo: 'PIX' };
+    const resultado = await controller.processar(dto as never);
+    expect(serviceMock.processar).toHaveBeenCalledWith(dto);
+    expect(resultado).toEqual({ status: 'APROVADO' });
   });
 });

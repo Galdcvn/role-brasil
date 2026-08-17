@@ -13,6 +13,7 @@ describe('EventoRepository', () => {
     evento: {
       findFirst: jest.Mock;
       findMany: jest.Mock;
+      count: jest.Mock;
       update: jest.Mock;
     };
     reserva: { count: jest.Mock; findMany: jest.Mock };
@@ -28,7 +29,12 @@ describe('EventoRepository', () => {
       $transaction: jest.fn((fn: (tx: unknown) => Promise<unknown>) =>
         fn(txMock),
       ),
-      evento: { findFirst: jest.fn(), findMany: jest.fn(), update: jest.fn() },
+      evento: {
+        findFirst: jest.fn(),
+        findMany: jest.fn(),
+        count: jest.fn(),
+        update: jest.fn(),
+      },
       reserva: { count: jest.fn(), findMany: jest.fn() },
     };
     repository = new EventoRepository(prismaMock as unknown as PrismaService);
@@ -244,6 +250,90 @@ describe('EventoRepository', () => {
         data: { status: 'PUBLICADO' },
         select: expect.any(Object) as object,
       });
+    });
+  });
+
+  describe('listarPublicos', () => {
+    it('retorna eventos publicados com paginação', async () => {
+      prismaMock.evento.findMany.mockResolvedValue([{ id: 1 }]);
+      prismaMock.evento.count.mockResolvedValue(1);
+      const resultado = await repository.listarPublicos({ page: 1, limit: 10 });
+      expect(prismaMock.evento.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ status: 'PUBLICADO' }) as object,
+          skip: 0,
+          take: 10,
+        }) as object,
+      );
+      expect(prismaMock.evento.count).toHaveBeenCalledWith({
+        where: expect.objectContaining({ status: 'PUBLICADO' }) as object,
+      });
+      expect(resultado).toEqual({
+        eventos: [{ id: 1 }],
+        total: 1,
+        page: 1,
+        limit: 10,
+      });
+    });
+
+    it('aplica filtro de busca por titulo', async () => {
+      prismaMock.evento.findMany.mockResolvedValue([]);
+      prismaMock.evento.count.mockResolvedValue(0);
+      await repository.listarPublicos({ busca: 'rock' });
+      expect(prismaMock.evento.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            titulo: { contains: 'rock', mode: 'insensitive' },
+          }) as object,
+        }) as object,
+      );
+    });
+
+    it('aplica filtro de preço', async () => {
+      prismaMock.evento.findMany.mockResolvedValue([]);
+      prismaMock.evento.count.mockResolvedValue(0);
+      await repository.listarPublicos({ precoMin: 1000, precoMax: 5000 });
+      expect(prismaMock.evento.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            categorias: {
+              some: { precoCentavos: { gte: 1000, lte: 5000 } },
+            },
+          }) as object,
+        }) as object,
+      );
+    });
+  });
+
+  describe('buscarPublico', () => {
+    it('retorna null quando evento não existe', async () => {
+      prismaMock.evento.findFirst.mockResolvedValue(null);
+      const resultado = await repository.buscarPublico(999);
+      expect(resultado).toBeNull();
+    });
+
+    it('retorna evento com sessões e vagas', async () => {
+      prismaMock.evento.findFirst.mockResolvedValue({
+        id: 1,
+        titulo: 'Festa',
+        endereco: { cidade: 'SP' },
+        categorias: [{ nome: 'INTEIRA', precoCentavos: 2000 }],
+        sessoes: [{ id: 10, dataHora: new Date(), _count: { assentos: 50 } }],
+      });
+      const resultado = await repository.buscarPublico(1);
+      expect(resultado).toEqual(
+        expect.objectContaining({
+          id: 1,
+          titulo: 'Festa',
+          sessoes: [
+            {
+              id: 10,
+              dataHora: expect.any(Date) as Date,
+              vagasDisponiveis: 50,
+            },
+          ],
+        }) as object,
+      );
     });
   });
 });

@@ -8,6 +8,7 @@ import { Prisma } from '@prisma/client';
 import { CategoriaIngresso, ReservaStatus } from '@prisma/client';
 import { CatalogService } from '../catalog/catalog.service';
 import { AtualizarEventoDto } from './dto/atualizar-evento.dto';
+import { BuscarEventosDto } from './dto/buscar-eventos-publicos.dto';
 import { CriarEventoDto } from './dto/criar-evento.dto';
 import { EventoRepository } from './evento.repository';
 
@@ -186,6 +187,18 @@ export class EventoService {
       throw new ConflictException('Evento cancelado não pode ser publicado');
     }
     return this.eventoRepository.publicar(id);
+  }
+
+  async listarPublicos(filtros: BuscarEventosDto) {
+    return this.eventoRepository.listarPublicos(filtros);
+  }
+
+  async detalhePublico(id: number) {
+    const evento = await this.eventoRepository.buscarPublico(id);
+    if (evento === null) {
+      throw new NotFoundException('Evento não encontrado');
+    }
+    return evento;
   }
 
   private montarMetricas(

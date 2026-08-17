@@ -6,5 +6,6 @@ import { FavoritoService } from './favorito.service';
 @Module({
   controllers: [FavoritoController],
   providers: [FavoritoService, FavoritoRepository],
+  exports: [FavoritoRepository],
 })
 export class FavoritoModule {}

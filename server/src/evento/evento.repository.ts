@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { BuscarEventosDto } from './dto/buscar-eventos-publicos.dto';
 
 const SELECT_EVENTO = {
   id: true,
@@ -174,5 +175,117 @@ export class EventoRepository {
         ingressos: { select: { categoria: true } },
       },
     });
+  }
+
+  async listarPublicos(filtros: BuscarEventosDto) {
+    const page = filtros.page ?? 1;
+    const limit = filtros.limit ?? 20;
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.EventoWhereInput = {
+      status: 'PUBLICADO',
+      excluidoEm: null,
+    };
+
+    if (filtros.busca) {
+      where.titulo = { contains: filtros.busca, mode: 'insensitive' };
+    }
+
+    if (filtros.dataInicio || filtros.dataFim) {
+      where.sessoes = {
+        some: {
+          status: 'ATIVA',
+          excluidoEm: null,
+          dataHora: {
+            ...(filtros.dataInicio && { gte: new Date(filtros.dataInicio) }),
+            ...(filtros.dataFim && { lte: new Date(filtros.dataFim) }),
+          },
+        },
+      };
+    }
+
+    if (filtros.cidade || filtros.estado) {
+      where.endereco = {
+        ...(filtros.cidade && {
+          cidade: { contains: filtros.cidade, mode: 'insensitive' },
+        }),
+        ...(filtros.estado && { estado: filtros.estado }),
+      };
+    }
+
+    if (filtros.precoMin !== undefined || filtros.precoMax !== undefined) {
+      where.categorias = {
+        some: {
+          precoCentavos: {
+            ...(filtros.precoMin !== undefined && { gte: filtros.precoMin }),
+            ...(filtros.precoMax !== undefined && { lte: filtros.precoMax }),
+          },
+        },
+      };
+    }
+
+    const [eventos, total] = await Promise.all([
+      this.prisma.evento.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { criadoEm: 'desc' },
+        select: {
+          id: true,
+          titulo: true,
+          descricao: true,
+          posterUrl: true,
+          criadoEm: true,
+          endereco: { select: { cidade: true, estado: true } },
+          categorias: {
+            select: { nome: true, precoCentavos: true },
+            orderBy: { precoCentavos: 'asc' },
+          },
+          sessoes: {
+            where: { status: 'ATIVA', excluidoEm: null },
+            orderBy: { dataHora: 'asc' },
+            select: { id: true, dataHora: true },
+            take: 1,
+          },
+        },
+      }),
+      this.prisma.evento.count({ where }),
+    ]);
+
+    return { eventos, total, page, limit };
+  }
+
+  async buscarPublico(id: number) {
+    const evento = await this.prisma.evento.findFirst({
+      where: { id, status: 'PUBLICADO', excluidoEm: null },
+      include: {
+        endereco: true,
+        categorias: { orderBy: { precoCentavos: 'asc' } },
+        sessoes: {
+          where: { status: 'ATIVA', excluidoEm: null },
+          orderBy: { dataHora: 'asc' },
+          select: {
+            id: true,
+            dataHora: true,
+            _count: {
+              select: {
+                assentos: { where: { status: 'DISPONIVEL' } },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (evento === null) return null;
+
+    const sessoesComVagas = evento.sessoes.map((s) => ({
+      id: s.id,
+      dataHora: s.dataHora,
+      vagasDisponiveis: s._count.assentos,
+    }));
+
+    const resultado = { ...evento, sessoes: sessoesComVagas };
+    return resultado;
   }
 }

@@ -22,6 +22,8 @@ describe('EventoService', () => {
     publicar: jest.Mock;
     contarReservas: jest.Mock;
     buscarReservas: jest.Mock;
+    listarPublicos: jest.Mock;
+    buscarPublico: jest.Mock;
   };
   let catalogMock: { detalharFilme: jest.Mock; buscarFilmes: jest.Mock };
 
@@ -52,6 +54,8 @@ describe('EventoService', () => {
       publicar: jest.fn(),
       contarReservas: jest.fn(),
       buscarReservas: jest.fn(),
+      listarPublicos: jest.fn(),
+      buscarPublico: jest.fn(),
     };
     catalogMock = {
       detalharFilme: jest.fn(),
@@ -339,6 +343,45 @@ describe('EventoService', () => {
       });
       await expect(service.publicar(7, 1)).rejects.toThrow(ConflictException);
       expect(repositoryMock.publicar).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('listarPublicos', () => {
+    it('repassa filtros ao repository', async () => {
+      repositoryMock.listarPublicos.mockResolvedValue({
+        eventos: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+      });
+      const resultado = await service.listarPublicos({
+        busca: 'festa',
+        precoMin: 1000,
+      });
+      expect(repositoryMock.listarPublicos).toHaveBeenCalledWith({
+        busca: 'festa',
+        precoMin: 1000,
+      });
+      expect(resultado.eventos).toEqual([]);
+    });
+  });
+
+  describe('detalhePublico', () => {
+    it('lança NotFoundException quando evento não existe', async () => {
+      repositoryMock.buscarPublico.mockResolvedValue(null);
+      await expect(service.detalhePublico(99)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('retorna o evento quando encontrado', async () => {
+      repositoryMock.buscarPublico.mockResolvedValue({
+        id: 1,
+        titulo: 'Festa',
+      });
+      const resultado = await service.detalhePublico(1);
+      expect(repositoryMock.buscarPublico).toHaveBeenCalledWith(1);
+      expect(resultado).toEqual({ id: 1, titulo: 'Festa' });
     });
   });
 });
