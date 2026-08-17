@@ -1,4 +1,4 @@
-# Primeira Fila — server
+# Rolê Brasil — server
 
 Back-end NestJS + Prisma (Supabase PostgreSQL).
 

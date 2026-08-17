@@ -21,7 +21,7 @@ function renderAt(initialEntries: string[]) {
 describe('App', () => {
   it('renders the home page on "/"', () => {
     const { container, root } = renderAt(['/'])
-    expect(container.textContent).toContain('Primeira Fila')
+    expect(container.textContent).toContain('Rolê Brasil')
     act(() => root.unmount())
   })
 

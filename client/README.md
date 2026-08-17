@@ -1,4 +1,4 @@
-# Primeira Fila — client
+# Rolê Brasil — client
 
 Front-end React 19 + TypeScript + Vite 8 + Tailwind 4 + React Router 7.
 

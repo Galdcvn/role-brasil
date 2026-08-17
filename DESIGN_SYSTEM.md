@@ -1,8 +1,8 @@
-# Primeira Fila - Especificação de UI/UX para Plataforma Completa
+# Rolê Brasil - Especificação de UI/UX para Plataforma Completa
 
 ## 1. Visão Geral do Produto
 
-O **Primeira Fila** evoluiu para uma plataforma *End-to-End* (Ponta a Ponta) que atende a três perfis distintos de usuários:
+O **Rolê Brasil** evoluiu para uma plataforma *End-to-End* (Ponta a Ponta) que atende a três perfis distintos de usuários:
 1. **O Cliente (B2C):** Descobre eventos, escolhe lugares/quantidades, realiza o pagamento simulado e gerencia seus ingressos digitais.
 2. **O Organizador (B2B):** Cria e gerencia eventos de forma simplificada, importando dados de um catálogo externo (API de Filmes/Shows) e definindo regras de negócio (capacidade, preço, local).
 3. **A Portaria (Staff/Validador):** Responsável por operar a interface de controle de acesso na entrada do evento, validando QRs via câmera ou digitação.
@@ -94,7 +94,7 @@ Abaixo, detalhamos a interação passo a passo para cada requisito do projeto.
 1. **Acesso:** Cliente vai em "Perfil" > "Meus Ingressos". Lista de eventos futuros e passados.
 2. **Visualização:** Ao abrir um ingresso, o QR Code domina a tela. Abaixo dele, o código alfanumérico para caso o QR falhe.
 3. **Compartilhamento:** Um botão "Compartilhar Ingresso".
-    *   *Web:* Copia um link único (ex: `primeira-fila.com/ticket/A1B2C3D4`) para a área de transferência. Ao abrir esse link, a pessoa vê o ingresso digital.
+    *   *Web:* Copia um link único (ex: `role-brasil.com/ticket/A1B2C3D4`) para a área de transferência. Ao abrir esse link, a pessoa vê o ingresso digital.
     *   *Mobile:* Abre a gaveta de compartilhamento nativa (WhatsApp, Email, etc).
 
 ### 5.4. Fluxo de Portaria (Validação de Entrada)
@@ -114,6 +114,6 @@ Esta tela deve ser escura (Dark Mode otimizado) para economizar bateria e não o
 ## 6. Boas Práticas Técnicas para o Front-End (React / Next.js)
 
 *   **Gerenciamento de Estado:** Use Context API ou Redux para manter o estado do carrinho durante o fluxo de Reserva -> Checkout -> Sucesso, evitando perda de dados se o usuário der "Refresh".
-*   **Webcam na Portaria:** Certifique-se de pedir a permissão da câmera (Browser Permissions) de forma amigável: *"O Primeira Fila Validador precisa acessar sua câmera para ler os QRs"*.
+*   **Webcam na Portaria:** Certifique-se de pedir a permissão da câmera (Browser Permissions) de forma amigável: *"O Rolê Brasil Validador precisa acessar sua câmera para ler os QRs"*.
 *   **Responsividade do Mapa:** O mapa de assentos em telas mobile deve estar dentro de um container com `overflow: auto` (ou touch-action: pan-x pan-y) para permitir que o usuário role pelo mapa sem quebrar o layout da página.
 *   **Feedback de Pagamento:** Para a simulação, use `setTimeout` de uns 2 segundos com um *spinner* no botão de pagamento para simular a comunicação com o gateway bancário, melhorando a percepção de realismo (Feedback de Processamento).
