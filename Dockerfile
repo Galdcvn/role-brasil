@@ -9,7 +9,7 @@ RUN cd server && NODE_ENV=development npm install
 
 COPY . .
 
-RUN cd server && npx prisma generate && npx nest build
+RUN cd server && DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" npx prisma generate && npx nest build
 RUN cd server && npm prune --omit=dev
 
 CMD ["sh", "-c", "cd server && node dist/main"]
