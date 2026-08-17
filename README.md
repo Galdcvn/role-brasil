@@ -27,11 +27,11 @@ role-brasil/
 
 ## Deploy
 
-| Serviço | O que roda | Config |
-|---------|-----------|--------|
-| **Vercel** | Client (React SPA) | `vercel.json` — builda client com deps, SPA routing |
-| **Railway** | Server (NestJS + Prisma) | `Dockerfile` + `railway.json` (Node 22, prisma generate, nest build) |
-| **Supabase** | PostgreSQL (banco de dados) | — |
+| Serviço | O que roda | URL | Config |
+|---------|-----------|-----|--------|
+| **Vercel** | Client (React SPA) | — | `vercel.json` — builda client com deps, SPA routing |
+| **Railway** | Server (NestJS + Prisma) | `https://role-brasil-production.up.railway.app` | `Dockerfile` + `railway.json` (Node 22, prisma generate, nest build) |
+| **Supabase** | PostgreSQL (banco de dados) | — | — |
 
 ### Variáveis de ambiente
 
@@ -42,12 +42,13 @@ DATABASE_URL=postgresql://postgres.<ref>:<senha>@aws-0-sa-east-1.pooler.supabase
 TMDB_API_KEY=<chave da API do TMDb>
 JWT_SECRET=<segredo para assinar tokens>
 ALLOW_OTP_FALLBACK=true
+PORT=3000
 ```
 
 **Client (Vercel):**
 
 ```env
-VITE_API_URL=https://seu-app.up.railway.app/api
+VITE_API_URL=https://role-brasil-production.up.railway.app/api
 ```
 
 > O client lê `VITE_API_URL` para saber onde buscar a API. Em dev, o fallback é `/api` (proxy do Vite → `localhost:3000`).
@@ -113,17 +114,26 @@ npm run test:cov
 
 > Registro das decisões tomadas ao longo do desenvolvimento, com o contexto de cada uma. Inserida em ordem cronológica; decisões novas são adicionadas no topo.
 
+### 17/08/2026 — Fix deploy Railway (OpenSSL, tsconfig, porta)
+
+- **Railway server online**: `https://role-brasil-production.up.railway.app` — todos os endpoints funcionando (registro 201, login, rotas públicas).
+- **`tsconfig.build.json`** — adicionado `rootDir: "./src"` + `include: ["src"]` para corrigir output do NestJS. Sem essas opções, o `nest build` gerava `dist/src/main.js` (preservando a pasta `src/`) em vez de `dist/main.js` esperado pelo CMD do Dockerfile. A causa era `jest.setup.ts` na raiz do `server/` — arquivos fora de `src/` faziam o TypeScript inferir `rootDir` como `.` (raiz do projeto) ao invés de `./src`.
+- **`Dockerfile`** — adicionado `apt-get install -y openssl` antes do `prisma generate`. O `node:22-slim` não vem com OpenSSL; o Prisma client precisa dele para conexão TLS ao Supabase. Sem ele, o server crashava silenciosamente após startup, resultando em 502 no Railway.
+- **`railway.json`** — removido `startCommand` (Railway não executa comandos via shell; o `cd` era tratado como executável). O CMD do Dockerfile (`["sh", "-c", "cd server && node dist/main"]`) agora cuida do start.
+- **Env var `PORT=3000`** obrigatória no Railway — Dockerfile customizado não herda automaticamente a porta do Railway. Sem essa env var, o server escuta em 3000 (default do `main.ts`) mas o proxy do Railway não roteia corretamente.
+- **Como a IA refinou**: diagnóstico iterativo — primeiro removeu `startCommand` (502 por `cd` não encontrado), depois adicionou OpenSSL (502 por crash silencioso do Prisma), depois corrigiu `tsconfig.build.json` (`dist/main.js` não existia) e identificou que `PORT=3000` precisava ser env var explícita.
+
 ### 17/08/2026 — Deploy (Vercel + Railway)
 
 - **`vercel.json`**: builda o client com instalação de deps (`npm install --prefix client && npm run build --prefix client`), output `client/dist`, SPA routing via rewrites para React Router.
 - **`Dockerfile`**: multi-step build no Railway (substitui Nixpacks) — `COPY . .` antes do `nest build` garante que o `dist/` gerado permanece na imagem. `DATABASE_URL` dummy no step de `prisma generate` (o config exige a variável mas o generate não conecta no banco).
-- **`railway.json`**: builder `DOCKERFILE`, start com `cd server && node dist/main`, restart on failure (máx 10 tentativas).
+- **`railway.json`**: builder `DOCKERFILE`, restart on failure (máx 10 tentativas). O `startCommand` foi removido — Railway não executa comandos via shell — e o CMD do Dockerfile cuida do start.
 - **`.dockerignore`**: exclui `node_modules`, `dist`, `coverage`, `.git` etc. para manter a imagem enxuta.
 - **`nixpacks.toml`** removido — não necessário com Dockerfile customizado.
 - **Railway**: server NestJS com Prisma, Node 22 via `FROM node:22-slim`, devDeps instaladas para build e depois removidas com `npm prune --omit=dev`.
 - **Vercel**: client React SPA, `VITE_API_URL` como env var apontando pro Railway.
 - **Migrations pendentes**: `20260817000001_cliente_schema` e `20260817010000_portaria_schema` precisam ser aplicadas no SQL Editor do Supabase antes do deploy.
-- **Como a IA refinou**: diagnosticou que o Nixpacks gerava um Dockerfile com `COPY . /app` como step final, sobrescrevendo o `dist/` (gitignored). Migrado para Dockerfile customizado. Em seguida, identificou que `prisma.config.ts` exigia `DATABASE_URL` durante `prisma generate` (mesmo sem conectar no banco) — resolvido passando uma string dummy no step de build.
+- **Como a IA refinou**: diagnosticou que o Nixpacks gerava um Dockerfile com `COPY . /app` como step final, sobrescrevendo o `dist/` (gitignored). Migrado para Dockerfile customizado. Em seguida, identificou que `prisma.config.ts` exigia `DATABASE_URL` durante `prisma generate` (mesmo sem conectar no banco) — resolvido passando uma string dummy no step de build. Posteriormente, corrigiu o output do `nest build` (adicionando `rootDir`/`include` ao `tsconfig.build.json`), instalou OpenSSL no container para o Prisma TLS e removeu o `startCommand` do `railway.json`.
 
 ### 17/08/2026 — Design System atualizado
 
