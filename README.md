@@ -25,6 +25,47 @@ role-brasil/
 └── server/            # Back-end NestJS + Prisma
 ```
 
+## Deploy
+
+| Serviço | O que roda | URL |
+|---------|-----------|-----|
+| **Vercel** | Client (React SPA) | `https://role-brasil.vercel.app` |
+| **Railway** | Server (NestJS + Prisma) | `https://seu-app.up.railway.app` |
+| **Supabase** | PostgreSQL (banco de dados) | — |
+
+### Variáveis de ambiente
+
+**Server (Railway):**
+
+```env
+DATABASE_URL=postgresql://postgres.<ref>:<senha>@aws-0-sa-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connect_timeout=20
+TMDB_API_KEY=<chave da API do TMDb>
+JWT_SECRET=<segredo para assinar tokens>
+ALLOW_OTP_FALLBACK=true
+```
+
+**Client (Vercel):**
+
+```env
+VITE_API_URL=https://seu-app.up.railway.app/api
+```
+
+> O client lê `VITE_API_URL` para saber onde buscar a API. Em dev, o fallback é `/api` (proxy do Vite → `localhost:3000`).
+
+### Migrations
+
+As migrations são escritas manualmente no SQL Editor do Supabase — **não** rodar `prisma migrate deploy` antes de aplicar no dashboard.
+
+| Migration | Status |
+|-----------|--------|
+| `20260815000000_init` | Aplicada |
+| `20260815000001_usuario_ativo` | Aplicada |
+| `20260815000002_organizador_fluxo` | Aplicada |
+| `20260817000001_cliente_schema` | Pendente |
+| `20260817010000_portaria_schema` | Pendente |
+
+---
+
 ## Como rodar
 
 > **Estado atual: backend completo** — autenticação, módulo organizador (catálogo TMDb, eventos, sessões), módulo cliente (rotas públicas, favoritos, assentos, reservas, pagamentos, ingressos, mensagens) e módulo portaria (validação de ingressos, comprovantes, histórico) implementados no server, com **250 testes** passando. O client ainda está em scaffold (rotas `/` e `/404` apenas).
@@ -69,6 +110,15 @@ npm run test:cov
 ## Linha do tempo das decisões
 
 > Registro das decisões tomadas ao longo do desenvolvimento, com o contexto de cada uma. Inserida em ordem cronológica; decisões novas são adicionadas no topo.
+
+### 17/08/2026 — Deploy (Vercel + Railway)
+
+- **`vercel.json`**: builda só o client (`npm run build --prefix client`), output `client/dist`, SPA routing via rewrites para React Router.
+- **`railway.json`**: build com Nixpacks (`cd server && npm install && npx prisma generate`), start com `node dist/main`, restart on failure (máx 10 tentativas).
+- **Railway**: server NestJS com Prisma, expõe via `PORT` env var (já lido no `main.ts`).
+- **Vercel**: client React SPA, `VITE_API_URL` como env var apontando pro Railway.
+- **Migrations pendentes**: `20260817000001_cliente_schema` e `20260817010000_portaria_schema` precisam ser aplicadas no SQL Editor do Supabase antes do deploy.
+- **Como a IA refinou**: identificou que o `main.ts` já lê `process.env.PORT`, que o client não tem chamadas de API ainda (scaffold vazio), e que a env var `VITE_API_URL` será necessária quando o API client for criado (C1).
 
 ### 17/08/2026 — Design System atualizado
 
