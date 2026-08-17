@@ -117,7 +117,7 @@ npm run test:cov
 
 - **`vercel.json`**: builda o client com instalação de deps (`npm install --prefix client && npm run build --prefix client`), output `client/dist`, SPA routing via rewrites para React Router.
 - **`nixpacks.toml`**: força Node 22 (`nodejs_22`) no Nixpacks do Railway — o padrão (Node 18) não atende os engines do projeto (`>=22.12.0`).
-- **`railway.json`**: build com Nixpacks (`cd server && npm install && npx prisma generate`), start com `node dist/main`, restart on failure (máx 10 tentativas).
+- **`railway.json`**: build com `NODE_ENV=development npm install` (garante instalação de devDependencies como `@nestjs/cli`), `prisma generate`, `nest build`, start com `node dist/main`, restart on failure (máx 10 tentativas).
 - **Railway**: server NestJS com Prisma, expõe via `PORT` env var (já lido no `main.ts`). `DATABASE_URL` precisa estar disponível tanto em runtime quanto em build (marcar "Available during build" no dashboard).
 - **Vercel**: client React SPA, `VITE_API_URL` como env var apontando pro Railway.
 - **Migrations pendentes**: `20260817000001_cliente_schema` e `20260817010000_portaria_schema` precisam ser aplicadas no SQL Editor do Supabase antes do deploy.
