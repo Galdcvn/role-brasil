@@ -25,6 +25,20 @@ describe('App', () => {
     act(() => root.unmount())
   })
 
+  it('renders the login page on "/login"', () => {
+    const { container, root } = renderAt(['/login'])
+    expect(container.textContent).toContain('Entrar')
+    expect(container.textContent).toContain('Esqueceu a senha?')
+    act(() => root.unmount())
+  })
+
+  it('renders the registro page on "/registro"', () => {
+    const { container, root } = renderAt(['/registro'])
+    expect(container.textContent).toContain('Cadastrar')
+    expect(container.textContent).toContain('Já tem uma conta?')
+    act(() => root.unmount())
+  })
+
   it('redirects unknown routes to the 404 page', () => {
     const { container, root } = renderAt(['/rota-inexistente'])
     expect(container.textContent).toContain('Página não encontrada.')
