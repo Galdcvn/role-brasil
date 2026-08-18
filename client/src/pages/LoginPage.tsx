@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 import AuthLayout from '../components/auth/AuthLayout'
 import Input from '../components/ui/Input'
 import Button from '../components/ui/Button'
@@ -17,11 +18,41 @@ const LockIcon = (
 )
 
 export default function LoginPage() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { login } = useAuth()
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
+  const [erro, setErro] = useState('')
+  const [carregando, setCarregando] = useState(false)
 
-  function handleSubmit(e: React.FormEvent) {
+  const sucesso = (location.state as { sucesso?: string } | null)?.sucesso
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    setErro('')
+    setCarregando(true)
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, senha }),
+      })
+
+      if (!res.ok) {
+        setErro('Credenciais inválidas.')
+        return
+      }
+
+      const data = await res.json()
+      login(data.access_token)
+      navigate('/portal', { replace: true })
+    } catch {
+      setErro('Erro de conexão. Tente novamente.')
+    } finally {
+      setCarregando(false)
+    }
   }
 
   return (
@@ -30,6 +61,10 @@ export default function LoginPage() {
         <h1 className="text-2xl font-bold tracking-wide text-white">Rolê Brasil</h1>
         <p className="mt-1 text-sm font-semibold text-slate-400">Faça seu rolê acontecer.</p>
       </div>
+
+      {sucesso && (
+        <p className="mb-4 text-center text-sm text-[#00FF88]">{sucesso}</p>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
@@ -51,7 +86,13 @@ export default function LoginPage() {
           onChange={(e) => setSenha(e.target.value)}
         />
 
-        <Button type="submit">Entrar</Button>
+        {erro && (
+          <p className="text-center text-sm text-red-400">{erro}</p>
+        )}
+
+        <Button type="submit" loading={carregando}>
+          Entrar
+        </Button>
       </form>
 
       <div className="mt-4 text-center text-sm text-slate-400">

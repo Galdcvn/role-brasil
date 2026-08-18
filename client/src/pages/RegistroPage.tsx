@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import AuthLayout from '../components/auth/AuthLayout'
 import Input from '../components/ui/Input'
 import Button from '../components/ui/Button'
@@ -39,15 +39,80 @@ interface Props {
 }
 
 export default function RegistroPage({ papel }: Props) {
+  const navigate = useNavigate()
   const [nome, setNome] = useState('')
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [confirmarSenha, setConfirmarSenha] = useState('')
+  const [erro, setErro] = useState('')
+  const [carregando, setCarregando] = useState(false)
+  const [etapa, setEtapa] = useState<'formulario' | 'verificacao'>('formulario')
+  const [codigo, setCodigo] = useState('')
+  const [codigoServidor, setCodigoServidor] = useState('')
 
   const labels = ROTULOS_PAPEL[papel] ?? ROTULOS_PAPEL.CLIENT;
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    setErro('')
+
+    if (senha !== confirmarSenha) {
+      setErro('As senhas não coincidem.')
+      return
+    }
+
+    setCarregando(true)
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/registro`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome, email, senha, papel }),
+      })
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => null)
+        setErro(body?.message ?? 'Não foi possível realizar o cadastro.')
+        return
+      }
+
+      const data = await res.json()
+
+      if (data.codigo) {
+        setCodigoServidor(String(data.codigo))
+        setCodigo(String(data.codigo))
+      }
+
+      setEtapa('verificacao')
+    } catch {
+      setErro('Erro de conexão. Tente novamente.')
+    } finally {
+      setCarregando(false)
+    }
+  }
+
+  async function handleVerificar(e: React.FormEvent) {
+    e.preventDefault()
+    setErro('')
+    setCarregando(true)
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/verificar-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, codigo }),
+      })
+
+      if (!res.ok) {
+        setErro('Código inválido ou expirado.')
+        return
+      }
+
+      navigate('/login', { state: { sucesso: 'Conta criada! Faça login.' } })
+    } catch {
+      setErro('Erro de conexão. Tente novamente.')
+    } finally {
+      setCarregando(false)
+    }
   }
 
   return (
@@ -57,47 +122,83 @@ export default function RegistroPage({ papel }: Props) {
         <p className="mt-1 text-sm font-semibold text-slate-400">{labels.subtitulo}</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
-          icon={UserIcon}
-          type="text"
-          placeholder="Nome completo"
-          autoComplete="name"
-          value={nome}
-          onChange={(e) => setNome(e.target.value)}
-        />
+      {etapa === 'formulario' ? (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Input
+            icon={UserIcon}
+            type="text"
+            placeholder="Nome completo"
+            autoComplete="name"
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+          />
 
-        <Input
-          icon={MailIcon}
-          type="email"
-          placeholder="E-mail"
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+          <Input
+            icon={MailIcon}
+            type="email"
+            placeholder="E-mail"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
 
-        <Input
-          icon={LockIcon}
-          type="password"
-          placeholder="Senha"
-          showToggle
-          autoComplete="new-password"
-          value={senha}
-          onChange={(e) => setSenha(e.target.value)}
-        />
+          <Input
+            icon={LockIcon}
+            type="password"
+            placeholder="Senha"
+            showToggle
+            autoComplete="new-password"
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+          />
 
-        <Input
-          icon={LockIcon}
-          type="password"
-          placeholder="Confirmar senha"
-          showToggle
-          autoComplete="new-password"
-          value={confirmarSenha}
-          onChange={(e) => setConfirmarSenha(e.target.value)}
-        />
+          <Input
+            icon={LockIcon}
+            type="password"
+            placeholder="Confirmar senha"
+            showToggle
+            autoComplete="new-password"
+            value={confirmarSenha}
+            onChange={(e) => setConfirmarSenha(e.target.value)}
+          />
 
-        <Button type="submit">{labels.botao}</Button>
-      </form>
+          {erro && (
+            <p className="text-center text-sm text-red-400">{erro}</p>
+          )}
+
+          <Button type="submit" loading={carregando}>
+            {labels.botao}
+          </Button>
+        </form>
+      ) : (
+        <form onSubmit={handleVerificar} className="space-y-4">
+          <p className="text-center text-sm text-slate-400">
+            Enviamos um código de verificação para <strong className="text-white">{email}</strong>.
+          </p>
+
+          <Input
+            icon={LockIcon}
+            type="text"
+            placeholder="Código de verificação"
+            value={codigo}
+            onChange={(e) => setCodigo(e.target.value)}
+          />
+
+          {codigoServidor && (
+            <p className="text-center text-xs text-slate-500">
+              Código dev: <strong className="text-[#00FF88]">{codigoServidor}</strong>
+            </p>
+          )}
+
+          {erro && (
+            <p className="text-center text-sm text-red-400">{erro}</p>
+          )}
+
+          <Button type="submit" loading={carregando}>
+            Verificar e-mail
+          </Button>
+        </form>
+      )}
 
       <div className="mt-4 text-center text-sm text-slate-400">
         <p>
