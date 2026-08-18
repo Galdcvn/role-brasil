@@ -111,7 +111,7 @@ describe('Registro fluxo', () => {
   it('calls registro API and shows OTP step', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ id: 1, nome: 'João', email: 'a@b.com', verificado: false, codigo: 123456 }),
+      json: async () => ({ id: 1, nome: 'João', email: 'a@b.com', verificado: false }),
     } as Response)
 
     const { container, cleanup } = renderAt(['/registro/cliente'])
@@ -119,6 +119,7 @@ describe('Registro fluxo', () => {
     await submitForm(container)
 
     expect(container.textContent).toContain('código de verificação')
+    expect(container.textContent).toContain('Reenviar código')
     cleanup()
   })
 
@@ -151,7 +152,7 @@ describe('Registro fluxo', () => {
     vi.spyOn(globalThis, 'fetch')
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ id: 1, nome: 'João', email: 'a@b.com', verificado: false, codigo: 123456 }),
+        json: async () => ({ id: 1, nome: 'João', email: 'a@b.com', verificado: false }),
       } as Response)
       .mockResolvedValueOnce({
         ok: true,
@@ -161,6 +162,13 @@ describe('Registro fluxo', () => {
     const { container, cleanup } = renderAt(['/registro/cliente'])
     fillForm(container, ['João', 'a@b.com', '123456', '123456'])
     await submitForm(container)
+
+    const codigoInput = container.querySelector('input[placeholder="Código de verificação"]') as HTMLInputElement
+    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')!.set!
+    act(() => {
+      setter.call(codigoInput, '123456')
+      codigoInput.dispatchEvent(new Event('input', { bubbles: true }))
+    })
     await submitForm(container)
 
     expect(container.textContent).toContain('Entrar')
@@ -171,7 +179,7 @@ describe('Registro fluxo', () => {
     vi.spyOn(globalThis, 'fetch')
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ id: 1, nome: 'João', email: 'a@b.com', verificado: false, codigo: 123456 }),
+        json: async () => ({ id: 1, nome: 'João', email: 'a@b.com', verificado: false }),
       } as Response)
       .mockResolvedValueOnce({
         ok: false,
@@ -181,6 +189,13 @@ describe('Registro fluxo', () => {
     const { container, cleanup } = renderAt(['/registro/cliente'])
     fillForm(container, ['João', 'a@b.com', '123456', '123456'])
     await submitForm(container)
+
+    const codigoInput = container.querySelector('input[placeholder="Código de verificação"]') as HTMLInputElement
+    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')!.set!
+    act(() => {
+      setter.call(codigoInput, '123456')
+      codigoInput.dispatchEvent(new Event('input', { bubbles: true }))
+    })
     await submitForm(container)
 
     expect(container.textContent).toContain('Código inválido ou expirado')
@@ -191,13 +206,20 @@ describe('Registro fluxo', () => {
     vi.spyOn(globalThis, 'fetch')
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ id: 1, nome: 'João', email: 'a@b.com', verificado: false, codigo: 123456 }),
+        json: async () => ({ id: 1, nome: 'João', email: 'a@b.com', verificado: false }),
       } as Response)
       .mockRejectedValueOnce(new Error('fail'))
 
     const { container, cleanup } = renderAt(['/registro/cliente'])
     fillForm(container, ['João', 'a@b.com', '123456', '123456'])
     await submitForm(container)
+
+    const codigoInput = container.querySelector('input[placeholder="Código de verificação"]') as HTMLInputElement
+    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')!.set!
+    act(() => {
+      setter.call(codigoInput, '123456')
+      codigoInput.dispatchEvent(new Event('input', { bubbles: true }))
+    })
     await submitForm(container)
 
     expect(container.textContent).toContain('Erro de conexão')

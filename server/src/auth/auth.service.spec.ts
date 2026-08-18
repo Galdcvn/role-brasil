@@ -1,4 +1,8 @@
-import { ConflictException, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -34,7 +38,7 @@ describe('AuthService', () => {
       adicionarPapel: jest.fn(),
     };
     jwtMock = { sign: jest.fn().mockReturnValue('token-jwt') };
-    configMock = { get: jest.fn().mockReturnValue('true') };
+    configMock = { get: jest.fn() };
     service = new AuthService(
       repositoryMock as unknown as UsuarioRepository,
       jwtMock as unknown as JwtService,
@@ -49,7 +53,7 @@ describe('AuthService', () => {
       senha: 'segredo1',
     };
 
-    it('cria o usuário novo, grava o OTP e devolve o código quando o fallback está ativo', async () => {
+    it('cria o usuário novo e grava o OTP', async () => {
       repositoryMock.findByEmail.mockResolvedValue(null);
       repositoryMock.create.mockResolvedValue({
         id: 1,
@@ -78,27 +82,13 @@ describe('AuthService', () => {
         expect.any(Number),
         expect.any(Date),
       );
-      expect(resultado).toHaveProperty('codigo');
-      const codigo = (resultado as unknown as { codigo: number }).codigo;
-      expect(codigo).toBeGreaterThanOrEqual(100000);
-      expect(codigo).toBeLessThanOrEqual(999999);
+      expect(resultado).not.toHaveProperty('codigo');
       expect(resultado).toEqual({
         id: 1,
         nome: 'Ana',
         email: 'ana@example.com',
         verificado: false,
-        codigo,
       });
-    });
-
-    it('não devolve o código quando o fallback está desativado', async () => {
-      configMock.get.mockReturnValue('false');
-      repositoryMock.findByEmail.mockResolvedValue(null);
-      repositoryMock.create.mockResolvedValue({ id: 1, verificado: false });
-
-      const resultado = await service.registrar(dto);
-
-      expect(resultado).not.toHaveProperty('codigo');
     });
 
     it('usa o papel informado no registro', async () => {
@@ -159,10 +149,30 @@ describe('AuthService', () => {
         'ORGANIZER',
       );
       expect(repositoryMock.setCodigoVerificacao).toHaveBeenCalled();
-      expect(resultado).toHaveProperty('codigo');
+      expect(resultado).not.toHaveProperty('codigo');
     });
 
-    it('lança ConflictException quando o email já existe e o papel já está vinculado', async () => {
+    it('reenvia OTP quando papel já vinculado mas não verificado (sem 409)', async () => {
+      repositoryMock.findByEmail.mockResolvedValue({
+        id: 1,
+        nome: 'Ana',
+        email: 'ana@example.com',
+        verificado: false,
+        papeis: [{ papel: { nome: 'CLIENT' } }],
+      });
+
+      const resultado = await service.registrar(dto);
+
+      expect(repositoryMock.setCodigoVerificacao).toHaveBeenCalled();
+      expect(resultado).toEqual({
+        id: 1,
+        nome: 'Ana',
+        email: 'ana@example.com',
+        verificado: false,
+      });
+    });
+
+    it('lança ConflictException quando o email já existe, papel vinculado e verificado', async () => {
       repositoryMock.findByEmail.mockResolvedValue({
         id: 1,
         nome: 'Ana',
@@ -194,21 +204,6 @@ describe('AuthService', () => {
 
       expect(repositoryMock.updateVerificado).toHaveBeenCalledWith(1);
       expect(resultado).toEqual({ mensagem: 'E-mail verificado com sucesso' });
-    });
-
-    it('aceita o código de fallback em ambiente de dev', async () => {
-      repositoryMock.findByEmail.mockResolvedValue({
-        id: 1,
-        codigoVerificacao: 654321,
-        codigoVerificacaoExpiraEm: new Date(Date.now() + 60_000),
-      });
-
-      await service.verificarEmail({
-        email: 'ana@example.com',
-        codigo: 0,
-      });
-
-      expect(repositoryMock.updateVerificado).toHaveBeenCalledWith(1);
     });
 
     it('lança UnauthorizedException para código incorreto', async () => {
@@ -253,6 +248,46 @@ describe('AuthService', () => {
       await expect(
         service.verificarEmail({ email: 'nao@existe.com', codigo: 123456 }),
       ).rejects.toBeInstanceOf(UnauthorizedException);
+    });
+  });
+
+  describe('reenviarCodigo', () => {
+    it('reenvia código para usuário não verificado', async () => {
+      repositoryMock.findByEmail.mockResolvedValue({
+        id: 1,
+        verificado: false,
+      });
+
+      const resultado = await service.reenviarCodigo('ana@example.com');
+
+      expect(repositoryMock.setCodigoVerificacao).toHaveBeenCalledWith(
+        1,
+        expect.any(Number),
+        expect.any(Date),
+      );
+      expect(resultado).toEqual({
+        mensagem: 'Código reenviado com sucesso',
+      });
+    });
+
+    it('retorna mensagem quando e-mail já verificado', async () => {
+      repositoryMock.findByEmail.mockResolvedValue({
+        id: 1,
+        verificado: true,
+      });
+
+      const resultado = await service.reenviarCodigo('ana@example.com');
+
+      expect(repositoryMock.setCodigoVerificacao).not.toHaveBeenCalled();
+      expect(resultado).toEqual({ mensagem: 'E-mail já verificado' });
+    });
+
+    it('lança NotFoundException para usuário inexistente', async () => {
+      repositoryMock.findByEmail.mockResolvedValue(null);
+
+      await expect(
+        service.reenviarCodigo('nao@existe.com'),
+      ).rejects.toBeInstanceOf(NotFoundException);
     });
   });
 

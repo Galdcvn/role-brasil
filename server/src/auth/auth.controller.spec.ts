@@ -10,6 +10,7 @@ describe('AuthController', () => {
   let serviceMock: {
     registrar: jest.Mock;
     verificarEmail: jest.Mock;
+    reenviarCodigo: jest.Mock;
     login: jest.Mock;
   };
 
@@ -17,6 +18,7 @@ describe('AuthController', () => {
     serviceMock = {
       registrar: jest.fn(),
       verificarEmail: jest.fn(),
+      reenviarCodigo: jest.fn(),
       login: jest.fn(),
     };
     controller = new AuthController(serviceMock as unknown as AuthService);
@@ -43,6 +45,15 @@ describe('AuthController', () => {
     const resultado = controller.verificarEmail(dto);
 
     expect(serviceMock.verificarEmail).toHaveBeenCalledWith(dto);
+    expect(resultado).toEqual({ mensagem: 'ok' });
+  });
+
+  it('reenviarCodigo repassa o email', () => {
+    serviceMock.reenviarCodigo.mockReturnValue({ mensagem: 'ok' });
+
+    const resultado = controller.reenviarCodigo({ email: 'ana@example.com' });
+
+    expect(serviceMock.reenviarCodigo).toHaveBeenCalledWith('ana@example.com');
     expect(resultado).toEqual({ mensagem: 'ok' });
   });
 

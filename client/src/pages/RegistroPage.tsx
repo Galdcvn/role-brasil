@@ -4,6 +4,8 @@ import AuthLayout from '../components/auth/AuthLayout'
 import Input from '../components/ui/Input'
 import Button from '../components/ui/Button'
 
+const API_URL = import.meta.env.VITE_API_URL ?? '/api'
+
 const UserIcon = (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
@@ -21,8 +23,6 @@ const LockIcon = (
     <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
   </svg>
 )
-
-const API_URL = import.meta.env.VITE_API_URL ?? '/api'
 
 const ROTULOS_PAPEL: Record<string, { subtitulo: string; botao: string }> = {
   CLIENT: { subtitulo: 'Crie sua conta.', botao: 'Cadastrar' },
@@ -50,7 +50,7 @@ export default function RegistroPage({ papel }: Props) {
   const [carregando, setCarregando] = useState(false)
   const [etapa, setEtapa] = useState<'formulario' | 'verificacao'>('formulario')
   const [codigo, setCodigo] = useState('')
-  const [codigoServidor, setCodigoServidor] = useState('')
+  const [cooldown, setCooldown] = useState(0)
 
   const labels = ROTULOS_PAPEL[papel] ?? ROTULOS_PAPEL.CLIENT;
 
@@ -75,13 +75,6 @@ export default function RegistroPage({ papel }: Props) {
         const body = await res.json().catch(() => null)
         setErro(body?.message ?? 'Não foi possível realizar o cadastro.')
         return
-      }
-
-      const data = await res.json()
-
-      if (data.codigo) {
-        setCodigoServidor(String(data.codigo))
-        setCodigo(String(data.codigo))
       }
 
       setEtapa('verificacao')
@@ -114,6 +107,37 @@ export default function RegistroPage({ papel }: Props) {
       setErro('Erro de conexão. Tente novamente.')
     } finally {
       setCarregando(false)
+    }
+  }
+
+  async function handleReenviar() {
+    if (cooldown > 0) return
+
+    setErro('')
+    try {
+      const res = await fetch(`${API_URL}/auth/reenviar-codigo`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+
+      if (!res.ok) {
+        setErro('Não foi possível reenviar o código.')
+        return
+      }
+
+      setCooldown(60)
+      const timer = setInterval(() => {
+        setCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer)
+            return 0
+          }
+          return prev - 1
+        })
+      }, 1000)
+    } catch {
+      setErro('Erro de conexão. Tente novamente.')
     }
   }
 
@@ -186,12 +210,6 @@ export default function RegistroPage({ papel }: Props) {
             onChange={(e) => setCodigo(e.target.value)}
           />
 
-          {codigoServidor && (
-            <p className="text-center text-xs text-slate-500">
-              Código dev: <strong className="text-[#00FF88]">{codigoServidor}</strong>
-            </p>
-          )}
-
           {erro && (
             <p className="text-center text-sm text-red-400">{erro}</p>
           )}
@@ -199,6 +217,15 @@ export default function RegistroPage({ papel }: Props) {
           <Button type="submit" loading={carregando}>
             Verificar e-mail
           </Button>
+
+          <button
+            type="button"
+            onClick={handleReenviar}
+            disabled={cooldown > 0}
+            className="w-full text-center text-sm text-slate-400 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {cooldown > 0 ? `Reenviar em ${cooldown}s` : 'Reenviar código'}
+          </button>
         </form>
       )}
 

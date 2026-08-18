@@ -71,7 +71,7 @@ As migrations são escritas manualmente no SQL Editor do Supabase — **não** r
 
 ## Como rodar
 
-> **Estado atual: backend completo** — autenticação, módulo organizador (catálogo TMDb, eventos, sessões), módulo cliente (rotas públicas, favoritos, assentos, reservas, pagamentos, ingressos, mensagens) e módulo portaria (validação de ingressos, comprovantes, histórico) implementados no server, com **251 testes** passando. O client tem Portal unificado (sidebar, bottom nav, tema escuro), páginas de Login/Registro conectadas à API, e **42 testes** passando com coverage ≥ 90%.
+> **Estado atual: backend completo** — autenticação, módulo organizador (catálogo TMDb, eventos, sessões), módulo cliente (rotas públicas, favoritos, assentos, reservas, pagamentos, ingressos, mensagens) e módulo portaria (validação de ingressos, comprovantes, histórico) implementados no server, com **254 testes** passando. O client tem Portal unificado (sidebar, bottom nav, tema escuro), páginas de Login/Registro conectadas à API, e **42 testes** passando com coverage ≥ 90%.
 
 ### Pré-requisitos
 
@@ -113,6 +113,15 @@ npm run test:cov
 ## Linha do tempo das decisões
 
 > Registro das decisões tomadas ao longo do desenvolvimento, com o contexto de cada uma. Inserida em ordem cronológica; decisões novas são adicionadas no topo.
+
+### 18/08/2026 — Fix fluxo auth completo (validação OTP + dead-lock + reenvio)
+
+- **Bug raiz — DTO `verificar-email`**: `@IsInt()` rejeitava strings mesmo com `transform: true`. Fix: `@Transform(({ value }) => Number(value))` antes de `@IsInt()`.
+- **Dead-lock removido**: `registrar()` agora reenvia OTP quando email+papel já existem mas não verificados (antes dava 409 e travava o usuário). Só dá 409 se o email já estiver verificado.
+- **Novo endpoint `POST /auth/reenviar-codigo`**: aceita `{ email }`, gera novo OTP para usuários não verificados. Rate limit não implementado (futuro).
+- **`comFallbackDev` removido**: o código OTP nunca mais é retornado na resposta — nem em dev. O fallback `000000` também foi removido do `verificarEmail` por segurança.
+- **Client**: botão "Reenviar código" na tela de verificação com cooldown de 60s. Envio de `codigo` como `Number()` no body.
+- **Testes**: 254 server + 42 client (total 296), todos passando.
 
 ### 18/08/2026 — Fix vitest hang (jsdom → happy-dom) + cobertura client ≥ 90%
 

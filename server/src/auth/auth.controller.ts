@@ -4,6 +4,7 @@ import { Request } from 'express';
 import { Public } from '../common/decorators/public.decorator';
 import { AuthService, UsuarioLogado } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { ReenviarCodigoDto } from './dto/reenviar-codigo.dto';
 import { RegistrarDto } from './dto/registrar.dto';
 import { VerificarEmailDto } from './dto/verificar-email.dto';
 
@@ -22,6 +23,11 @@ export class AuthController {
   @Post('verificar-email')
   verificarEmail(@Body() dto: VerificarEmailDto) {
     return this.authService.verificarEmail(dto);
+  }
+
+  @Post('reenviar-codigo')
+  reenviarCodigo(@Body() dto: ReenviarCodigoDto) {
+    return this.authService.reenviarCodigo(dto.email);
   }
 
   @Post('login')

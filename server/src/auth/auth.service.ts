@@ -1,6 +1,7 @@
 import {
   ConflictException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -14,7 +15,6 @@ import {
 import { RegistrarDto } from './dto/registrar.dto';
 import { VerificarEmailDto } from './dto/verificar-email.dto';
 
-const CODIGO_FALLBACK_DEV = 0;
 const TTL_CODIGO_MS = 10 * 60 * 1000;
 
 export interface UsuarioLogado {
@@ -40,8 +40,19 @@ export class AuthService {
       const papelVinculado = existente.papeis.some(
         (p) => p.papel.nome === papel,
       );
+
       if (papelVinculado) {
-        throw new ConflictException('Não foi possível realizar o cadastro');
+        if (existente.verificado) {
+          throw new ConflictException('Não foi possível realizar o cadastro');
+        }
+
+        await this.gerarNovoCodigo(existente.id);
+        return {
+          id: existente.id,
+          nome: existente.nome,
+          email: existente.email,
+          verificado: existente.verificado,
+        };
       }
 
       await this.usuarioRepository.adicionarPapel(existente.id, papel);
@@ -55,21 +66,13 @@ export class AuthService {
         };
       }
 
-      const codigo = gerarCodigoOtp();
-      await this.usuarioRepository.setCodigoVerificacao(
-        existente.id,
-        codigo,
-        new Date(Date.now() + TTL_CODIGO_MS),
-      );
-      return this.comFallbackDev(
-        {
-          id: existente.id,
-          nome: existente.nome,
-          email: existente.email,
-          verificado: existente.verificado,
-        },
-        codigo,
-      );
+      await this.gerarNovoCodigo(existente.id);
+      return {
+        id: existente.id,
+        nome: existente.nome,
+        email: existente.email,
+        verificado: existente.verificado,
+      };
     }
 
     const senha = await bcrypt.hash(dto.senha, 10);
@@ -80,22 +83,14 @@ export class AuthService {
       papel,
     });
 
-    const codigo = gerarCodigoOtp();
-    await this.usuarioRepository.setCodigoVerificacao(
-      usuario.id,
-      codigo,
-      new Date(Date.now() + TTL_CODIGO_MS),
-    );
+    await this.gerarNovoCodigo(usuario.id);
 
-    return this.comFallbackDev(
-      {
-        id: usuario.id,
-        nome: usuario.nome,
-        email: usuario.email,
-        verificado: usuario.verificado,
-      },
-      codigo,
-    );
+    return {
+      id: usuario.id,
+      nome: usuario.nome,
+      email: usuario.email,
+      verificado: usuario.verificado,
+    };
   }
 
   async verificarEmail(dto: VerificarEmailDto) {
@@ -109,8 +104,7 @@ export class AuthService {
       Date.now() > usuario.codigoVerificacaoExpiraEm.getTime();
     const codigoConfere =
       usuario.codigoVerificacao !== null &&
-      (dto.codigo === usuario.codigoVerificacao ||
-        (this.fallbackDevAtivo() && dto.codigo === CODIGO_FALLBACK_DEV));
+      dto.codigo === usuario.codigoVerificacao;
 
     if (!codigoConfere || expirado) {
       throw new UnauthorizedException('Código inválido ou expirado');
@@ -118,6 +112,19 @@ export class AuthService {
 
     await this.usuarioRepository.updateVerificado(usuario.id);
     return { mensagem: 'E-mail verificado com sucesso' };
+  }
+
+  async reenviarCodigo(email: string) {
+    const usuario = await this.usuarioRepository.findByEmail(email);
+    if (!usuario) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+    if (usuario.verificado) {
+      return { mensagem: 'E-mail já verificado' };
+    }
+
+    await this.gerarNovoCodigo(usuario.id);
+    return { mensagem: 'Código reenviado com sucesso' };
   }
 
   async validarCredenciais(
@@ -154,17 +161,13 @@ export class AuthService {
     return { access_token: this.jwtService.sign(payload) };
   }
 
-  private fallbackDevAtivo(): boolean {
-    return this.config.get<string>('ALLOW_OTP_FALLBACK') === 'true';
-  }
-
-  private comFallbackDev(
-    retorno: { id: number; nome: string; email: string; verificado: boolean },
-    codigo: number,
-  ) {
-    if (!this.fallbackDevAtivo()) {
-      return retorno;
-    }
-    return { ...retorno, codigo };
+  private async gerarNovoCodigo(usuarioId: number): Promise<number> {
+    const codigo = gerarCodigoOtp();
+    await this.usuarioRepository.setCodigoVerificacao(
+      usuarioId,
+      codigo,
+      new Date(Date.now() + TTL_CODIGO_MS),
+    );
+    return codigo;
   }
 }
