@@ -52,15 +52,6 @@ const SECOES: Record<string, { label: string; itens: { label: string; path: stri
         ),
       },
       {
-        label: 'Criar Evento',
-        path: '/portal/organizador/evento/novo',
-        icon: (
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
-        ),
-      },
-      {
         label: 'Relatórios',
         path: '/portal/organizador/relatorios',
         icon: (
@@ -142,7 +133,7 @@ export default function Sidebar({ aberta, onFechar }: Props) {
                 <ul className="space-y-0.5">
                   {secao.itens.map((item) => {
                     const isActive =
-                      item.path === '/portal/cliente'
+                      item.path === '/portal/cliente' || item.path === '/portal/organizador'
                         ? location.pathname === item.path
                         : location.pathname.startsWith(item.path)
 

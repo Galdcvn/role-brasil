@@ -42,15 +42,6 @@ const ROTAS_POR_PAPEL: Record<string, { label: string; path: string; icon: React
       ),
     },
     {
-      label: 'Criar',
-      path: '/portal/organizador/evento/novo',
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-6 w-6">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-        </svg>
-      ),
-    },
-    {
       label: 'Relatórios',
       path: '/portal/organizador/relatorios',
       icon: (
@@ -113,7 +104,7 @@ export default function BottomNav() {
       <div className="flex flex-1 justify-around">
         {rotas.map((rota) => {
           const isActive =
-            rota.path === '/portal/cliente'
+            (rota.path === '/portal/cliente' || rota.path === '/portal/organizador')
               ? location.pathname === rota.path
               : location.pathname.startsWith(rota.path)
 
