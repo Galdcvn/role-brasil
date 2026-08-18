@@ -249,6 +249,40 @@ describe('AuthService', () => {
         service.verificarEmail({ email: 'nao@existe.com', codigo: 123456 }),
       ).rejects.toBeInstanceOf(UnauthorizedException);
     });
+
+    it('aceita código 0 quando ALLOW_OTP_FALLBACK está habilitado', async () => {
+      configMock.get.mockImplementation((key: string) =>
+        key === 'ALLOW_OTP_FALLBACK' ? true : undefined,
+      );
+      repositoryMock.findByEmail.mockResolvedValue({
+        id: 1,
+        codigoVerificacao: 768846,
+        codigoVerificacaoExpiraEm: new Date(Date.now() + 60_000),
+      });
+
+      const resultado = await service.verificarEmail({
+        email: 'ana@example.com',
+        codigo: 0,
+      });
+
+      expect(repositoryMock.updateVerificado).toHaveBeenCalledWith(1);
+      expect(resultado).toEqual({ mensagem: 'E-mail verificado com sucesso' });
+    });
+
+    it('rejeita código 0 quando ALLOW_OTP_FALLBACK está desabilitado', async () => {
+      configMock.get.mockImplementation((key: string) =>
+        key === 'ALLOW_OTP_FALLBACK' ? false : undefined,
+      );
+      repositoryMock.findByEmail.mockResolvedValue({
+        id: 1,
+        codigoVerificacao: 768846,
+        codigoVerificacaoExpiraEm: new Date(Date.now() + 60_000),
+      });
+
+      await expect(
+        service.verificarEmail({ email: 'ana@example.com', codigo: 0 }),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+    });
   });
 
   describe('reenviarCodigo', () => {

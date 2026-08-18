@@ -143,7 +143,7 @@ Regras:
 - JWT assinado pelo servidor com payload `{ sub, email, roles[] }` — papéis: `ORGANIZER`, `CLIENT`, `PORTARIA`. Expiram em 7 dias.
 - **Guards globais** (`APP_GUARD`): `JwtAuthGuard` exige token por padrão e respeita `@Public`; `RolesGuard` + decorator `@Roles(...)` restringem rotas por papel (ex.: criar evento exige `ORGANIZER`; validar ingresso exige `PORTARIA`; reservar exige `CLIENT`).
 - **Registro inteligente**: `RegistrarDto.papel` (`CLIENT | ORGANIZER | PORTARIA`, default `CLIENT`). Se o email já existe e o papel não está vinculado, o sistema adiciona o papel (sem duplicar usuário). Se o papel já está vinculado, retorna Conflict. Mensagens de erro genéricas (`'Credenciais inválidas'`, `'Não foi possível realizar o cadastro'`) — nunca revelam se uma conta existe ou não.
-- Verificação de email por **OTP de 6 dígitos (TTL 10 min)**. Em dev (`ALLOW_OTP_FALLBACK`), o código `000000` sempre funciona e o código "enviado" é devolvido na resposta — simulando o email sem infraestrutura real.
+- Verificação de email por **OTP de 6 dígitos (TTL 10 min)**. Em dev (`ALLOW_OTP_FALLBACK`), o código `000000` sempre funciona — o código gerado não é retornado na resposta (simula envio real de email). Novo endpoint `POST /auth/reenviar-codigo` gera novo OTP para usuários não verificados.
 - **Login exige email verificado e conta ativa**; usuário desativado (coluna `ativo`) não autentica. Todas as falhas de login retornam `'Credenciais inválidas'` (uniforme, sem vazamento).
 
 ## 5. Modelo de dados (Prisma)
