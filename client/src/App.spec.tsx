@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, beforeEach } from 'vitest'
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { MemoryRouter } from 'react-router-dom'
@@ -19,10 +19,8 @@ function renderAt(initialEntries: string[]) {
 }
 
 describe('App', () => {
-  it('renders the home page on "/"', () => {
-    const { container, root } = renderAt(['/'])
-    expect(container.textContent).toContain('Rolê Brasil')
-    act(() => root.unmount())
+  beforeEach(() => {
+    localStorage.clear()
   })
 
   it('renders the login page on "/login"', () => {
@@ -36,6 +34,20 @@ describe('App', () => {
     const { container, root } = renderAt(['/registro'])
     expect(container.textContent).toContain('Cadastrar')
     expect(container.textContent).toContain('Já tem uma conta?')
+    act(() => root.unmount())
+  })
+
+  it('redirects to /login when not authenticated on "/"', () => {
+    const { container, root } = renderAt(['/'])
+    expect(container.textContent).toContain('Entrar')
+    expect(container.textContent).toContain('Esqueceu a senha?')
+    act(() => root.unmount())
+  })
+
+  it('renders the home page on "/" when authenticated', () => {
+    localStorage.setItem('token', 'fake-jwt')
+    const { container, root } = renderAt(['/'])
+    expect(container.textContent).toContain('Rolê Brasil')
     act(() => root.unmount())
   })
 
