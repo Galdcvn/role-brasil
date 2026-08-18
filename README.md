@@ -71,7 +71,7 @@ As migrations são escritas manualmente no SQL Editor do Supabase — **não** r
 
 ## Como rodar
 
-> **Estado atual: backend completo** — autenticação, módulo organizador (catálogo TMDb, eventos, sessões), módulo cliente (rotas públicas, favoritos, assentos, reservas, pagamentos, ingressos, mensagens) e módulo portaria (validação de ingressos, comprovantes, histórico) implementados no server, com **251 testes** passando. O client tem telas de Login e Registro (glassmorphism) com ProtectedRoute.
+> **Estado atual: backend completo** — autenticação, módulo organizador (catálogo TMDb, eventos, sessões), módulo cliente (rotas públicas, favoritos, assentos, reservas, pagamentos, ingressos, mensagens) e módulo portaria (validação de ingressos, comprovantes, histórico) implementados no server, com **251 testes** passando. O client tem Portal unificado (sidebar, bottom nav, tema escuro), páginas de Login/Registro conectadas à API, e **42 testes** passando com coverage ≥ 90%.
 
 ### Pré-requisitos
 
@@ -113,6 +113,15 @@ npm run test:cov
 ## Linha do tempo das decisões
 
 > Registro das decisões tomadas ao longo do desenvolvimento, com o contexto de cada uma. Inserida em ordem cronológica; decisões novas são adicionadas no topo.
+
+### 18/08/2026 — Fix vitest hang (jsdom → happy-dom) + cobertura client ≥ 90%
+
+- **Problema**: vitest 4 com jsdom hangava no Windows (workers zumbis que nunca liberam o event loop) — testes passavam mas `vitest run` nunca encerrava. Pre-push hook falhava por timeout.
+- **Solução**: `jsdom` → `happy-dom` como `test.environment` no `vite.config.ts`. O happy-dom é mais leve e libera workers limpo. Additionally, `Portal.spec.tsx` (13 testes) foi merged no `App.spec.tsx` — testes separados que renderizam o App completo tinham comportamento instável; consolidar num único arquivo resolveu.
+- **Coverage client**: de 85.96% functions → **94.73%** — testes adicionados para `RelatoriosPage`, toggle de senha no `Input`, e abrir/fechar sidebar mobile.
+- **Testes client**: 10 → **42** (39 + 3 novos de cobertura).
+- **Total**: 293 testes (251 server + 42 client), todos passando.
+- **Docs atualizados**: README status, timeline, ARCHITECTURE.md.
 
 ### 17/08/2026 — Portal Unificado (Sidebar + Bottom Nav + tema escuro único)
 
