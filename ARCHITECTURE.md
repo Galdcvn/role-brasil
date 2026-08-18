@@ -46,21 +46,22 @@ O Rolê Brasil é uma plataforma de eventos e ingressos com três papéis:
 
 ```
 src/
+├── api.ts                 Helper fetch com auth (api<T>(path, init))
 ├── pages/
-│   ├── auth/            LoginPage, SelecaoPapel, Registro
 │   ├── portal/
-│   │   ├── organizador/ Dashboard, Eventos, NovoEvento, Relatorios
+│   │   ├── organizador/ Dashboard, Eventos, DetalheEvento, NovoEvento, EditarEvento, Relatorios
 │   │   └── cliente/     Placeholder (construção)
+│   ├── LoginPage.tsx, RegistroPage.tsx, SelecaoPapelPage.tsx
 │   ├── HomePage.tsx
 │   └── NotFoundPage.tsx
 ├── components/
 │   ├── auth/            AuthLayout, ProtectedRoute
 │   ├── portal/          PortalLayout, Sidebar, BottomNav, Header
-│   └── ui/              Button, Input
+│   └── ui/              Button, Input, Card, StatusBadge, EmptyState
 ├── contexts/
 │   ├── AuthContext.tsx   Decodifica JWT, user { id, email, roles[] }
 │   └── PortalContext.tsx roleAtivo, papeisDisponiveis
-└── lib/                 Cliente HTTP do /api e helpers puros
+└── test-utils.ts        criarTokenFake() helper
 ```
 
 Regras:
@@ -106,7 +107,7 @@ Regras:
 - **portaria** — valida por código (16 chars) ou qrToken; consumo atômico impede uso duplo; fluxo em 2 fases para meia-entrada/gratuidade. **Implementado** — registro de scan, confirmação/rejeição de comprovante, histórico global e por evento.
 - **favorites** — eventos salvos pelo cliente. **Implementado** — toggle (adicionar/remover), listar IDs favoritados.
 - **messages** — mensagens por evento (bidirectional cliente ↔ organizador); leitura e contagem de não lidas. **Implementado** — envio, listagem, marcar como lida, contagem de não lidas.
-- **stats** — painel do organizador: ocupação por sessão, ingressos vendidos por categoria e receita. Pendente.
+- **stats** — painel do organizador: ocupação por sessão, ingressos vendidos por categoria e receita. **Implementado** — `GET /api/stats/organizador` agrega métricas de todos os eventos do organizador.
 
 **Mapeamento para o scaffold atual (`server/src/`):**
 
@@ -124,7 +125,7 @@ Regras:
 | portaria | `portaria/` | **implementado** — `portaria.repository.ts`, `portaria.service.ts`, `portaria.controller.ts`, `dto/` |
 | favorito | `favorito/` | **implementado** — `favorito.repository.ts`, `favorito.service.ts`, `favorito.controller.ts` |
 | mensagem | `mensagem/` | **implementado** — `mensagem.repository.ts`, `mensagem.service.ts`, `mensagem.controller.ts`, `mensagem-global.controller.ts` |
-| stats | `stats/` | pendente — reutiliza `EventoRepository`/`SessaoRepository` |
+| stats | `stats/` | **implementado** — `stats.service.ts`, `stats.controller.ts` |
 | infra | `common/` | decorators `@Roles`/`@Public`, guards JWT/papéis, `NotificationService` |
 | infra | `prisma/` | `PrismaService`/`PrismaModule` (global) |
 | infra | `utils/` | utilitários (OTP, centavos) |

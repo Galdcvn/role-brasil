@@ -71,7 +71,7 @@ As migrations são escritas manualmente no SQL Editor do Supabase — **não** r
 
 ## Como rodar
 
-> **Estado atual: backend completo** — autenticação, módulo organizador (catálogo TMDb, eventos, sessões), módulo cliente (rotas públicas, favoritos, assentos, reservas, pagamentos, ingressos, mensagens) e módulo portaria (validação de ingressos, comprovantes, histórico) implementados no server, com **254 testes** passando. O client tem Portal unificado (sidebar, bottom nav, tema escuro), páginas de Login/Registro conectadas à API, e **42 testes** passando com coverage ≥ 90%.
+> **Estado atual: backend completo + client organizador** — autenticação, módulo organizador (catálogo TMDb, eventos, sessões), módulo cliente (rotas públicas, favoritos, assentos, reservas, pagamentos, ingressos, mensagens) e módulo portaria (validação de ingressos, comprovantes, histórico) implementados no server, com **258 testes** passando. O client tem Portal unificado (sidebar, bottom nav, tema escuro), páginas de Login/Registro conectadas à API, **módulo organizador completo** (Dashboard com KPIs, listagem, criação com TMDb, edição, relatórios, detalhe com sessões), e **42 testes** passando com coverage ≥ 90%.
 
 ### Pré-requisitos
 
@@ -113,6 +113,19 @@ npm run test:cov
 ## Linha do tempo das decisões
 
 > Registro das decisões tomadas ao longo do desenvolvimento, com o contexto de cada uma. Inserida em ordem cronológica; decisões novas são adicionadas no topo.
+
+### 18/08/2026 — Módulo Organizador completo no client
+
+- **Backend: `GET /api/stats/organizador`** — novo endpoint que agrega métricas de todos os eventos do organizador (totalEventos, eventosPorStatus, totalReservas, totalReceitaCentavos, totalIngressos). StatsService + StatsController + specs.
+- **Client infra**: `api.ts` (helper fetch com auth), `Card.tsx`, `StatusBadge.tsx`, `EmptyState.tsx` — componentes UI reutilizáveis com tema escuro.
+- **DashboardPage**: KPI cards (eventos, reservas, receita, ingressos) + eventos por status + últimos 5 eventos com link para detalhe. Empty state quando não há eventos.
+- **EventosPage**: listagem de eventos do organizador com poster, título, sessões, status badge. Loading skeleton + empty state. Botão "Criar Evento".
+- **DetalheEventoPage**: detalhe completo do evento — métricas, endereço, categorias, sessões (com métricas por sessão), ações (Publicar/Cancelar/Excluir). Form inline para criar sessão. Botão Editar.
+- **NovoEventoPage**: formulário multi-step — busca TMDb (preenche título/descrição/poster), dados do evento, endereço, categorias dinâmicas (INTEIRA/MEIA/GRATUIDADE + preço + comprovante).
+- **EditarEventoPage**: form de edição com proteção — se evento já tem reservas, só edita descrição. Senão, edita tudo.
+- **RelatoriosPage**: select de evento + métricas detalhadas (reservas por sessão, receita, ingressos por categoria).
+- **Rotas**: adicionadas `/portal/organizador/evento/:id` e `/portal/organizador/evento/:id/editar`.
+- **Testes**: 258 server (2 novos stats) + 42 client (todos passando).
 
 ### 18/08/2026 — Fix fluxo auth completo (validação OTP + dead-lock + reenvio)
 

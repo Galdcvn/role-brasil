@@ -1,0 +1,25 @@
+const CORES: Record<string, string> = {
+  RASCUNHO: 'bg-slate-700 text-slate-300',
+  PUBLICADO: 'bg-emerald-900/60 text-emerald-400',
+  CANCELADO: 'bg-red-900/60 text-red-400',
+  ATIVA: 'bg-emerald-900/60 text-emerald-400',
+  CANCELADA: 'bg-red-900/60 text-red-400',
+  EMITIDO: 'bg-emerald-900/60 text-emerald-400',
+  USADO: 'bg-blue-900/60 text-blue-400',
+  PENDENTE: 'bg-yellow-900/60 text-yellow-400',
+  PAGO: 'bg-emerald-900/60 text-emerald-400',
+  RECUSADO: 'bg-red-900/60 text-red-400',
+}
+
+interface StatusBadgeProps {
+  status: string
+}
+
+export default function StatusBadge({ status }: StatusBadgeProps) {
+  const classes = CORES[status] ?? 'bg-slate-700 text-slate-300'
+  return (
+    <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${classes}`}>
+      {status}
+    </span>
+  )
+}

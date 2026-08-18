@@ -9,7 +9,9 @@ import SelecaoPapelPage from './pages/SelecaoPapelPage'
 import RegistroPage from './pages/RegistroPage'
 import DashboardPage from './pages/portal/organizador/DashboardPage'
 import EventosPage from './pages/portal/organizador/EventosPage'
+import DetalheEventoPage from './pages/portal/organizador/DetalheEventoPage'
 import NovoEventoPage from './pages/portal/organizador/NovoEventoPage'
+import EditarEventoPage from './pages/portal/organizador/EditarEventoPage'
 import RelatoriosPage from './pages/portal/organizador/RelatoriosPage'
 import ClientePlaceholderPage from './pages/portal/cliente/PlaceholderPage'
 import NotFoundPage from './pages/NotFoundPage'
@@ -25,6 +27,8 @@ function PortalRoutes() {
           <Route path="organizador" element={<DashboardPage />} />
           <Route path="organizador/eventos" element={<EventosPage />} />
           <Route path="organizador/evento/novo" element={<NovoEventoPage />} />
+          <Route path="organizador/evento/:id" element={<DetalheEventoPage />} />
+          <Route path="organizador/evento/:id/editar" element={<EditarEventoPage />} />
           <Route path="organizador/relatorios" element={<RelatoriosPage />} />
           <Route path="portaria" element={<ClientePlaceholderPage />} />
           <Route path="portaria/*" element={<ClientePlaceholderPage />} />

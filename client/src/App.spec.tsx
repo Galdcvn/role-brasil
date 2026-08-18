@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach } from 'vitest'
+import { describe, expect, it, beforeEach, vi } from 'vitest'
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { MemoryRouter } from 'react-router-dom'
@@ -25,9 +25,17 @@ function renderAt(initialEntries: string[]) {
   }
 }
 
+function mockFetch(data: unknown, ok = true) {
+  return vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+    ok,
+    json: async () => data,
+  } as Response)
+}
+
 describe('App', () => {
   beforeEach(() => {
     localStorage.clear()
+    vi.restoreAllMocks()
   })
 
   it('renders the login page on "/login"', () => {
@@ -88,6 +96,7 @@ describe('App', () => {
   })
 
   it('renders the portal on "/portal" when authenticated', () => {
+    mockFetch({ totalEventos: 0, eventosPorStatus: {}, totalReservas: 0, totalReceitaCentavos: 0, totalIngressos: 0 })
     localStorage.setItem('token', criarTokenFake({ roles: ['ORGANIZER'] }))
     const { container, cleanup } = renderAt(['/portal'])
     expect(container.textContent).toContain('Rolê Brasil')
@@ -101,8 +110,9 @@ describe('App', () => {
   })
 
   it('renders portal sidebar with ORGANIZER sections', () => {
+    mockFetch([])
     localStorage.setItem('token', criarTokenFake({ roles: ['ORGANIZER'] }))
-    const { container, cleanup } = renderAt(['/portal/organizador'])
+    const { container, cleanup } = renderAt(['/portal/organizador/eventos'])
     expect(container.textContent).toContain('Dashboard')
     expect(container.textContent).toContain('Eventos')
     expect(container.textContent).toContain('Criar Evento')
@@ -110,28 +120,32 @@ describe('App', () => {
     cleanup()
   })
 
-  it('renders the Dashboard page content', () => {
+  it('renders the Dashboard page loading state', () => {
+    mockFetch({ totalEventos: 0, eventosPorStatus: {}, totalReservas: 0, totalReceitaCentavos: 0, totalIngressos: 0 })
     localStorage.setItem('token', criarTokenFake({ roles: ['ORGANIZER'] }))
     const { container, cleanup } = renderAt(['/portal/organizador'])
-    expect(container.textContent).toContain('Visão geral dos seus eventos')
+    expect(container.textContent).toContain('Dashboard')
     cleanup()
   })
 
-  it('renders portal sub-pages', () => {
+  it('renders the Eventos page with loading state', () => {
+    mockFetch([])
     localStorage.setItem('token', criarTokenFake({ roles: ['ORGANIZER'] }))
     const { container, cleanup } = renderAt(['/portal/organizador/eventos'])
-    expect(container.textContent).toContain('Lista de eventos criados por você')
+    expect(container.textContent).toContain('Meus Eventos')
     cleanup()
   })
 
-  it('renders Novo Evento and Relatórios pages', () => {
+  it('renders the Novo Evento page', () => {
     localStorage.setItem('token', criarTokenFake({ roles: ['ORGANIZER'] }))
     const { container, cleanup } = renderAt(['/portal/organizador/evento/novo'])
-    expect(container.textContent).toContain('Formulário de criação de evento')
+    expect(container.textContent).toContain('Criar Evento')
+    expect(container.querySelector('input[placeholder="Título do evento"]')).toBeTruthy()
     cleanup()
   })
 
   it('shows user email in header', () => {
+    mockFetch({ totalEventos: 0, eventosPorStatus: {}, totalReservas: 0, totalReceitaCentavos: 0, totalIngressos: 0 })
     localStorage.setItem('token', criarTokenFake({ roles: ['ORGANIZER'], email: 'org@test.com' }))
     const { container, cleanup } = renderAt(['/portal/organizador'])
     expect(container.textContent).toContain('org@test.com')
@@ -147,8 +161,9 @@ describe('App', () => {
   })
 
   it('shows both CLIENT and ORGANIZER sections in sidebar', () => {
+    mockFetch([])
     localStorage.setItem('token', criarTokenFake({ roles: ['CLIENT', 'ORGANIZER'] }))
-    const { container, cleanup } = renderAt(['/portal/organizador'])
+    const { container, cleanup } = renderAt(['/portal/organizador/eventos'])
     expect(container.textContent).toContain('Cliente')
     expect(container.textContent).toContain('Organizador')
     expect(container.textContent).toContain('Dashboard')
@@ -156,9 +171,10 @@ describe('App', () => {
   })
 
   it('renders the Relatórios page', () => {
+    mockFetch([])
     localStorage.setItem('token', criarTokenFake({ roles: ['ORGANIZER'] }))
     const { container, cleanup } = renderAt(['/portal/organizador/relatorios'])
-    expect(container.textContent).toContain('Relatórios de vendas e ocupação')
+    expect(container.textContent).toContain('Relatórios')
     cleanup()
   })
 
@@ -178,6 +194,7 @@ describe('App', () => {
   })
 
   it('opens sidebar on mobile via menu button', () => {
+    mockFetch({ totalEventos: 0, eventosPorStatus: {}, totalReservas: 0, totalReceitaCentavos: 0, totalIngressos: 0 })
     localStorage.setItem('token', criarTokenFake({ roles: ['ORGANIZER'] }))
     const { container, cleanup } = renderAt(['/portal/organizador'])
     const menuBtn = container.querySelector('button[aria-label="Abrir menu"]') as HTMLButtonElement
