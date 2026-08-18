@@ -74,6 +74,19 @@ describe('App', () => {
     act(() => root.unmount())
   })
 
+  it('redirects to /login when not authenticated on "/portal"', () => {
+    const { container, root } = renderAt(['/portal'])
+    expect(container.textContent).toContain('Entrar')
+    act(() => root.unmount())
+  })
+
+  it('renders the portal on "/portal" when authenticated', () => {
+    localStorage.setItem('token', 'fake-jwt')
+    const { container, root } = renderAt(['/portal'])
+    expect(container.textContent).toContain('Rolê Brasil')
+    act(() => root.unmount())
+  })
+
   it('redirects unknown routes to the 404 page', () => {
     const { container, root } = renderAt(['/rota-inexistente'])
     expect(container.textContent).toContain('Página não encontrada.')

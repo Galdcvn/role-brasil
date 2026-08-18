@@ -46,17 +46,31 @@ O Rolê Brasil é uma plataforma de eventos e ingressos com três papéis:
 
 ```
 src/
-├── pages/       Uma pasta-arquivo por rota (Home, Evento, Checkout, Portaria, ...)
-├── components/  Componentes reutilizáveis (SeatMap, TicketCard, QrScanner, ...)
-├── contexts/    Estado de sessão/auth e toasts
-└── lib/         Cliente HTTP do /api e helpers puros (formatação, ...)
+├── pages/
+│   ├── auth/            LoginPage, SelecaoPapel, Registro
+│   ├── portal/
+│   │   ├── organizador/ Dashboard, Eventos, NovoEvento, Relatorios
+│   │   └── cliente/     Placeholder (construção)
+│   ├── HomePage.tsx
+│   └── NotFoundPage.tsx
+├── components/
+│   ├── auth/            AuthLayout, ProtectedRoute
+│   ├── portal/          PortalLayout, Sidebar, BottomNav, Header
+│   └── ui/              Button, Input
+├── contexts/
+│   ├── AuthContext.tsx   Decodifica JWT, user { id, email, roles[] }
+│   └── PortalContext.tsx roleAtivo, papeisDisponiveis
+└── lib/                 Cliente HTTP do /api e helpers puros
 ```
 
 Regras:
 
+- **Portal unificado**: um único shell (sidebar + bottom nav) serve todos os papéis. O papel ativo é controlado por `PortalContext` e muda o conteúdo/rotas exibidos, não o layout.
+- **Sidebar (desktop) + Bottom Nav (mobile)**: sidebar fixa à esquerda em telas ≥ lg; bottom nav fixo no fundo em telas < lg. Ambos mostram apenas os papéis que o usuário possui.
 - **Role-gating no front é só UX.** Esconder/mostrar botões por papel melhora o produto, mas não protege nada: a autorização real é feita pelos guards no backend.
 - O client nunca decide preço, disponibilidade ou validade — ele exibe o que o server responde.
-- Estado de autenticação em `context`; token em `localStorage`; toda chamada protegida envia `Authorization: Bearer <token>`.
+- Estado de autenticação em `AuthContext`; token em `localStorage`; toda chamada protegida envia `Authorization: Bearer <token>`.
+- Tema escuro único — não há troca de tema entre papéis; shell e conteúdo são sempre dark.
 
 ## 4. Server (NestJS) — mapa de módulos
 

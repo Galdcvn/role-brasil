@@ -114,6 +114,19 @@ npm run test:cov
 
 > Registro das decisões tomadas ao longo do desenvolvimento, com o contexto de cada uma. Inserida em ordem cronológica; decisões novas são adicionadas no topo.
 
+### 17/08/2026 — Portal Unificado (Sidebar + Bottom Nav + tema escuro único)
+
+- **Decisão: portal único em vez de portais separados por papel** — o mesmo usuário pode ter múltiplos papéis (ex: ORGANIZER + CLIENT), então um portal unificado com troca de papel é mais flexível. O usuário escolheu **Sidebar + Bottom Nav** como padrão de navegação e **tema escuro único** (sem troca de tema entre papéis).
+- **Shell implementado**: `PortalLayout` (sidebar desktop + bottom nav mobile + header), `Sidebar` (seções colapsáveis por papel com ícones SVG inline), `BottomNav` (nav mobile com toggle de papel), `Header` (logo + email + logout).
+- **AuthContext**: decodifica JWT via `atob()`, expõe `user: { id, email, roles[] }`, `login()`, `logout()`, `isAutenticado`. Checa expiração do token na inicialização.
+- **PortalContext**: `roleAtivo` (papel selecionado), `setRoleAtivo()`, `papeisDisponiveis` (derivado do JWT).
+- **Páginas placeholder do organizador**: Dashboard, Eventos, Criar Evento, Relatórios — texto + heading para validar o layout.
+- **Placeholder cliente**: "Em breve" para não quebrar se user CLIENT acessar `/portal/cliente`.
+- **Rotas no App.tsx**: `/portal/*` protegido por `ProtectedRoute`, com sub-rotas aninhadas em `PortalRoutes` (wrapper do `PortalProvider`).
+- **Testes**: 10/10 passando (2 novos: portal autenticado + redirect não autenticado).
+- **Docs atualizados**: `ARCHITECTURE.md` seção 3 (Client) reescrita com estrutura de pastas e regras do portal.
+- **Como a IA refinou**: corrigiu warnings do oxlint (`exhaustive-deps` — `papeisDisponiveis` criava array novo a cada render → fixado com `useRef`; `only-export-components` → suppress comment). Todas as rotas de fallback do portal redirecionam para `/portal/organizador`.
+
 ### 17/08/2026 — Seleção de papel com animação + regra de docs obrigatórios
 
 - **`SelecaoPapelPage`**: nova página em `/registro` com 3 cards (Cliente, Organizador, Portaria). Cada card é um `Link` com ícone SVG, título e descrição. Animação `fade-in-down` com stagger de 150ms via `animation-delay` inline — os 3 botões aparecem um após o outro, descendo com opacidade.
