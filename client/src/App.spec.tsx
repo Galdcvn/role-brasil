@@ -85,7 +85,7 @@ describe('App', () => {
   it('renders the home page on "/" when authenticated', () => {
     localStorage.setItem('token', criarTokenFake({ roles: ['CLIENT'] }))
     const { container, cleanup } = renderAt(['/'])
-    expect(container.textContent).toContain('Rolê Brasil')
+    expect(container.textContent).toContain('em construção')
     cleanup()
   })
 
@@ -99,7 +99,7 @@ describe('App', () => {
     mockFetch({ totalEventos: 0, eventosPorStatus: {}, totalReservas: 0, totalReceitaCentavos: 0, totalIngressos: 0 })
     localStorage.setItem('token', criarTokenFake({ roles: ['ORGANIZER'] }))
     const { container, cleanup } = renderAt(['/portal'])
-    expect(container.textContent).toContain('Rolê Brasil')
+    expect(container.textContent).toContain('Dashboard')
     cleanup()
   })
 

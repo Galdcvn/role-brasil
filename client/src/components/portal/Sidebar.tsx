@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import { usePortal } from '../../contexts/PortalContext'
+import logoTexto from '../../assets/RB_Logo_Texto.png'
 
 interface Props {
   aberta: boolean
@@ -115,9 +116,7 @@ export default function Sidebar({ aberta, onFechar }: Props) {
         `}
       >
         <div className="flex h-14 items-center border-b border-slate-800 px-4">
-          <span className="text-lg font-bold tracking-wide text-[#00FF88]">
-            Rolê Brasil
-          </span>
+          <img src={logoTexto} alt="Rolê Brasil" className="h-8" />
         </div>
 
         <nav className="flex-1 overflow-y-auto px-3 py-4">

@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import AuthLayout from '../components/auth/AuthLayout'
 import Input from '../components/ui/Input'
 import Button from '../components/ui/Button'
+import logoTexto from '../assets/RB_Logo_Texto.png'
 
 const MailIcon = (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -60,8 +61,8 @@ export default function LoginPage() {
   return (
     <AuthLayout>
       <div className="mb-6 flex flex-col items-center">
-        <h1 className="text-2xl font-bold tracking-wide text-white">Rolê Brasil</h1>
-        <p className="mt-1 text-sm font-semibold text-slate-400">Faça seu rolê acontecer.</p>
+        <img src={logoTexto} alt="Rolê Brasil" className="h-10" />
+        <p className="mt-2 text-sm font-semibold text-slate-400">Faça seu rolê acontecer.</p>
       </div>
 
       {sucesso && (

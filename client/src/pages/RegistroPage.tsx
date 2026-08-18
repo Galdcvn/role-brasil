@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import AuthLayout from '../components/auth/AuthLayout'
 import Input from '../components/ui/Input'
 import Button from '../components/ui/Button'
+import logoTexto from '../assets/RB_Logo_Texto.png'
 
 const API_URL = import.meta.env.VITE_API_URL ?? '/api'
 
@@ -144,8 +145,8 @@ export default function RegistroPage({ papel }: Props) {
   return (
     <AuthLayout>
       <div className="mb-6 flex flex-col items-center">
-        <h1 className="text-2xl font-bold tracking-wide text-white">Rolê Brasil</h1>
-        <p className="mt-1 text-sm font-semibold text-slate-400">{labels.subtitulo}</p>
+        <img src={logoTexto} alt="Rolê Brasil" className="h-10" />
+        <p className="mt-2 text-sm font-semibold text-slate-400">{labels.subtitulo}</p>
       </div>
 
       {etapa === 'formulario' ? (

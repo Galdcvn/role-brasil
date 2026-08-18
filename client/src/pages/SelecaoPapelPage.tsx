@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import AuthLayout from '../components/auth/AuthLayout'
+import logoTexto from '../assets/RB_Logo_Texto.png'
 
 const PAPEIS = [
   {
@@ -41,8 +42,8 @@ export default function SelecaoPapelPage() {
   return (
     <AuthLayout>
       <div className="mb-6 flex flex-col items-center">
-        <h1 className="text-2xl font-bold tracking-wide text-white">Rolê Brasil</h1>
-        <p className="mt-1 text-sm font-semibold text-slate-400">Como você quer participar?</p>
+        <img src={logoTexto} alt="Rolê Brasil" className="h-10" />
+        <p className="mt-2 text-sm font-semibold text-slate-400">Como você quer participar?</p>
       </div>
 
       <div className="space-y-3">

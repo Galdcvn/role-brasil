@@ -1,4 +1,5 @@
 import { useAuth } from '../../contexts/AuthContext'
+import logo from '../../assets/RB_Logo.png'
 
 interface Props {
   onMenuClick: () => void
@@ -19,9 +20,7 @@ export default function Header({ onMenuClick }: Props) {
             <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
           </svg>
         </button>
-        <span className="text-lg font-bold tracking-wide text-[#00FF88] lg:hidden">
-          Rolê Brasil
-        </span>
+        <img src={logo} alt="Rolê Brasil" className="h-6 lg:hidden" />
       </div>
 
       <div className="flex items-center gap-3">
