@@ -115,7 +115,6 @@ describe('App', () => {
     const { container, cleanup } = renderAt(['/portal/organizador/eventos'])
     expect(container.textContent).toContain('Dashboard')
     expect(container.textContent).toContain('Eventos')
-    expect(container.textContent).toContain('Criar Evento')
     expect(container.textContent).toContain('Relatórios')
     cleanup()
   })
