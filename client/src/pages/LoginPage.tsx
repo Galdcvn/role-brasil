@@ -17,6 +17,8 @@ const LockIcon = (
   </svg>
 )
 
+const API_URL = import.meta.env.VITE_API_URL ?? '/api'
+
 export default function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -34,7 +36,7 @@ export default function LoginPage() {
     setCarregando(true)
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
+      const res = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, senha }),

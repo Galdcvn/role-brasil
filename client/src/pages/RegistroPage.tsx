@@ -22,6 +22,8 @@ const LockIcon = (
   </svg>
 )
 
+const API_URL = import.meta.env.VITE_API_URL ?? '/api'
+
 const ROTULOS_PAPEL: Record<string, { subtitulo: string; botao: string }> = {
   CLIENT: { subtitulo: 'Crie sua conta.', botao: 'Cadastrar' },
   ORGANIZER: {
@@ -63,7 +65,7 @@ export default function RegistroPage({ papel }: Props) {
 
     setCarregando(true)
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/registro`, {
+      const res = await fetch(`${API_URL}/auth/registro`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nome, email, senha, papel }),
@@ -96,7 +98,7 @@ export default function RegistroPage({ papel }: Props) {
     setCarregando(true)
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/verificar-email`, {
+      const res = await fetch(`${API_URL}/auth/verificar-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, codigo }),
