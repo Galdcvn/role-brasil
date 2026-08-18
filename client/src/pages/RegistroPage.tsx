@@ -106,6 +106,11 @@ export default function RegistroPage({ papel }: Props) {
             Entrar
           </Link>
         </p>
+        <p className="mt-2">
+          <Link to="/registro" className="text-xs text-slate-500 hover:text-slate-300">
+            ← Voltar para seleção de papel
+          </Link>
+        </p>
       </div>
     </AuthLayout>
   )

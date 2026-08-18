@@ -30,21 +30,30 @@ describe('App', () => {
     act(() => root.unmount())
   })
 
-  it('renders the registro CLIENT page on "/registro"', () => {
+  it('renders the role selection page on "/registro"', () => {
     const { container, root } = renderAt(['/registro'])
+    expect(container.textContent).toContain('Como você quer participar?')
+    expect(container.textContent).toContain('Cliente')
+    expect(container.textContent).toContain('Organizador')
+    expect(container.textContent).toContain('Portaria')
+    act(() => root.unmount())
+  })
+
+  it('renders the CLIENT registration form on "/registro/cliente"', () => {
+    const { container, root } = renderAt(['/registro/cliente'])
     expect(container.textContent).toContain('Crie sua conta.')
     expect(container.textContent).toContain('Cadastrar')
     act(() => root.unmount())
   })
 
-  it('renders the registro ORGANIZER page on "/registro/organizador"', () => {
+  it('renders the ORGANIZER registration form on "/registro/organizador"', () => {
     const { container, root } = renderAt(['/registro/organizador'])
     expect(container.textContent).toContain('Crie sua conta de Organizador.')
     expect(container.textContent).toContain('Cadastrar como Organizador')
     act(() => root.unmount())
   })
 
-  it('renders the registro PORTARIA page on "/registro/portaria"', () => {
+  it('renders the PORTARIA registration form on "/registro/portaria"', () => {
     const { container, root } = renderAt(['/registro/portaria'])
     expect(container.textContent).toContain('Crie sua conta de Portaria.')
     expect(container.textContent).toContain('Cadastrar como Portaria')

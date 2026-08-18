@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
+import SelecaoPapelPage from './pages/SelecaoPapelPage'
 import RegistroPage from './pages/RegistroPage'
 import NotFoundPage from './pages/NotFoundPage'
 
@@ -9,7 +10,8 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/registro" element={<RegistroPage papel="CLIENT" />} />
+      <Route path="/registro" element={<SelecaoPapelPage />} />
+      <Route path="/registro/cliente" element={<RegistroPage papel="CLIENT" />} />
       <Route
         path="/registro/organizador"
         element={<RegistroPage papel="ORGANIZER" />}
