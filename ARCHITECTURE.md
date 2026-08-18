@@ -82,7 +82,7 @@ Regras:
                                     Portaria   (Stats)
 ```
 
-- **auth** — registro com verificação de email, login (passport-local + JWT), estratégias e guards por papel. **Implementado**.
+- **auth** — registro com verificação de email, login (passport-local + JWT), estratégias e guards por papel. **Implementado** — registro inteligente: se email já existe e papel não está vinculado, adiciona o papel (sem duplicar usuário); se papel já está vinculado, Conflict. Mensagens de erro genéricas para evitar vazamento de existência de contas.
 - **catalog** — adapter para o TMDb (`CatalogProvider`): busca e detalhe de filmes, normalizados para um formato próprio; extensível para Ticketmaster. **Implementado** (`TmdbAdapter` com `fetch`, `GET /api/catalog/buscar`).
 - **events** — CRUD do organizador: montar evento a partir do catálogo, definir local, categorias de ingresso e preços, publicar/cancelar. **Implementado** — com reservas só edita a descrição e só cancela; sem reservas edita tudo e soft-deleta; `GET :id` devolve métricas; `GET /api/eventos/publicos` para busca pública com filtros ILIKE.
 - **sessions / seats** — um evento tem várias sessões (data/hora). Cada sessão tem seu mapa de assentos, gerado a partir da configuração de fileiras. A unicidade de um lugar por sessão é garantida por constraint de banco. **Implementado** — CRUD de sessões com regras de reserva; mapa de assentos agrupados por fileira.
@@ -122,15 +122,15 @@ Regras:
 - **Cancelar evento = transação**: sessões `ATIVA` viram `CANCELADA` e o evento vira `CANCELADO` numa única `$transaction`.
 - **Métricas em `GET /api/eventos/:id`** (dono): `reservasTotais`, `reservasPorSessao`, `valorArrecadado` (= `Σ subtotalCentavos` de reservas `PAGO`), `valorArrecadadoPorSessao`, `ingressosPorCategoria` e `ingressosPorCategoriaPorSessao` — computadas em TS no `EventoService` a partir de um `findMany` enxuto de reservas (KISS, sem SQL raw).
 - **Snapshot do TMDb**: com `tmdbId`, título/sinopse/pôster vêm do catálogo e podem ser sobrescritos pelo organizador; o evento sobrevive se a API externa cair.
-- **Papel dinâmico**: o registro aceita `papel: 'CLIENT' | 'ORGANIZER' | 'PORTARIA'` — o papel é buscado/criado sob demanda na mesma transação do usuário.
+- **Papel dinâmico**: o registro aceita `papel: 'CLIENT' | 'ORGANIZER' | 'PORTARIA'` — o papel é buscado/criado sob demanda na mesma transação do usuário. Se o email já existe e o papel não está vinculado, apenas adiciona o `Papeis_Usuario` (sem duplicar o usuário). N:N mantido para permitir que um usuário assuma múltiplos papéis sem re-registro.
 
 ### Autenticação e papéis
 
 - JWT assinado pelo servidor com payload `{ sub, email, roles[] }` — papéis: `ORGANIZER`, `CLIENT`, `PORTARIA`. Expiram em 7 dias.
 - **Guards globais** (`APP_GUARD`): `JwtAuthGuard` exige token por padrão e respeita `@Public`; `RolesGuard` + decorator `@Roles(...)` restringem rotas por papel (ex.: criar evento exige `ORGANIZER`; validar ingresso exige `PORTARIA`; reservar exige `CLIENT`).
-- **Registro aceita papel**: `RegistrarDto.papel` (`CLIENT | ORGANIZER | PORTARIA`, default `CLIENT`). O papel é buscado/criado sob demanda na mesma `$transaction` do usuário; senha com `bcrypt` (custo 10).
+- **Registro inteligente**: `RegistrarDto.papel` (`CLIENT | ORGANIZER | PORTARIA`, default `CLIENT`). Se o email já existe e o papel não está vinculado, o sistema adiciona o papel (sem duplicar usuário). Se o papel já está vinculado, retorna Conflict. Mensagens de erro genéricas (`'Credenciais inválidas'`, `'Não foi possível realizar o cadastro'`) — nunca revelam se uma conta existe ou não.
 - Verificação de email por **OTP de 6 dígitos (TTL 10 min)**. Em dev (`ALLOW_OTP_FALLBACK`), o código `000000` sempre funciona e o código "enviado" é devolvido na resposta — simulando o email sem infraestrutura real.
-- **Login exige email verificado e conta ativa**; usuário desativado (coluna `ativo`) não autentica.
+- **Login exige email verificado e conta ativa**; usuário desativado (coluna `ativo`) não autentica. Todas as falhas de login retornam `'Credenciais inválidas'` (uniforme, sem vazamento).
 
 ## 5. Modelo de dados (Prisma)
 

@@ -5,7 +5,6 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { gerarCodigoOtp } from '../utils/otp.util';
 import {
@@ -34,25 +33,52 @@ export class AuthService {
   ) {}
 
   async registrar(dto: RegistrarDto) {
-    const senha = await bcrypt.hash(dto.senha, 10);
+    const papel = dto.papel ?? NOME_PAPEL_CLIENT;
+    const existente = await this.usuarioRepository.findByEmail(dto.email);
 
-    let usuario: Awaited<ReturnType<UsuarioRepository['create']>>;
-    try {
-      usuario = await this.usuarioRepository.create({
-        nome: dto.nome,
-        email: dto.email,
-        senha,
-        papel: dto.papel ?? NOME_PAPEL_CLIENT,
-      });
-    } catch (erro) {
-      if (
-        erro instanceof Prisma.PrismaClientKnownRequestError &&
-        erro.code === 'P2002'
-      ) {
-        throw new ConflictException('E-mail já cadastrado');
+    if (existente) {
+      const papelVinculado = existente.papeis.some(
+        (p) => p.papel.nome === papel,
+      );
+      if (papelVinculado) {
+        throw new ConflictException('Não foi possível realizar o cadastro');
       }
-      throw erro;
+
+      await this.usuarioRepository.adicionarPapel(existente.id, papel);
+
+      if (existente.verificado) {
+        return {
+          id: existente.id,
+          nome: existente.nome,
+          email: existente.email,
+          verificado: existente.verificado,
+        };
+      }
+
+      const codigo = gerarCodigoOtp();
+      await this.usuarioRepository.setCodigoVerificacao(
+        existente.id,
+        codigo,
+        new Date(Date.now() + TTL_CODIGO_MS),
+      );
+      return this.comFallbackDev(
+        {
+          id: existente.id,
+          nome: existente.nome,
+          email: existente.email,
+          verificado: existente.verificado,
+        },
+        codigo,
+      );
     }
+
+    const senha = await bcrypt.hash(dto.senha, 10);
+    const usuario = await this.usuarioRepository.create({
+      nome: dto.nome,
+      email: dto.email,
+      senha,
+      papel,
+    });
 
     const codigo = gerarCodigoOtp();
     await this.usuarioRepository.setCodigoVerificacao(
@@ -103,7 +129,7 @@ export class AuthService {
       throw new UnauthorizedException('Credenciais inválidas');
     }
     if (!usuario.verificado) {
-      throw new UnauthorizedException('E-mail ainda não verificado');
+      throw new UnauthorizedException('Credenciais inválidas');
     }
 
     const senhaConfere = await bcrypt.compare(senha, usuario.senha);

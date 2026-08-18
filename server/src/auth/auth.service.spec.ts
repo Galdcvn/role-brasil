@@ -1,7 +1,6 @@
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { UsuarioRepository } from '../usuario/usuario.repository';
 import { AuthService } from './auth.service';
@@ -15,6 +14,7 @@ describe('AuthService', () => {
     findByEmailComSenha: jest.Mock;
     setCodigoVerificacao: jest.Mock;
     updateVerificado: jest.Mock;
+    adicionarPapel: jest.Mock;
   };
   let jwtMock: { sign: jest.Mock };
   let configMock: { get: jest.Mock };
@@ -31,6 +31,7 @@ describe('AuthService', () => {
       findByEmailComSenha: jest.fn(),
       setCodigoVerificacao: jest.fn(),
       updateVerificado: jest.fn(),
+      adicionarPapel: jest.fn(),
     };
     jwtMock = { sign: jest.fn().mockReturnValue('token-jwt') };
     configMock = { get: jest.fn().mockReturnValue('true') };
@@ -48,7 +49,8 @@ describe('AuthService', () => {
       senha: 'segredo1',
     };
 
-    it('cria o usuário, grava o OTP e devolve o código quando o fallback está ativo', async () => {
+    it('cria o usuário novo, grava o OTP e devolve o código quando o fallback está ativo', async () => {
+      repositoryMock.findByEmail.mockResolvedValue(null);
       repositoryMock.create.mockResolvedValue({
         id: 1,
         nome: 'Ana',
@@ -57,6 +59,7 @@ describe('AuthService', () => {
       });
 
       const resultado = await service.registrar(dto);
+
       expect(repositoryMock.create).toHaveBeenCalledWith({
         nome: 'Ana',
         email: 'ana@example.com',
@@ -76,7 +79,7 @@ describe('AuthService', () => {
         expect.any(Date),
       );
       expect(resultado).toHaveProperty('codigo');
-      const codigo = (resultado as { codigo: number }).codigo;
+      const codigo = (resultado as unknown as { codigo: number }).codigo;
       expect(codigo).toBeGreaterThanOrEqual(100000);
       expect(codigo).toBeLessThanOrEqual(999999);
       expect(resultado).toEqual({
@@ -90,6 +93,7 @@ describe('AuthService', () => {
 
     it('não devolve o código quando o fallback está desativado', async () => {
       configMock.get.mockReturnValue('false');
+      repositoryMock.findByEmail.mockResolvedValue(null);
       repositoryMock.create.mockResolvedValue({ id: 1, verificado: false });
 
       const resultado = await service.registrar(dto);
@@ -98,6 +102,7 @@ describe('AuthService', () => {
     });
 
     it('usa o papel informado no registro', async () => {
+      repositoryMock.findByEmail.mockResolvedValue(null);
       repositoryMock.create.mockResolvedValue({ id: 2, verificado: false });
 
       await service.registrar({ ...dto, papel: 'ORGANIZER' });
@@ -107,24 +112,70 @@ describe('AuthService', () => {
       );
     });
 
-    it('lança ConflictException quando o e-mail já existe', async () => {
-      repositoryMock.create.mockRejectedValue(
-        new Prisma.PrismaClientKnownRequestError(
-          'Unique constraint failed on the fields: (`email`)',
-          { code: 'P2002', clientVersion: '6.19.3' },
-        ),
+    it('adiciona papel quando email já existe mas o papel não está vinculado', async () => {
+      repositoryMock.findByEmail.mockResolvedValue({
+        id: 1,
+        nome: 'Ana',
+        email: 'ana@example.com',
+        verificado: true,
+        papeis: [{ papel: { nome: 'CLIENT' } }],
+      });
+
+      const resultado = await service.registrar({
+        ...dto,
+        papel: 'ORGANIZER',
+      });
+
+      expect(repositoryMock.adicionarPapel).toHaveBeenCalledWith(
+        1,
+        'ORGANIZER',
       );
+      expect(repositoryMock.create).not.toHaveBeenCalled();
+      expect(repositoryMock.setCodigoVerificacao).not.toHaveBeenCalled();
+      expect(resultado).toEqual({
+        id: 1,
+        nome: 'Ana',
+        email: 'ana@example.com',
+        verificado: true,
+      });
+    });
+
+    it('adiciona papel e reenvia OTP quando email existe e não está verificado', async () => {
+      repositoryMock.findByEmail.mockResolvedValue({
+        id: 1,
+        nome: 'Ana',
+        email: 'ana@example.com',
+        verificado: false,
+        papeis: [{ papel: { nome: 'CLIENT' } }],
+      });
+
+      const resultado = await service.registrar({
+        ...dto,
+        papel: 'ORGANIZER',
+      });
+
+      expect(repositoryMock.adicionarPapel).toHaveBeenCalledWith(
+        1,
+        'ORGANIZER',
+      );
+      expect(repositoryMock.setCodigoVerificacao).toHaveBeenCalled();
+      expect(resultado).toHaveProperty('codigo');
+    });
+
+    it('lança ConflictException quando o email já existe e o papel já está vinculado', async () => {
+      repositoryMock.findByEmail.mockResolvedValue({
+        id: 1,
+        nome: 'Ana',
+        email: 'ana@example.com',
+        verificado: true,
+        papeis: [{ papel: { nome: 'CLIENT' } }],
+      });
 
       await expect(service.registrar(dto)).rejects.toBeInstanceOf(
         ConflictException,
       );
-    });
-
-    it('propaga erros que não são de unicidade', async () => {
-      const erro = new Error('banco indisponível');
-      repositoryMock.create.mockRejectedValue(erro);
-
-      await expect(service.registrar(dto)).rejects.toBe(erro);
+      expect(repositoryMock.adicionarPapel).not.toHaveBeenCalled();
+      expect(repositoryMock.create).not.toHaveBeenCalled();
     });
   });
 
@@ -160,14 +211,6 @@ describe('AuthService', () => {
       expect(repositoryMock.updateVerificado).toHaveBeenCalledWith(1);
     });
 
-    it('lança UnauthorizedException para usuário inexistente', async () => {
-      repositoryMock.findByEmail.mockResolvedValue(null);
-
-      await expect(
-        service.verificarEmail({ email: 'nao@existe.com', codigo: 123456 }),
-      ).rejects.toBeInstanceOf(UnauthorizedException);
-    });
-
     it('lança UnauthorizedException para código incorreto', async () => {
       repositoryMock.findByEmail.mockResolvedValue({
         id: 1,
@@ -201,6 +244,14 @@ describe('AuthService', () => {
 
       await expect(
         service.verificarEmail({ email: 'ana@example.com', codigo: 123456 }),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+    });
+
+    it('lança UnauthorizedException para usuário inexistente', async () => {
+      repositoryMock.findByEmail.mockResolvedValue(null);
+
+      await expect(
+        service.verificarEmail({ email: 'nao@existe.com', codigo: 123456 }),
       ).rejects.toBeInstanceOf(UnauthorizedException);
     });
   });

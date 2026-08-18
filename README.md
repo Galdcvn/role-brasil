@@ -71,7 +71,7 @@ As migrations são escritas manualmente no SQL Editor do Supabase — **não** r
 
 ## Como rodar
 
-> **Estado atual: backend completo** — autenticação, módulo organizador (catálogo TMDb, eventos, sessões), módulo cliente (rotas públicas, favoritos, assentos, reservas, pagamentos, ingressos, mensagens) e módulo portaria (validação de ingressos, comprovantes, histórico) implementados no server, com **250 testes** passando. O client ainda está em scaffold (rotas `/` e `/404` apenas).
+> **Estado atual: backend completo** — autenticação, módulo organizador (catálogo TMDb, eventos, sessões), módulo cliente (rotas públicas, favoritos, assentos, reservas, pagamentos, ingressos, mensagens) e módulo portaria (validação de ingressos, comprovantes, histórico) implementados no server, com **251 testes** passando. O client tem telas de Login e Registro (glassmorphism) com ProtectedRoute.
 
 ### Pré-requisitos
 
@@ -113,6 +113,16 @@ npm run test:cov
 ## Linha do tempo das decisões
 
 > Registro das decisões tomadas ao longo do desenvolvimento, com o contexto de cada uma. Inserida em ordem cronológica; decisões novas são adicionadas no topo.
+
+### 17/08/2026 — Registro inteligente + segurança de mensagens
+
+- **Backend — `UsuarioRepository.adicionarPapel(usuarioId, nomePapel)`**: novo método que adiciona um `Papeis_Usuario` dentro de `$transaction` (find or create `Papel`). Permite que um usuário existente assuma um novo papel sem duplicar a conta.
+- **Backend — `AuthService.registrar()` refatorado**: lógica inteligente — se email não existe, cria user + papel + OTP (fluxo anterior); se email existe e papel não está vinculado, apenas adiciona o papel (reenvia OTP se não verificado); se email existe e papel já está vinculado, ConflictException. Removido catch de `Prisma.PrismaClientKnownRequestError` P2002 — a verificação agora é explícita via `findByEmail`.
+- **Segurança — mensagens de erro genéricas**: `'E-mail já cadastrado'` removido (vazava existência); `'E-mail ainda não verificado'` no login unificado para `'Credenciais inválidas'`. Todas as falhas de login agora retornam a mesma mensagem — um atacante não consegue distinguir "email não existe" de "senha errada" de "email não verificado".
+- **Frontend — `RegistroPage` com prop `papel`**: componente reutilizado para `/registro` (CLIENT), `/registro/organizador` (ORGANIZER) e `/registro/portaria` (PORTARIA). Título e botão mudam conforme o papel.
+- **Frontend — `ProtectedRoute`**: componentes não autenticados (sem `localStorage.token`) são redirecionados para `/login`. Rotas públicas: `/login`, `/registro/*`, `/404`.
+- **Checkpoint**: 251 testes, typecheck + lint + build limpos.
+- **Como a IA refinou**: detectou que o catch de P2002 era innecessário com a nova lógica explícita; removeu import `Prisma` do service; unificou as mensagens de erro de login (3 branches → 1 mensagem).
 
 ### 17/08/2026 — Fix deploy Railway (OpenSSL, tsconfig, porta)
 

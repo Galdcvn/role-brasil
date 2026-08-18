@@ -30,10 +30,24 @@ describe('App', () => {
     act(() => root.unmount())
   })
 
-  it('renders the registro page on "/registro"', () => {
+  it('renders the registro CLIENT page on "/registro"', () => {
     const { container, root } = renderAt(['/registro'])
+    expect(container.textContent).toContain('Crie sua conta.')
     expect(container.textContent).toContain('Cadastrar')
-    expect(container.textContent).toContain('Já tem uma conta?')
+    act(() => root.unmount())
+  })
+
+  it('renders the registro ORGANIZER page on "/registro/organizador"', () => {
+    const { container, root } = renderAt(['/registro/organizador'])
+    expect(container.textContent).toContain('Crie sua conta de Organizador.')
+    expect(container.textContent).toContain('Cadastrar como Organizador')
+    act(() => root.unmount())
+  })
+
+  it('renders the registro PORTARIA page on "/registro/portaria"', () => {
+    const { container, root } = renderAt(['/registro/portaria'])
+    expect(container.textContent).toContain('Crie sua conta de Portaria.')
+    expect(container.textContent).toContain('Cadastrar como Portaria')
     act(() => root.unmount())
   })
 

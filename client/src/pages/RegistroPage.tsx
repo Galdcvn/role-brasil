@@ -22,11 +22,29 @@ const LockIcon = (
   </svg>
 )
 
-export default function RegistroPage() {
+const ROTULOS_PAPEL: Record<string, { subtitulo: string; botao: string }> = {
+  CLIENT: { subtitulo: 'Crie sua conta.', botao: 'Cadastrar' },
+  ORGANIZER: {
+    subtitulo: 'Crie sua conta de Organizador.',
+    botao: 'Cadastrar como Organizador',
+  },
+  PORTARIA: {
+    subtitulo: 'Crie sua conta de Portaria.',
+    botao: 'Cadastrar como Portaria',
+  },
+}
+
+interface Props {
+  papel: string
+}
+
+export default function RegistroPage({ papel }: Props) {
   const [nome, setNome] = useState('')
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [confirmarSenha, setConfirmarSenha] = useState('')
+
+  const labels = ROTULOS_PAPEL[papel] ?? ROTULOS_PAPEL.CLIENT;
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -36,7 +54,7 @@ export default function RegistroPage() {
     <AuthLayout>
       <div className="mb-6 flex flex-col items-center">
         <h1 className="text-2xl font-bold tracking-wide text-white">Rolê Brasil</h1>
-        <p className="mt-1 text-sm font-semibold text-slate-400">Crie sua conta.</p>
+        <p className="mt-1 text-sm font-semibold text-slate-400">{labels.subtitulo}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -78,7 +96,7 @@ export default function RegistroPage() {
           onChange={(e) => setConfirmarSenha(e.target.value)}
         />
 
-        <Button type="submit">Cadastrar</Button>
+        <Button type="submit">{labels.botao}</Button>
       </form>
 
       <div className="mt-4 text-center text-sm text-slate-400">

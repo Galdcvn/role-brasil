@@ -109,6 +109,20 @@ export class UsuarioRepository {
     });
   }
 
+  async adicionarPapel(usuarioId: number, nomePapel: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const papel = await tx.papel.findFirst({
+        where: { nome: nomePapel },
+      });
+      const papelId =
+        papel?.id ?? (await tx.papel.create({ data: { nome: nomePapel } })).id;
+
+      return tx.papeisUsuario.create({
+        data: { usuarioId, papelId },
+      });
+    });
+  }
+
   desativar(id: number) {
     return this.prisma.usuario.update({
       where: { id },
