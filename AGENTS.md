@@ -11,6 +11,7 @@
 - **NÃO** utilize `any` nas definições de tipos do TypeScript. Use tipagem estrita, `unknown` ou Generics quando a tipagem exata for dinâmica.
 - **NÃO** utilize Herança de classes para reaproveitamento de código; prefira **Composição**.
 - **⚠️ ATUALIZE O README.md E O ARCHITECTURE.md** após CADA implementação ou decisão significativa. Isso é **obrigatório** e **não pode ser esquecido**. O `README.md` recebe a linha do tempo com decisões; o `ARCHITECTURE.md` recebe a descrição atualizada do módulo/fluxo. Faça isso **antes** de commitar.
+- **⚠️ MOBILE FIRST** — Todo layout e componente de UI deve ser projetado **primeiro para telas pequenas (mobile)**. Estilos base = mobile. Classes com prefixo `sm:`, `md:`, `lg:` são usadas **apenas** para aprimorar em telas maiores. **NUNCA** comece com desktop e tente "adaptar" para mobile.
 
 ## Princípios & Qualidade de Código
 

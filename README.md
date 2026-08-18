@@ -121,7 +121,13 @@ npm run test:cov
 - **`AGENTS.md` atualizado**: regra inegociável adicionada — `⚠️ ATUALIZE O README.md E O ARCHITECTURE.md` após cada implementação significativa, antes de commitar. Seção 4 reescrita com checklist obrigatória. Checkpoint agora exige docs atualizados antes de avançar.
 - **Como a IA refinou**: o usuário apontou que a IA esquecia de atualizar os docs; a solução foi adicionar a regra como inegociável no `AGENTS.md` com alerta visual (⚠️) e linguagem direta, para que a IA não ignore.
 
-### 17/08/2026 — Registro inteligente + segurança de mensagens
+### 17/08/2026 — Mobile First + regra de docs obrigatórios
+
+- **Regra Mobile First adicionada ao `AGENTS.md`**: todo layout e componente de UI deve ser projetado primeiro para telas pequenas. Estilos base = mobile; prefixos `sm:`, `md:`, `lg:` apenas para aprimorar em telas maiores.
+- **`AuthLayout` ajustado**: padding `p-8` → `p-6 sm:p-8` — card menor no mobile (p/ telas 320px+), maior no desktop. Demais componentes (`Input`, `Button`, páginas) já estavam mobile-first (full-width, stack, touch targets adequados ~48px).
+- **Regra de docs obrigatórios reforçada no `AGENTS.md`**: seção 4 reescrita com checklist; checkpoint exige docs atualizados antes de avançar.
+
+### 17/08/2026 — Seleção de papel com animação + regra de docs obrigatórios
 
 - **Backend — `UsuarioRepository.adicionarPapel(usuarioId, nomePapel)`**: novo método que adiciona um `Papeis_Usuario` dentro de `$transaction` (find or create `Papel`). Permite que um usuário existente assuma um novo papel sem duplicar a conta.
 - **Backend — `AuthService.registrar()` refatorado**: lógica inteligente — se email não existe, cria user + papel + OTP (fluxo anterior); se email existe e papel não está vinculado, apenas adiciona o papel (reenvia OTP se não verificado); se email existe e papel já está vinculado, ConflictException. Removido catch de `Prisma.PrismaClientKnownRequestError` P2002 — a verificação agora é explícita via `findByEmail`.
