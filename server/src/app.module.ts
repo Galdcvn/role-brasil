@@ -17,6 +17,7 @@ import { PagamentoModule } from './pagamento/pagamento.module';
 import { PortariaModule } from './portaria/portaria.module';
 import { ReservaModule } from './reserva/reserva.module';
 import { SessaoModule } from './sessao/sessao.module';
+import { StatsModule } from './stats/stats.module';
 import { UsuarioModule } from './usuario/usuario.module';
 
 @Module({
@@ -35,6 +36,7 @@ import { UsuarioModule } from './usuario/usuario.module';
     PagamentoModule,
     PortariaModule,
     SessaoModule,
+    StatsModule,
   ],
   controllers: [AppController],
   providers: [
