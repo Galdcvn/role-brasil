@@ -101,7 +101,7 @@ export default function RegistroPage({ papel }: Props) {
       const res = await fetch(`${API_URL}/auth/verificar-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, codigo }),
+        body: JSON.stringify({ email, codigo: Number(codigo) }),
       })
 
       if (!res.ok) {
