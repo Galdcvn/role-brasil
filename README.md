@@ -71,7 +71,7 @@ As migrations são escritas manualmente no SQL Editor do Supabase — **não** r
 
 ## Como rodar
 
-> **Estado atual: backend completo + client organizador** — autenticação, módulo organizador (catálogo TMDb, eventos, sessões), módulo cliente (rotas públicas, favoritos, assentos, reservas, pagamentos, ingressos, mensagens) e módulo portaria (validação de ingressos, comprovantes, histórico) implementados no server, com **258 testes** passando. O client tem Portal unificado (sidebar, bottom nav, tema escuro), páginas de Login/Registro conectadas à API, **módulo organizador completo** (Dashboard com KPIs, listagem, criação com TMDb, edição, relatórios, detalhe com sessões), e **42 testes** passando com coverage ≥ 90%.
+> **Estado atual: backend completo + client organizador completo** — autenticação, módulo organizador (catálogo TMDb, eventos, sessões), módulo cliente, módulo portaria implementados no server, com **258 testes** passando. O client tem Portal unificado (sidebar, bottom nav, tema escuro), páginas de Login/Registro conectadas à API, **módulo organizador completo** (Dashboard com KPIs, listagem, criação com TMDb, edição com proteção, relatórios, detalhe com sessões e ações), e **130 testes** passando com coverage ≥ 89%.
 
 ### Pré-requisitos
 
@@ -125,7 +125,7 @@ npm run test:cov
 - **EditarEventoPage**: form de edição com proteção — se evento já tem reservas, só edita descrição. Senão, edita tudo.
 - **RelatoriosPage**: select de evento + métricas detalhadas (reservas por sessão, receita, ingressos por categoria).
 - **Rotas**: adicionadas `/portal/organizador/evento/:id` e `/portal/organizador/evento/:id/editar`.
-- **Testes**: 258 server (2 novos stats) + 42 client (todos passando).
+- **Testes**: 258 server (stats) + 130 client (39 antigos + 91 novos: Card, StatusBadge, EmptyState, api, EventosPage, DashboardPage, DetalheEventoPage com interações, NovoEventoPage com TMDb/form, EditarEventoPage com proteção, RelatoriosPage). Coverage client: 92.5% stmts / 86.8% branches / 89.1% functions / 93.2% lines.
 
 ### 18/08/2026 — Fix fluxo auth completo (validação OTP + dead-lock + reenvio)
 
