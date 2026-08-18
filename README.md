@@ -114,6 +114,13 @@ npm run test:cov
 
 > Registro das decisões tomadas ao longo do desenvolvimento, com o contexto de cada uma. Inserida em ordem cronológica; decisões novas são adicionadas no topo.
 
+### 17/08/2026 — Seleção de papel com animação + regra de docs obrigatórios
+
+- **`SelecaoPapelPage`**: nova página em `/registro` com 3 cards (Cliente, Organizador, Portaria). Cada card é um `Link` com ícone SVG, título e descrição. Animação `fade-in-down` com stagger de 150ms via `animation-delay` inline — os 3 botões aparecem um após o outro, descendo com opacidade.
+- **Rotas reorganizadas**: `/registro` agora mostra a seleção de papel; o formulário de registro ficou em `/registro/{papel}` (`/registro/cliente`, `/registro/organizador`, `/registro/portaria`). Link "Voltar para seleção de papel" no rodapé de cada formulário.
+- **`AGENTS.md` atualizado**: regra inegociável adicionada — `⚠️ ATUALIZE O README.md E O ARCHITECTURE.md` após cada implementação significativa, antes de commitar. Seção 4 reescrita com checklist obrigatória. Checkpoint agora exige docs atualizados antes de avançar.
+- **Como a IA refinou**: o usuário apontou que a IA esquecia de atualizar os docs; a solução foi adicionar a regra como inegociável no `AGENTS.md` com alerta visual (⚠️) e linguagem direta, para que a IA não ignore.
+
 ### 17/08/2026 — Registro inteligente + segurança de mensagens
 
 - **Backend — `UsuarioRepository.adicionarPapel(usuarioId, nomePapel)`**: novo método que adiciona um `Papeis_Usuario` dentro de `$transaction` (find or create `Papel`). Permite que um usuário existente assuma um novo papel sem duplicar a conta.
