@@ -10,6 +10,7 @@
 - **NÃO** instale bibliotecas `npm`, `yarn` ou `pnpm` adicionais sem autorização prévia e explícita no chat.
 - **NÃO** utilize `any` nas definições de tipos do TypeScript. Use tipagem estrita, `unknown` ou Generics quando a tipagem exata for dinâmica.
 - **NÃO** utilize Herança de classes para reaproveitamento de código; prefira **Composição**.
+- **⚠️ ATUALIZE O README.md E O ARCHITECTURE.md** após CADA implementação ou decisão significativa. Isso é **obrigatório** e **não pode ser esquecido**. O `README.md` recebe a linha do tempo com decisões; o `ARCHITECTURE.md` recebe a descrição atualizada do módulo/fluxo. Faça isso **antes** de commitar.
 
 ## Princípios & Qualidade de Código
 
@@ -48,7 +49,11 @@
   - **Build:** Garantir que o projeto compila.
   - **Testes & Coverage:** Executar `npm test -- --coverage`.
 - **Correção Estrita:** Ao encontrar erros nas validações acima, forneça o código para correção focando **estritamente** na resolução desses problemas. Não faça refatorações de escopo fora do erro apontado.
-- Avance para a próxima etapa/módulo **apenas** quando os testes passarem com sucesso e a cobertura de 85% for confirmada.
+- Avance para a próxima etapa/módulo **apenas** quando os testes passarem com sucesso, a cobertura de 85% for confirmada, e o **README.md + ARCHITECTURE.md** estiverem atualizados.
 
-### 4. Registro das atividades
-- Sempre que terminar uma implementação lembre de atualizar o `ARCHITECTURE.md`, se for cabível, e adicionar ao `README.md` atualizações sobre o sistema e sobre as decisões tomadas na linha do tempo, deixando claro as minhas decisões e como usei a IA para melhorar/refinar elas.
+### 4. Registro das atividades (OBRIGATÓRIO — NÃO ESQUEÇA)
+- **ANTES de commitar**, atualize:
+  1. **`README.md`** → adicione entrada na linha do tempo (decisão, contexto, como a IA refinou).
+  2. **`ARCHITECTURE.md`** → atualize a descrição do módulo/fluxo afetado.
+- Se a mudança é apenas de bugfix ou refatoração sem impacto arquitetural, atualize apenas o `README.md` com a entrada na timeline.
+- **NÃO faça commit sem atualizar esses arquivos.** Eles são a memória do projeto.
