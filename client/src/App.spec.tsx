@@ -95,11 +95,19 @@ describe('App', () => {
     cleanup()
   })
 
-  it('renders the portal on "/portal" when authenticated', () => {
+  it('renders the portal on "/portal" when authenticated as ORGANIZER', () => {
     mockFetch({ totalEventos: 0, eventosPorStatus: {}, totalReservas: 0, totalReceitaCentavos: 0, totalIngressos: 0 })
     localStorage.setItem('token', criarTokenFake({ roles: ['ORGANIZER'] }))
     const { container, cleanup } = renderAt(['/portal'])
     expect(container.textContent).toContain('Dashboard')
+    cleanup()
+  })
+
+  it('redirects CLIENT to /portal/cliente on "/portal"', () => {
+    mockFetch({ eventos: [], total: 0, page: 1, limit: 12 })
+    localStorage.setItem('token', criarTokenFake({ roles: ['CLIENT'] }))
+    const { container, cleanup } = renderAt(['/portal'])
+    expect(container.textContent).toContain('Explorar Eventos')
     cleanup()
   })
 

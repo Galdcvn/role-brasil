@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider } from './contexts/AuthContext'
+import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { PortalProvider } from './contexts/PortalContext'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import PortalLayout from './components/portal/PortalLayout'
@@ -19,12 +19,26 @@ import IngressosPage from './pages/portal/cliente/IngressosPage'
 import DetalheIngressoPage from './pages/portal/cliente/DetalheIngressoPage'
 import NotFoundPage from './pages/NotFoundPage'
 
+function PortalIndex() {
+  const { user } = useAuth()
+  if (user?.roles.includes('CLIENT')) return <Navigate to="cliente" replace />
+  if (user?.roles.includes('PORTARIA')) return <Navigate to="portaria" replace />
+  return <Navigate to="organizador" replace />
+}
+
+function PortalNotFound() {
+  const { user } = useAuth()
+  if (user?.roles.includes('CLIENT')) return <Navigate to="/portal/cliente" replace />
+  if (user?.roles.includes('PORTARIA')) return <Navigate to="/portal/portaria" replace />
+  return <Navigate to="/portal/organizador" replace />
+}
+
 function PortalRoutes() {
   return (
     <PortalProvider>
       <Routes>
         <Route element={<PortalLayout />}>
-          <Route index element={<Navigate to="organizador" replace />} />
+          <Route index element={<PortalIndex />} />
           <Route path="cliente" element={<InicioPage />} />
           <Route path="cliente/evento/:id" element={<DetalheEventoPage />} />
           <Route path="cliente/ingressos" element={<IngressosPage />} />
@@ -37,7 +51,7 @@ function PortalRoutes() {
           <Route path="organizador/relatorios" element={<RelatoriosPage />} />
           <Route path="portaria" element={<InicioPage />} />
           <Route path="portaria/*" element={<InicioPage />} />
-          <Route path="*" element={<Navigate to="organizador" replace />} />
+          <Route path="*" element={<PortalNotFound />} />
         </Route>
       </Routes>
     </PortalProvider>
