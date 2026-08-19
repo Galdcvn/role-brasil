@@ -187,6 +187,9 @@ export default function DetalheEventoPage() {
     }
   }
 
+  const categoriasDisponiveis = evento?.categorias ?? []
+  const primeiraCategoria = categoriasDisponiveis[0]?.nome ?? 'INTEIRA'
+
   function toggleAssento(assento: { id: number; fileira: string; numero: number }) {
     setItensSelecionados((prev) => {
       const idx = prev.findIndex((i) => i.assentoSessaoId === assento.id)
@@ -194,7 +197,7 @@ export default function DetalheEventoPage() {
         return prev.filter((_, i) => i !== idx)
       }
       if (prev.length >= 10) return prev
-      return [...prev, { assentoSessaoId: assento.id, categoria: 'INTEIRA', fileira: assento.fileira, numero: assento.numero }]
+      return [...prev, { assentoSessaoId: assento.id, categoria: primeiraCategoria, fileira: assento.fileira, numero: assento.numero }]
     })
   }
 
@@ -438,34 +441,45 @@ export default function DetalheEventoPage() {
             </div>
           ) : (
             <>
-              <div className="space-y-1">
-                {assentos.map((fileira) => (
-                  <div key={fileira.fileira} className="flex items-center gap-1.5">
-                    <span className="w-6 text-center text-xs font-semibold text-slate-500">{fileira.fileira}</span>
-                    <div className="flex flex-wrap gap-1">
-                      {fileira.assentos.map((assento) => {
-                        const selecionado = itensSelecionados.some((i) => i.assentoSessaoId === assento.id)
-                        const indisponivel = assento.status !== 'DISPONIVEL'
-                        return (
-                          <button
-                            key={assento.id}
-                            onClick={() => !indisponivel && toggleAssento(assento)}
-                            disabled={indisponivel}
-                            className={`flex h-8 w-8 items-center justify-center rounded text-xs font-medium transition-colors ${
-                              indisponivel
-                                ? 'cursor-not-allowed bg-slate-800 text-slate-600'
-                                : selecionado
-                                  ? 'bg-[#00FF88] text-slate-950'
-                                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                            }`}
-                          >
-                            {assento.numero}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                ))}
+              <div className="rounded-xl bg-slate-800/30 p-3 pb-5">
+                <div className="mx-auto mb-4 w-3/4 max-w-xs rounded-t-full bg-gradient-to-b from-slate-600/40 to-transparent py-1.5 text-center">
+                  <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Palco</span>
+                </div>
+
+                <div className="space-y-1.5 overflow-x-auto">
+                  {assentos.map((fileira, idx) => {
+                    const pl = idx * 4
+                    return (
+                      <div key={fileira.fileira} className="flex items-center justify-center gap-1.5">
+                        <span className="w-5 shrink-0 text-center text-[10px] font-semibold text-slate-500">{fileira.fileira}</span>
+                        <div className="flex items-center gap-0.5" style={{ paddingLeft: pl, paddingRight: pl }}>
+                          {fileira.assentos.map((assento) => {
+                            const selecionado = itensSelecionados.some((i) => i.assentoSessaoId === assento.id)
+                            const indisponivel = assento.status !== 'DISPONIVEL'
+                            return (
+                              <button
+                                key={assento.id}
+                                onClick={() => !indisponivel && toggleAssento(assento)}
+                                disabled={indisponivel}
+                                title={`${assento.fileira}${assento.numero}`}
+                                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[10px] font-medium transition-all sm:h-8 sm:w-8 sm:rounded-lg sm:text-xs ${
+                                  indisponivel
+                                    ? 'cursor-not-allowed bg-slate-800/60 text-slate-700'
+                                    : selecionado
+                                      ? 'bg-[#00FF88] text-slate-950 shadow-[0_0_8px_rgba(0,255,136,0.3)]'
+                                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600 hover:scale-110'
+                                }`}
+                              >
+                                {assento.numero}
+                              </button>
+                            )
+                          })}
+                        </div>
+                        <span className="w-5 shrink-0 text-center text-[10px] font-semibold text-slate-500">{fileira.fileira}</span>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
 
               <div className="flex items-center gap-4 text-xs text-slate-400">
@@ -494,9 +508,9 @@ export default function DetalheEventoPage() {
                           onChange={(e) => atualizarCategoria(item.assentoSessaoId, e.target.value)}
                           className="rounded border border-slate-700 bg-slate-800 px-2 py-1 text-xs text-white focus:border-[#00FF88] focus:outline-none"
                         >
-                          <option value="INTEIRA">Inteira</option>
-                          <option value="MEIA">Meia</option>
-                          <option value="GRATUIDADE">Gratuidade</option>
+                          {categoriasDisponiveis.map((cat) => (
+                            <option key={cat.nome} value={cat.nome}>{cat.nome}</option>
+                          ))}
                         </select>
                       </div>
                     ))}

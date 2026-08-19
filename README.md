@@ -114,6 +114,12 @@ npm run test:cov
 
 > Registro das decisões tomadas ao longo do desenvolvimento, com o contexto de cada uma. Inserida em ordem cronológica; decisões novas são adicionadas no topo.
 
+### 19/08/2026 — Layout teatro + categorias dinâmicas + fix timezone sessão
+
+- **Layout assentos estilo teatro**: substituída grade simples por layout com indicador de "Palco" no topo, linhas centralizadas, curvatura progressiva (fileiras traseiras com mais padding lateral), labels em ambos os lados, assentos arredondados com hover scale e glow verde no selecionado.
+- **Categorias dinâmicas no fluxo de compra**: dropdown de categorias agora filtra com base em `evento.categorias` ao invés de mostrar hardcoded INTEIRA/MEIA/GRATUIDADE. Default muda para a primeira categoria disponível do evento.
+- **Fix timezone sessão (3h a menos)**: `<input type="datetime-local">` retorna ISO sem timezone. Prisma interpretava como UTC, causando -3h no Brasil. Agora appende offset local (`-03:00`) antes de enviar ao backend.
+
 ### 19/08/2026 — QR Code scanner + modo kiosk + design system portaria
 
 - **QR Code scanner**: integrado `html5-qrcode` na `ValidarPage`. Botão "Escanear QR Code" abre câmera fullscreen com viewfinder; ao detectar QR, valida automaticamente. Componente `QRScanner.tsx` encapsula `Html5Qrcode` com lifecycle seguro (stop + clear no unmount).

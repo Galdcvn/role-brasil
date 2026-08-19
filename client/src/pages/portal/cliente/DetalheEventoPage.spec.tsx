@@ -245,9 +245,9 @@ describe('DetalheEventoPage', () => {
     await act(async () => { seat1.click() })
 
     const select = container.querySelector('select') as HTMLSelectElement
-    expect(select.value).toBe('INTEIRA')
-    act(() => { select.value = 'MEIA'; select.dispatchEvent(new Event('change', { bubbles: true })) })
-    expect(select.value).toBe('MEIA')
+    expect(select.value).toBe('Pista')
+    act(() => { select.value = 'VIP'; select.dispatchEvent(new Event('change', { bubbles: true })) })
+    expect(select.value).toBe('VIP')
     cleanup()
   })
 

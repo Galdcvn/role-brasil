@@ -76,7 +76,7 @@ Regras:
 ### Páginas do Portal do Cliente
 
 - **InicioPage** (`/portal/cliente`): busca de eventos públicos com filtros (texto, cidade, estado, data, preço) e paginação. Cards com poster, endereço, categorias, próxima sessão.
-- **DetalheEventoPage** (`/portal/cliente/evento/:id`): state machine de compra — INFO → ASSENTOS → RESERVA → CONFIRMAÇÃO. Info do evento, mapa de assentos, timer de expiração (10 min), pagamento (PIX/cartão), confirmação. Favoritos toggle. Chat integrado para quem tem ingresso (polling 10s).
+- **DetalheEventoPage** (`/portal/cliente/evento/:id`): state machine de compra — INFO → ASSENTOS → RESERVA → CONFIRMAÇÃO. Info do evento, mapa de assentos estilo teatro (palco visual, curvatura progressiva, labels duplos), categorias dinâmicas filtradas por evento, timer de expiração (10 min), pagamento (PIX/cartão), confirmação. Favoritos toggle. Chat integrado para quem tem ingresso (polling 10s).
 - **FavoritosPage** (`/portal/cliente/favoritos`): grid de eventos favoritados com poster, título, categorias, endereço, próxima sessão. Backend `GET /api/favoritos/eventos` retorna eventos completos.
 - **IngressosPage** (`/portal/cliente/ingressos`): lista de ingressos do cliente com filtros por status (EMITIDO, PENDENTE, TODOS).
 - **DetalheIngressoPage** (`/portal/cliente/ingressos/:id`): detalhe do ingresso com QR code, código de 16 chars, cancelamento com confirmação dupla (até 7 dias antes do evento).
