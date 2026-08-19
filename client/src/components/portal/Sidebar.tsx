@@ -121,8 +121,8 @@ export default function Sidebar({ aberta, onFechar }: Props) {
           aberta ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="flex h-14 items-center border-b border-slate-800 px-4">
-          <img src={logoTexto} alt="Rolê Brasil" className="h-10" />
+        <div className="flex h-16 items-center border-b border-slate-800 px-4">
+          <img src={logoTexto} alt="Rolê Brasil" className="h-12" />
         </div>
 
         <nav className="flex-1 overflow-y-auto px-3 py-4">

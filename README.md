@@ -71,7 +71,7 @@ As migrations são escritas manualmente no SQL Editor do Supabase — **não** r
 
 ## Como rodar
 
-> **Estado atual: backend completo + client organizador + client cliente completo** — autenticação, módulo organizador (catálogo TMDb, eventos, sessões), módulo cliente, módulo portaria implementados no server, com **258 testes** passando. O client tem Portal unificado (sidebar, bottom nav, tema escuro), páginas de Login/Registro conectadas à API, **módulo organizador completo** (Dashboard com KPIs, listagem, criação com TMDb, edição com proteção, relatórios, detalhe com sessões e ações), **módulo cliente completo** (explorar eventos, detalhe com fluxo de compra, ingressos, detalhe ingresso com QR, chat, favoritos), e **217 testes** passando com coverage ≥ 87%.
+> **Estado atual: backend completo + client completo (organizador + cliente + portaria)** — autenticação, módulo organizador (catálogo TMDb, eventos, sessões), módulo cliente, módulo portaria implementados no server, com **258 testes** passando. O client tem Portal unificado (sidebar slide-over mobile, tema escuro), páginas de Login/Registro conectadas à API, **módulo organizador completo** (Dashboard com KPIs, listagem, criação com TMDb, edição com proteção, relatórios com métricas reais, detalhe com sessões/criação/loader), **módulo cliente completo** (explorar eventos, detalhe com fluxo de compra, ingressos, detalhe ingresso com QR, chat, favoritos), **módulo portaria completo** (validar ingresso, histórico de scans), e **228 testes** passando com coverage ≥ 84%.
 
 ### Pré-requisitos
 
@@ -113,6 +113,19 @@ npm run test:cov
 ## Linha do tempo das decisões
 
 > Registro das decisões tomadas ao longo do desenvolvimento, com o contexto de cada uma. Inserida em ordem cronológica; decisões novas são adicionadas no topo.
+
+### 19/08/2026 — Batch de fixes críticos + Portal Portaria funcional
+
+- **Fix fluxo de compra (CRÍTICO)**: `CriarReservaDto` usava `@Max(10)` (validador de número) no array `itens`, causando 400 em toda `POST /api/reservas`. Substituído por `@ArrayMaxSize(10)`. Causa raiz: `typeof [] === 'number'` é sempre `false`, então o ValidationPipe rejeitava o body antes de chegar ao controller.
+- **Fix Relatórios página branca**: `RelatoriosPage.tsx` crashava porque acessava `detalhe._count.sessoes` (inexistente), `s.reservas` / `s.valor` (campos errados) e `ingressosPorCategoria.length` (Record não tem `.length`). Interfaces e rendering atualizados para o shape real do backend: `sessoes` array, `reservasPorSessao[].total`, `valorArrecadadoPorSessao`, `ingressosPorCategoria` como Record.
+- **Fix organizador DetalheEventoPage métricas**: mesma correção de shape — `Metricas.reservasPorSessao` usava `reservas`/`valor` (errados), trocado para `total` + `valorArrecadadoPorSessao`.
+- **Logo com texto aumentada**: `h-10` → `h-14` em LoginPage, SelecaoPapelPage, RegistroPage; `h-10` → `h-12` no Sidebar; `h-8` → `h-10` no Header.
+- **Loader ao criar sessão**: estado `criandoSessao` adicionado ao DetalheEventoPage do organizador; botão "Adicionar" agora mostra spinner durante a requisição.
+- **Portal Portaria completo (client)**: `ValidarPage` (input de código + resultado com cores verde/amarelo/vermelho + detalhes do ingresso) e `HistoricoPage` (lista cronológica de scans com cores por resultado). Rotas `/portal/portaria` e `/portal/portaria/historico` atualizadas no `App.tsx`.
+- **StatusBadge expandido**: adicionados status portaria (`APROVADO`, `PENDENTE_DOCUMENTACAO`, `REJEITADO`, `DOCUMENTACAO_CONFIRMADA`, `DOCUMENTACAO_RECUSADA`, `NAO_NECESSARIO`).
+- **Fix testes organizador**: mocks de `MOCK_PUBLICADO` e `MOCK_RASCUNHO` atualizados para o shape correto do backend (`total` em vez de `reservas`, `valorArrecadadoPorSessao` adicionado).
+- **Fix chat testes**: `renderPage` do DetalheEventoPage.spec.tsx agora envolve `DetalheEventoPage` em `<Routes>/<Route>` para que `useParams()` retorne `{ id }` corretamente. Mock do POST de mensagem reestruturado para evitar consumo por chamadas duplicadas de `carregarMensagens`.
+- **Testes**: 228 client + 258 server = 486 total, todos passando.
 
 ### 19/08/2026 — Fix: sidebar mobile, remover BottomNav
 

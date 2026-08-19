@@ -42,7 +42,7 @@ export default function SelecaoPapelPage() {
   return (
     <AuthLayout>
       <div className="mb-6 flex flex-col items-center">
-        <img src={logoTexto} alt="Rolê Brasil" className="h-10" />
+        <img src={logoTexto} alt="Rolê Brasil" className="h-14" />
         <p className="mt-2 text-sm font-semibold text-slate-400">Como você quer participar?</p>
       </div>
 

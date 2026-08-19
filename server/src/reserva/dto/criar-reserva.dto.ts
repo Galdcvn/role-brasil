@@ -1,4 +1,10 @@
-import { IsArray, IsInt, IsEnum, ValidateNested, Max } from 'class-validator';
+import {
+  IsArray,
+  IsInt,
+  IsEnum,
+  ValidateNested,
+  ArrayMaxSize,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { CategoriaIngresso } from '@prisma/client';
 
@@ -17,6 +23,6 @@ export class CriarReservaDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ItemReservaDto)
-  @Max(10)
+  @ArrayMaxSize(10)
   itens!: ItemReservaDto[];
 }

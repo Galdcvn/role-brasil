@@ -12,11 +12,21 @@ interface EventoResumo {
 interface Metricas {
   reservasTotais: number
   valorArrecadado: number
-  reservasPorSessao: Array<{ sessaoId: number; reservas: number; valor: number }>
-  ingressosPorCategoria: Array<{ categoria: string; count: number }>
+  reservasPorSessao: Array<{ sessaoId: number; dataHora: string; total: number }>
+  valorArrecadadoPorSessao: Array<{ sessaoId: number; dataHora: string; total: number }>
+  ingressosPorCategoria: Record<string, number>
+  ingressosPorCategoriaPorSessao: Array<{
+    sessaoId: number
+    dataHora: string
+    porCategoria: Record<string, number>
+  }>
 }
 
-interface EventoCompleto extends EventoResumo {
+interface EventoCompleto {
+  id: number
+  titulo: string
+  status: string
+  sessoes: Array<{ id: number; dataHora: string; status: string }>
   metricas: Metricas
 }
 
@@ -104,7 +114,7 @@ export default function RelatoriosPage() {
                 </Card>
                 <Card>
                   <p className="text-xs text-slate-400">Sessões</p>
-                  <p className="text-2xl font-bold text-white">{detalhe._count.sessoes}</p>
+                  <p className="text-2xl font-bold text-white">{detalhe.sessoes.length}</p>
                 </Card>
               </div>
 
@@ -116,8 +126,14 @@ export default function RelatoriosPage() {
                       <div key={s.sessaoId} className="flex items-center justify-between rounded-lg bg-slate-800/50 px-3 py-2 text-sm">
                         <span className="text-slate-400">Sessão #{s.sessaoId}</span>
                         <div className="flex gap-4">
-                          <span className="text-white">{s.reservas} reservas</span>
-                          <span className="font-semibold text-[#00FF88]">{formatarCentavos(s.valor)}</span>
+                          <span className="text-white">{s.total} reservas</span>
+                          <span className="font-semibold text-[#00FF88]">
+                            {formatarCentavos(
+                              detalhe.metricas.valorArrecadadoPorSessao.find(
+                                (v) => v.sessaoId === s.sessaoId,
+                              )?.total ?? 0,
+                            )}
+                          </span>
                         </div>
                       </div>
                     ))}
@@ -125,16 +141,18 @@ export default function RelatoriosPage() {
                 </Card>
               )}
 
-              {detalhe.metricas.ingressosPorCategoria.length > 0 && (
+              {Object.entries(detalhe.metricas.ingressosPorCategoria).filter(([, c]) => c > 0).length > 0 && (
                 <Card>
                   <h2 className="mb-3 text-sm font-semibold text-slate-300">Ingressos por Categoria</h2>
                   <div className="space-y-2">
-                    {detalhe.metricas.ingressosPorCategoria.map((c) => (
-                      <div key={c.categoria} className="flex items-center justify-between text-sm">
-                        <span className="text-slate-400">{c.categoria}</span>
-                        <span className="font-semibold text-white">{c.count}</span>
-                      </div>
-                    ))}
+                    {Object.entries(detalhe.metricas.ingressosPorCategoria)
+                      .filter(([, count]) => count > 0)
+                      .map(([categoria, count]) => (
+                        <div key={categoria} className="flex items-center justify-between text-sm">
+                          <span className="text-slate-400">{categoria}</span>
+                          <span className="font-semibold text-white">{count}</span>
+                        </div>
+                      ))}
                   </div>
                 </Card>
               )}

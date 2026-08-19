@@ -18,6 +18,8 @@ import DetalheEventoPage from './pages/portal/cliente/DetalheEventoPage'
 import IngressosPage from './pages/portal/cliente/IngressosPage'
 import DetalheIngressoPage from './pages/portal/cliente/DetalheIngressoPage'
 import FavoritosPage from './pages/portal/cliente/FavoritosPage'
+import ValidarPage from './pages/portal/portaria/ValidarPage'
+import HistoricoPage from './pages/portal/portaria/HistoricoPage'
 import NotFoundPage from './pages/NotFoundPage'
 
 function PortalIndex() {
@@ -51,8 +53,8 @@ function PortalRoutes() {
           <Route path="organizador/evento/:id" element={<DetalheEventoPageOrganizador />} />
           <Route path="organizador/evento/:id/editar" element={<EditarEventoPage />} />
           <Route path="organizador/relatorios" element={<RelatoriosPage />} />
-          <Route path="portaria" element={<InicioPage />} />
-          <Route path="portaria/*" element={<InicioPage />} />
+          <Route path="portaria" element={<ValidarPage />} />
+          <Route path="portaria/historico" element={<HistoricoPage />} />
           <Route path="*" element={<PortalNotFound />} />
         </Route>
       </Routes>

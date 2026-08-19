@@ -22,7 +22,11 @@ const MOCK_PUBLICADO = {
   endereco: { rua: 'Rua A', numero: 123, bairro: 'Centro', cidade: 'SP', estado: 'SP', cep: '01000000' },
   categorias: [{ nome: 'INTEIRA', precoCentavos: 5000, requerComprovante: false }],
   sessoes: [{ id: 1, dataHora: '2026-09-01T20:00:00Z', status: 'ATIVA' }],
-  metricas: { reservasTotais: 10, valorArrecadado: 50000, reservasPorSessao: [{ sessaoId: 1, reservas: 10, valor: 50000 }], ingressosPorCategoria: [{ categoria: 'INTEIRA', count: 10 }] },
+  metricas: {
+    reservasTotais: 10, valorArrecadado: 50000,
+    reservasPorSessao: [{ sessaoId: 1, dataHora: '2026-09-01T20:00:00Z', total: 10 }],
+    valorArrecadadoPorSessao: [{ sessaoId: 1, dataHora: '2026-09-01T20:00:00Z', total: 50000 }],
+  },
 }
 
 const MOCK_RASCUNHO = {
@@ -62,7 +66,7 @@ describe('DetalheEventoPage interactions', () => {
     vi.spyOn(globalThis, 'fetch')
       .mockResolvedValueOnce({ ok: true, json: async () => MOCK_RASCUNHO } as Response)
       .mockResolvedValueOnce({ ok: true, json: async () => ({}) } as Response)
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ ...MOCK_RASCUNHO, sessoes: [{ id: 1, dataHora: '2026-09-01T20:00:00Z', status: 'ATIVA' }], metricas: { ...MOCK_RASCUNHO.metricas, reservasPorSessao: [] } }) } as Response)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ ...MOCK_RASCUNHO, sessoes: [{ id: 1, dataHora: '2026-09-01T20:00:00Z', status: 'ATIVA' }], metricas: { ...MOCK_RASCUNHO.metricas, reservasPorSessao: [], valorArrecadadoPorSessao: [] } }) } as Response)
     await act(async () => { root.render(<MemoryRouter initialEntries={[entry]}><AuthProvider><PortalProvider><Routes><Route path="/portal/organizador/evento/:id" element={<DetalheEventoPage />} /></Routes></PortalProvider></AuthProvider></MemoryRouter>) })
     const dateInput = container.querySelector('input[type="datetime-local"]') as HTMLInputElement
     const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')!.set!
@@ -78,7 +82,7 @@ describe('DetalheEventoPage interactions', () => {
     vi.spyOn(globalThis, 'fetch')
       .mockResolvedValueOnce({ ok: true, json: async () => MOCK_PUBLICADO } as Response)
       .mockResolvedValueOnce({ ok: true, json: async () => ({}) } as Response)
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ ...MOCK_PUBLICADO, sessoes: [{ id: 1, dataHora: '2026-09-01T20:00:00Z', status: 'CANCELADA' }], metricas: { ...MOCK_PUBLICADO.metricas, reservasPorSessao: [] } }) } as Response)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ ...MOCK_PUBLICADO, sessoes: [{ id: 1, dataHora: '2026-09-01T20:00:00Z', status: 'CANCELADA' }], metricas: { ...MOCK_PUBLICADO.metricas, reservasPorSessao: [], valorArrecadadoPorSessao: [] } }) } as Response)
     await act(async () => { root.render(<MemoryRouter initialEntries={[entry]}><AuthProvider><PortalProvider><Routes><Route path="/portal/organizador/evento/:id" element={<DetalheEventoPage />} /></Routes></PortalProvider></AuthProvider></MemoryRouter>) })
     const cancelBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Cancelar' && !b.textContent.includes('Evento'))
     await act(async () => { cancelBtn?.click() })
@@ -188,7 +192,7 @@ describe('DetalheEventoPage interactions', () => {
     const mockSemMetrica = {
       ...MOCK_PUBLICADO,
       sessoes: [{ id: 99, dataHora: '2026-09-01T20:00:00Z', status: 'ATIVA' }],
-      metricas: { reservasTotais: 0, valorArrecadado: 0, reservasPorSessao: [], ingressosPorCategoria: [] },
+      metricas: { reservasTotais: 0, valorArrecadado: 0, reservasPorSessao: [], valorArrecadadoPorSessao: [] },
     }
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({ ok: true, json: async () => mockSemMetrica } as Response)
     await act(async () => { root.render(<MemoryRouter initialEntries={[entry]}><AuthProvider><PortalProvider><Routes><Route path="/portal/organizador/evento/:id" element={<DetalheEventoPage />} /></Routes></PortalProvider></AuthProvider></MemoryRouter>) })
@@ -201,7 +205,7 @@ describe('DetalheEventoPage interactions', () => {
     const mockCancelada = {
       ...MOCK_PUBLICADO,
       sessoes: [{ id: 1, dataHora: '2026-09-01T20:00:00Z', status: 'CANCELADA' }],
-      metricas: { ...MOCK_PUBLICADO.metricas, reservasPorSessao: [{ sessaoId: 1, reservas: 0, valor: 0 }] },
+      metricas: { ...MOCK_PUBLICADO.metricas, reservasPorSessao: [{ sessaoId: 1, dataHora: '2026-09-01T20:00:00Z', total: 0 }], valorArrecadadoPorSessao: [{ sessaoId: 1, dataHora: '2026-09-01T20:00:00Z', total: 0 }] },
     }
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({ ok: true, json: async () => mockCancelada } as Response)
     await act(async () => { root.render(<MemoryRouter initialEntries={[entry]}><AuthProvider><PortalProvider><Routes><Route path="/portal/organizador/evento/:id" element={<DetalheEventoPage />} /></Routes></PortalProvider></AuthProvider></MemoryRouter>) })

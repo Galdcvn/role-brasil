@@ -159,8 +159,8 @@ export default function DetalheEventoPage() {
   }, [id])
 
   useEffect(() => {
-    api<{ id: number }[]>('/ingressos').then((lista) => {
-      setTemIngresso(lista.some((ing) => ing.id))
+    api<{ id: number; reserva: { sessao: { evento: { id: number } } } }[]>('/ingressos').then((lista) => {
+      setTemIngresso(lista.some((ing) => ing.reserva.sessao.evento.id === Number(id)))
     }).catch(() => {})
   }, [id])
 

@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest'
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from '../../../contexts/AuthContext'
 import { PortalProvider } from '../../../contexts/PortalContext'
 import DetalheEventoPage from './DetalheEventoPage'
@@ -17,7 +17,9 @@ function renderPage(entry: string) {
       <MemoryRouter initialEntries={[entry]}>
         <AuthProvider>
           <PortalProvider>
-            <DetalheEventoPage />
+            <Routes>
+              <Route path="/portal/cliente/evento/:id" element={<DetalheEventoPage />} />
+            </Routes>
           </PortalProvider>
         </AuthProvider>
       </MemoryRouter>,
@@ -88,7 +90,7 @@ function mountPage() {
 }
 
 function mountPageComIngresso() {
-  return mockFetchSequence([ok(eventoFake), ok(false), ok([{ id: 1 }])])
+  return mockFetchSequence([ok(eventoFake), ok(false), ok([{ id: 1, reserva: { sessao: { evento: { id: 1 } } } }])])
 }
 
 describe('DetalheEventoPage', () => {
@@ -533,8 +535,9 @@ describe('DetalheEventoPage', () => {
 
   it('sends chat message', async () => {
     const spy = mountPageComIngresso()
+    const msgResponse = { ok: true, json: async () => ({ id: 2, eventoId: 1, remetenteId: 1, conteudo: 'Nova msg', lida: false, criadoEm: '2026-08-18', remetente: { id: 1, nome: 'João' } }) } as Response
     spy.mockResolvedValue({ ok: true, json: async () => [] } as Response)
-    spy.mockResolvedValueOnce({ ok: true, json: async () => ({ id: 2, eventoId: 1, remetenteId: 1, conteudo: 'Nova msg', lida: false, criadoEm: '2026-08-18', remetente: { id: 1, nome: 'João' } }) } as Response)
+    spy.mockResolvedValueOnce(msgResponse)
     const { container, cleanup } = renderPage('/portal/cliente/evento/1')
     await act(async () => {})
 
@@ -545,6 +548,8 @@ describe('DetalheEventoPage', () => {
     const msgInput = container.querySelector('input[placeholder="Digite sua mensagem..."]') as HTMLInputElement
     expect(msgInput).toBeTruthy()
     setReactInputValue(msgInput, 'Nova msg')
+
+    spy.mockResolvedValueOnce({ ok: true, json: async () => ({ id: 3, eventoId: 1, remetenteId: 1, conteudo: 'Nova msg', lida: false, criadoEm: '2026-08-18', remetente: { id: 1, nome: 'João' } }) } as Response)
 
     const sendBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Enviar') as HTMLButtonElement
     await act(async () => { sendBtn.click() })

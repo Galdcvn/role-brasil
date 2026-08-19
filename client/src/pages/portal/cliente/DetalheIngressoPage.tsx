@@ -65,7 +65,7 @@ export default function DetalheIngressoPage() {
     }
     setCancelando(true)
     try {
-      await api(`/reservas/${ingresso?.reserva.id}/cancelar`, { method: 'POST' })
+      await api(`/ingressos/${ingresso?.id}/cancelar`, { method: 'POST' })
       setIngresso((prev) => prev ? { ...prev, status: 'CANCELADO' } : null)
       setConfirmado(false)
     } catch (e: unknown) {

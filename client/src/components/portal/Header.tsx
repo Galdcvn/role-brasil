@@ -20,7 +20,7 @@ export default function Header({ onMenuClick }: Props) {
             <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
           </svg>
         </button>
-        <img src={logo} alt="Rolê Brasil" className="h-8 lg:hidden" />
+        <img src={logo} alt="Rolê Brasil" className="h-10 lg:hidden" />
       </div>
 
       <div className="flex items-center gap-3">

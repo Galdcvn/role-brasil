@@ -61,7 +61,7 @@ export default function LoginPage() {
   return (
     <AuthLayout>
       <div className="mb-6 flex flex-col items-center">
-        <img src={logoTexto} alt="Rolê Brasil" className="h-10" />
+        <img src={logoTexto} alt="Rolê Brasil" className="h-14" />
         <p className="mt-2 text-sm font-semibold text-slate-400">Faça seu rolê acontecer.</p>
       </div>
 
@@ -99,8 +99,7 @@ export default function LoginPage() {
       </form>
 
       <div className="mt-4 text-center text-sm text-slate-400">
-        <a href="#" className="hover:underline">Esqueceu a senha?</a>
-        <p className="mt-2">
+        <p>
           Ainda não tem conta?{' '}
           <Link to="/registro" className="font-semibold text-[#00FF88] hover:underline">
             Cadastre-se

@@ -85,10 +85,15 @@ Regras:
 
 - **DashboardPage**: KPI cards + eventos por status + últimos eventos.
 - **EventosPage**: listagem de eventos do organizador com poster, sessões, status.
-- **DetalheEventoPage**: métricas, endereço, categorias, sessões, ações (Publicar/Cancelar/Excluir), form inline para sessão.
+- **DetalheEventoPage**: métricas, endereço, categorias, sessões, ações (Publicar/Cancelar/Excluir), form inline para sessão com loader.
 - **NovoEventoPage**: multi-step — busca TMDb, dados do evento, endereço, categorias dinâmicas.
 - **EditarEventoPage**: form com proteção — se evento tem reservas, só edita descrição.
-- **RelatoriosPage**: métricas detalhadas por evento (reservas, receita, ingressos).
+- **RelatoriosPage**: métricas detalhadas por evento (reservas por sessão com receita, ingressos por categoria).
+
+### Páginas do Portal da Portaria
+
+- **ValidarPage** (`/portal/portaria`): input para código do ingresso, valida via `POST /portaria/validar`, exibe resultado (APROVADO/PENDENTE_DOCUMENTACAO/REJEITADO) com cores semáforo e detalhes do ingresso (evento, assento, categoria, usuário, código).
+- **HistoricoPage** (`/portal/portaria/historico`): lista cronológica de scans realizados pelo portaria logado, com cores por resultado e detalhes do evento/ingresso.
 
 ## 4. Server (NestJS) — mapa de módulos
 

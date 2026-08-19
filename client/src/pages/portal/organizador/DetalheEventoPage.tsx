@@ -29,7 +29,8 @@ interface Endereco {
 interface Metricas {
   reservasTotais: number
   valorArrecadado: number
-  reservasPorSessao: Array<{ sessaoId: number; reservas: number; valor: number }>
+  reservasPorSessao: Array<{ sessaoId: number; dataHora: string; total: number }>
+  valorArrecadadoPorSessao: Array<{ sessaoId: number; dataHora: string; total: number }>
 }
 
 interface Evento {
@@ -72,6 +73,7 @@ export default function DetalheEventoPage() {
   const [novaSessaoFileiras, setNovaSessaoFileiras] = useState(5)
   const [novaSessaoAssentos, setNovaSessaoAssentos] = useState(20)
   const [sessaoErro, setSessaoErro] = useState<string | null>(null)
+  const [criandoSessao, setCriandoSessao] = useState(false)
 
   useEffect(() => {
     api<Evento>(`/eventos/${id}`)
@@ -101,6 +103,7 @@ export default function DetalheEventoPage() {
     e.preventDefault()
     if (!novaSessaoData) return
     setSessaoErro(null)
+    setCriandoSessao(true)
     try {
       await api(`/eventos/${id}/sessoes`, {
         method: 'POST',
@@ -115,6 +118,8 @@ export default function DetalheEventoPage() {
       setEvento(atualizado)
     } catch (e: unknown) {
       setSessaoErro(e instanceof Error ? e.message : 'Erro')
+    } finally {
+      setCriandoSessao(false)
     }
   }
 
@@ -239,6 +244,9 @@ export default function DetalheEventoPage() {
               const metrica = evento.metricas.reservasPorSessao.find(
                 (r) => r.sessaoId === s.id,
               )
+              const receita = evento.metricas.valorArrecadadoPorSessao.find(
+                (r) => r.sessaoId === s.id,
+              )
               return (
                 <div
                   key={s.id}
@@ -247,7 +255,7 @@ export default function DetalheEventoPage() {
                   <div>
                     <p className="text-sm text-white">{formatarData(s.dataHora)}</p>
                     <p className="text-xs text-slate-400">
-                      {metrica?.reservas ?? 0} reservas — {formatarCentavos(metrica?.valor ?? 0)}
+                      {metrica?.total ?? 0} reservas — {formatarCentavos(receita?.total ?? 0)}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -275,7 +283,7 @@ export default function DetalheEventoPage() {
               onChange={(e) => setNovaSessaoData(e.target.value)}
               className="flex-1 rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm text-white focus:border-[#00FF88] focus:outline-none"
             />
-            <Button type="submit" className="w-auto px-4 py-2 text-xs">
+            <Button type="submit" loading={criandoSessao} className="w-auto px-4 py-2 text-xs">
               Adicionar
             </Button>
           </div>

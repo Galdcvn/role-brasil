@@ -15,12 +15,26 @@ const MOCK_DETALHE = {
   id: 1,
   titulo: 'Show',
   status: 'PUBLICADO',
-  _count: { sessoes: 2 },
+  sessoes: [
+    { id: 1, dataHora: '2026-09-01T20:00:00Z', status: 'ATIVA' },
+    { id: 2, dataHora: '2026-09-02T20:00:00Z', status: 'ATIVA' },
+  ],
   metricas: {
     reservasTotais: 20,
     valorArrecadado: 100000,
-    reservasPorSessao: [{ sessaoId: 1, reservas: 12, valor: 60000 }, { sessaoId: 2, reservas: 8, valor: 40000 }],
-    ingressosPorCategoria: [{ categoria: 'INTEIRA', count: 15 }, { categoria: 'MEIA', count: 5 }],
+    reservasPorSessao: [
+      { sessaoId: 1, dataHora: '2026-09-01T20:00:00Z', total: 12 },
+      { sessaoId: 2, dataHora: '2026-09-02T20:00:00Z', total: 8 },
+    ],
+    valorArrecadadoPorSessao: [
+      { sessaoId: 1, dataHora: '2026-09-01T20:00:00Z', total: 60000 },
+      { sessaoId: 2, dataHora: '2026-09-02T20:00:00Z', total: 40000 },
+    ],
+    ingressosPorCategoria: { INTEIRA: 15, MEIA: 5, GRATUIDADE: 0 },
+    ingressosPorCategoriaPorSessao: [
+      { sessaoId: 1, dataHora: '2026-09-01T20:00:00Z', porCategoria: { INTEIRA: 10, MEIA: 5, GRATUIDADE: 0 } },
+      { sessaoId: 2, dataHora: '2026-09-02T20:00:00Z', porCategoria: { INTEIRA: 5, MEIA: 0, GRATUIDADE: 0 } },
+    ],
   },
 }
 
@@ -78,6 +92,7 @@ describe('RelatoriosPage', () => {
     expect(container.textContent).toContain('Reservas Totais')
     expect(container.textContent).toContain('20')
     expect(container.textContent).toContain('R$ 1000,00')
+    expect(container.textContent).toContain('2')
     act(() => root.unmount())
     container.remove()
   })
@@ -107,6 +122,8 @@ describe('RelatoriosPage', () => {
     expect(container.textContent).toContain('Reservas por')
     expect(container.textContent).toContain('12 reservas')
     expect(container.textContent).toContain('8 reservas')
+    expect(container.textContent).toContain('R$ 600,00')
+    expect(container.textContent).toContain('R$ 400,00')
     act(() => root.unmount())
     container.remove()
   })
@@ -136,6 +153,38 @@ describe('RelatoriosPage', () => {
     expect(container.textContent).toContain('Ingressos por Categoria')
     expect(container.textContent).toContain('INTEIRA')
     expect(container.textContent).toContain('MEIA')
+    act(() => root.unmount())
+    container.remove()
+  })
+
+  it('hides categories with zero count', async () => {
+    localStorage.setItem('token', criarTokenFake({ roles: ['ORGANIZER'] }))
+    let call = 0
+    vi.spyOn(globalThis, 'fetch').mockImplementation(() => {
+      call++
+      const data = call === 1 ? MOCK_EVENTOS : MOCK_DETALHE
+      return Promise.resolve({ ok: true, json: async () => data } as Response)
+    })
+    const container = document.createElement('div')
+    document.body.appendChild(container)
+    const root = createRoot(container)
+    await act(async () => {
+      root.render(
+        <MemoryRouter initialEntries={['/portal/organizador/relatorios']}>
+          <AuthProvider>
+            <PortalProvider>
+              <RelatoriosPage />
+            </PortalProvider>
+          </AuthProvider>
+        </MemoryRouter>,
+      )
+    })
+    expect(container.textContent).toContain('Ingressos por Categoria')
+    expect(container.textContent).toContain('INTEIRA')
+    expect(container.textContent).toContain('15')
+    expect(container.textContent).toContain('MEIA')
+    expect(container.textContent).toContain('5')
+    expect(container.textContent).not.toContain('GRATUIDADE')
     act(() => root.unmount())
     container.remove()
   })

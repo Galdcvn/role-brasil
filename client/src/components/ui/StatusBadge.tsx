@@ -11,6 +11,12 @@ const CORES: Record<string, string> = {
   RECUSADO: 'bg-red-900/60 text-red-400',
   CONFIRMADA: 'bg-emerald-900/60 text-emerald-400',
   EXPIRADA: 'bg-orange-900/60 text-orange-400',
+  APROVADO: 'bg-emerald-900/60 text-emerald-400',
+  PENDENTE_DOCUMENTACAO: 'bg-yellow-900/60 text-yellow-400',
+  REJEITADO: 'bg-red-900/60 text-red-400',
+  DOCUMENTACAO_CONFIRMADA: 'bg-emerald-900/60 text-emerald-400',
+  DOCUMENTACAO_RECUSADA: 'bg-red-900/60 text-red-400',
+  NAO_NECESSARIO: 'bg-slate-700 text-slate-300',
 }
 
 interface StatusBadgeProps {

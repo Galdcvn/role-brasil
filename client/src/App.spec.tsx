@@ -41,7 +41,7 @@ describe('App', () => {
   it('renders the login page on "/login"', () => {
     const { container, cleanup } = renderAt(['/login'])
     expect(container.textContent).toContain('Entrar')
-    expect(container.textContent).toContain('Esqueceu a senha?')
+    expect(container.textContent).toContain('Ainda não tem conta?')
     cleanup()
   })
 
@@ -78,14 +78,15 @@ describe('App', () => {
   it('redirects to /login when not authenticated on "/"', () => {
     const { container, cleanup } = renderAt(['/'])
     expect(container.textContent).toContain('Entrar')
-    expect(container.textContent).toContain('Esqueceu a senha?')
+    expect(container.textContent).toContain('Ainda não tem conta?')
     cleanup()
   })
 
-  it('renders the home page on "/" when authenticated', () => {
+  it('redirects authenticated user from "/" to "/portal"', () => {
+    mockFetch({ eventos: [], total: 0, page: 1, limit: 12 })
     localStorage.setItem('token', criarTokenFake({ roles: ['CLIENT'] }))
     const { container, cleanup } = renderAt(['/'])
-    expect(container.textContent).toContain('em construção')
+    expect(container.textContent).toContain('Explorar Eventos')
     cleanup()
   })
 
