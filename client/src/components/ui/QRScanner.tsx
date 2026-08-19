@@ -9,10 +9,16 @@ interface QRScannerProps {
 export default function QRScanner({ onScan, onClose }: QRScannerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const scannerRef = useRef<Html5Qrcode | null>(null)
+  const onScanRef = useRef(onScan)
+  const onCloseRef = useRef(onClose)
+
+  onScanRef.current = onScan
+  onCloseRef.current = onClose
 
   useEffect(() => {
     if (!containerRef.current) return
 
+    let active = true
     const scanner = new Html5Qrcode('qr-reader')
     scannerRef.current = scanner
 
@@ -21,30 +27,30 @@ export default function QRScanner({ onScan, onClose }: QRScannerProps) {
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 250, height: 250 } },
         (decodedText) => {
-          void Promise.resolve(scanner.stop()).catch(() => {})
-          onScan(decodedText)
+          if (active) onScanRef.current(decodedText)
         },
         () => {},
       )
-      .catch(() => onClose())
+      .catch(() => { if (active) onCloseRef.current() })
 
     return () => {
+      active = false
       if (scannerRef.current) {
-        void Promise.resolve(scannerRef.current.stop()).catch(() => {})
-        void Promise.resolve(scannerRef.current.clear()).catch(() => {})
+        const s = scannerRef.current
+        scannerRef.current = null
+        Promise.resolve(s.stop()).catch(() => {}).then(() => {
+          Promise.resolve(s.clear()).catch(() => {})
+        }).catch(() => {})
       }
     }
-  }, [onScan, onClose])
+  }, [])
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-black">
       <div className="flex items-center justify-between bg-slate-900 p-4">
         <h2 className="text-sm font-semibold text-white">Câmera</h2>
         <button
-          onClick={() => {
-            void Promise.resolve(scannerRef.current?.stop()).catch(() => {})
-            onClose()
-          }}
+          onClick={() => onClose()}
           className="rounded-lg bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:bg-slate-700"
         >
           Fechar
