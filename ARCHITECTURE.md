@@ -50,7 +50,7 @@ src/
 ├── pages/
 │   ├── portal/
 │   │   ├── organizador/ Dashboard, Eventos, DetalheEvento, NovoEvento, EditarEvento, Relatorios
-│   │   └── cliente/     Placeholder (construção)
+│   │   └── cliente/     InicioPage, DetalheEventoPage, IngressosPage, DetalheIngressoPage
 │   ├── LoginPage.tsx, RegistroPage.tsx, SelecaoPapelPage.tsx
 │   ├── HomePage.tsx
 │   └── NotFoundPage.tsx
@@ -72,6 +72,22 @@ Regras:
 - O client nunca decide preço, disponibilidade ou validade — ele exibe o que o server responde.
 - Estado de autenticação em `AuthContext`; token em `localStorage`; toda chamada protegida envia `Authorization: Bearer <token>`.
 - Tema escuro único — não há troca de tema entre papéis; shell e conteúdo são sempre dark.
+
+### Páginas do Portal do Cliente
+
+- **InicioPage** (`/portal/cliente`): busca de eventos públicos com filtros (texto, cidade, estado, data, preço) e paginação. Cards com poster, endereço, categorias, próxima sessão.
+- **DetalheEventoPage** (`/portal/cliente/evento/:id`): state machine de compra — INFO → ASSENTOS → RESERVA → CONFIRMAÇÃO. Info do evento, mapa de assentos, timer de expiração (10 min), pagamento (PIX/cartão), confirmação. Favoritos toggle. Chat integrado para quem tem ingresso (polling 10s).
+- **IngressosPage** (`/portal/cliente/ingressos`): lista de ingressos do cliente com filtros por status (EMITIDO, PENDENTE, TODOS).
+- **DetalheIngressoPage** (`/portal/cliente/ingressos/:id`): detalhe do ingresso com QR code, código de 16 chars, cancelamento com confirmação dupla (até 7 dias antes do evento).
+
+### Páginas do Portal do Organizador
+
+- **DashboardPage**: KPI cards + eventos por status + últimos eventos.
+- **EventosPage**: listagem de eventos do organizador com poster, sessões, status.
+- **DetalheEventoPage**: métricas, endereço, categorias, sessões, ações (Publicar/Cancelar/Excluir), form inline para sessão.
+- **NovoEventoPage**: multi-step — busca TMDb, dados do evento, endereço, categorias dinâmicas.
+- **EditarEventoPage**: form com proteção — se evento tem reservas, só edita descrição.
+- **RelatoriosPage**: métricas detalhadas por evento (reservas, receita, ingressos).
 
 ## 4. Server (NestJS) — mapa de módulos
 

@@ -132,7 +132,7 @@ export default function Sidebar({ aberta, onFechar }: Props) {
                 <ul className="space-y-0.5">
                   {secao.itens.map((item) => {
                     const isActive =
-                      item.path === '/portal/cliente' || item.path === '/portal/organizador'
+                      item.path === '/portal/cliente' || item.path === '/portal/organizador' || item.path === '/portal/portaria'
                         ? location.pathname === item.path
                         : location.pathname.startsWith(item.path)
 

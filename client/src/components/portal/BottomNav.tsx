@@ -104,7 +104,7 @@ export default function BottomNav() {
       <div className="flex flex-1 justify-around">
         {rotas.map((rota) => {
           const isActive =
-            (rota.path === '/portal/cliente' || rota.path === '/portal/organizador')
+            (rota.path === '/portal/cliente' || rota.path === '/portal/organizador' || rota.path === '/portal/portaria')
               ? location.pathname === rota.path
               : location.pathname.startsWith(rota.path)
 

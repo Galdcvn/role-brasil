@@ -152,10 +152,11 @@ describe('App', () => {
     cleanup()
   })
 
-  it('renders the cliente placeholder', () => {
+  it('renders the cliente portal with InicioPage', () => {
+    mockFetch({ eventos: [], total: 0, page: 1, limit: 12 })
     localStorage.setItem('token', criarTokenFake({ roles: ['CLIENT'] }))
     const { container, cleanup } = renderAt(['/portal/cliente'])
-    expect(container.textContent).toContain('Em breve')
+    expect(container.textContent).toContain('Explorar Eventos')
     cleanup()
   })
 

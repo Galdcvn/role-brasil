@@ -9,11 +9,14 @@ import SelecaoPapelPage from './pages/SelecaoPapelPage'
 import RegistroPage from './pages/RegistroPage'
 import DashboardPage from './pages/portal/organizador/DashboardPage'
 import EventosPage from './pages/portal/organizador/EventosPage'
-import DetalheEventoPage from './pages/portal/organizador/DetalheEventoPage'
+import DetalheEventoPageOrganizador from './pages/portal/organizador/DetalheEventoPage'
 import NovoEventoPage from './pages/portal/organizador/NovoEventoPage'
 import EditarEventoPage from './pages/portal/organizador/EditarEventoPage'
 import RelatoriosPage from './pages/portal/organizador/RelatoriosPage'
-import ClientePlaceholderPage from './pages/portal/cliente/PlaceholderPage'
+import InicioPage from './pages/portal/cliente/InicioPage'
+import DetalheEventoPage from './pages/portal/cliente/DetalheEventoPage'
+import IngressosPage from './pages/portal/cliente/IngressosPage'
+import DetalheIngressoPage from './pages/portal/cliente/DetalheIngressoPage'
 import NotFoundPage from './pages/NotFoundPage'
 
 function PortalRoutes() {
@@ -22,16 +25,18 @@ function PortalRoutes() {
       <Routes>
         <Route element={<PortalLayout />}>
           <Route index element={<Navigate to="organizador" replace />} />
-          <Route path="cliente" element={<ClientePlaceholderPage />} />
-          <Route path="cliente/*" element={<ClientePlaceholderPage />} />
+          <Route path="cliente" element={<InicioPage />} />
+          <Route path="cliente/evento/:id" element={<DetalheEventoPage />} />
+          <Route path="cliente/ingressos" element={<IngressosPage />} />
+          <Route path="cliente/ingressos/:id" element={<DetalheIngressoPage />} />
           <Route path="organizador" element={<DashboardPage />} />
           <Route path="organizador/eventos" element={<EventosPage />} />
           <Route path="organizador/evento/novo" element={<NovoEventoPage />} />
-          <Route path="organizador/evento/:id" element={<DetalheEventoPage />} />
+          <Route path="organizador/evento/:id" element={<DetalheEventoPageOrganizador />} />
           <Route path="organizador/evento/:id/editar" element={<EditarEventoPage />} />
           <Route path="organizador/relatorios" element={<RelatoriosPage />} />
-          <Route path="portaria" element={<ClientePlaceholderPage />} />
-          <Route path="portaria/*" element={<ClientePlaceholderPage />} />
+          <Route path="portaria" element={<InicioPage />} />
+          <Route path="portaria/*" element={<InicioPage />} />
           <Route path="*" element={<Navigate to="organizador" replace />} />
         </Route>
       </Routes>

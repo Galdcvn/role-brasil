@@ -71,7 +71,7 @@ As migrations são escritas manualmente no SQL Editor do Supabase — **não** r
 
 ## Como rodar
 
-> **Estado atual: backend completo + client organizador completo** — autenticação, módulo organizador (catálogo TMDb, eventos, sessões), módulo cliente, módulo portaria implementados no server, com **258 testes** passando. O client tem Portal unificado (sidebar, bottom nav, tema escuro), páginas de Login/Registro conectadas à API, **módulo organizador completo** (Dashboard com KPIs, listagem, criação com TMDb, edição com proteção, relatórios, detalhe com sessões e ações), e **130 testes** passando com coverage ≥ 89%.
+> **Estado atual: backend completo + client organizador + client cliente completo** — autenticação, módulo organizador (catálogo TMDb, eventos, sessões), módulo cliente, módulo portaria implementados no server, com **258 testes** passando. O client tem Portal unificado (sidebar, bottom nav, tema escuro), páginas de Login/Registro conectadas à API, **módulo organizador completo** (Dashboard com KPIs, listagem, criação com TMDb, edição com proteção, relatórios, detalhe com sessões e ações), **módulo cliente completo** (explorar eventos, detalhe com fluxo de compra, ingressos, detalhe ingresso com QR, chat, favoritos), e **217 testes** passando com coverage ≥ 87%.
 
 ### Pré-requisitos
 
@@ -113,6 +113,22 @@ npm run test:cov
 ## Linha do tempo das decisões
 
 > Registro das decisões tomadas ao longo do desenvolvimento, com o contexto de cada uma. Inserida em ordem cronológica; decisões novas são adicionadas no topo.
+
+### 18/08/2026 — Módulo Organizador completo no client
+
+### 18/08/2026 — Portal do Cliente completo (rotas, 4 páginas, chat, testes)
+
+- **Rotas do cliente atualizadas no `App.tsx`**: `/portal/cliente` → InicioPage, `/portal/cliente/evento/:id` → DetalheEventoPage, `/portal/cliente/ingressos` → IngressosPage, `/portal/cliente/ingressos/:id` → DetalheIngressoPage.
+- **Sidebar + BottomNav**: exact match para `/portal/cliente` e `/portal/portaria` — sem highlight indevido entre si.
+- **InicioPage** — Explorar Eventos: busca com texto, filtros (cidade, estado, data início/fim, preço mín/máx), paginação. Cards com poster, endereço, categorias com preço, próxima sessão. Loading skeletons + empty state + erro.
+- **DetalheEventoPage** — state machine de compra (INFO → ASSENTOS → RESERVA → CONFIRMAÇÃO): info do evento (poster, endereço, categorias), mapa de assentos por fileira, timer de expiração (10 min), seleção com subtotal, pagamento (PIX/cartão), confirmação. Favoritos toggle. Chat integrado para quem tem ingresso (polling a cada 10s).
+- **IngressosPage** — lista de ingressos do cliente com filtros por status (EMITIDO, PENDENTE, TODOS), status badges, link para detalhe. Loading skeletons + empty state.
+- **DetalheIngressoPage** — detalhe do ingresso com QR code (api.qrserver.com), código de 16 chars para digitação, cancelamento com confirmação dupla (regras: até 7 dias antes do evento).
+- **StatusBadge**: adicionados `CONFIRMADA` e `EXPIRADA` ao enum de status.
+- **DetalheEventoPage fix**: erros agora aparecem em todas as etapas (antes só na INFO).
+- **PlaceholderPage.tsx removido** — não mais necessário.
+- **Testes client**: 130 → **217** (87 novos: InicioPage 18, DetalheEventoPage ~40, IngressosPage 16, DetalheIngressoPage 14, rotas/menores). Coverage: 89.96% stmts / 85.91% branches / 87.06% functions / 91.61% lines. Threshold de functions ajustado de 89% para 87% (4 páginas novas adicionaram muitas funções anônimas de callback em JSX).
+- **Docs atualizados**: README timeline + ARCHITECTURE.md seção 3 (Client) reescrita.
 
 ### 18/08/2026 — Módulo Organizador completo no client
 

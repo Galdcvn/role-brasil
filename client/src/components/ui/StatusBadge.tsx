@@ -9,6 +9,8 @@ const CORES: Record<string, string> = {
   PENDENTE: 'bg-yellow-900/60 text-yellow-400',
   PAGO: 'bg-emerald-900/60 text-emerald-400',
   RECUSADO: 'bg-red-900/60 text-red-400',
+  CONFIRMADA: 'bg-emerald-900/60 text-emerald-400',
+  EXPIRADA: 'bg-orange-900/60 text-orange-400',
 }
 
 interface StatusBadgeProps {
