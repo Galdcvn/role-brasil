@@ -29,12 +29,12 @@ function renderPage() {
       </MemoryRouter>,
     )
   })
-  return { container, cleanup: () => { act(() => root.unmount()); container.remove() } }
+  return { container, root, cleanup: () => { act(() => root.unmount()); container.remove() } }
 }
 
-function mockFetchEventos() {
+function mockFetchEventos(events: Array<{ id: number; titulo: string }> = []) {
   return vi.spyOn(globalThis, 'fetch')
-    .mockResolvedValueOnce({ ok: true, json: async () => [] } as Response)
+    .mockResolvedValueOnce({ ok: true, json: async () => events } as Response)
 }
 
 describe('ValidarPage', () => {
@@ -186,6 +186,121 @@ describe('ValidarPage', () => {
     await act(async () => { simulateBtn.click() })
     expect(container.textContent).toContain('APROVADO')
     expect(container.textContent).toContain('SCANNED-CODE')
+    cleanup()
+  })
+
+  it('renders event selector when events exist', async () => {
+    mockFetchEventos([
+      { id: 1, titulo: 'Rock in Rio' },
+      { id: 2, titulo: 'Lollapalooza' },
+    ])
+    const { container, cleanup } = renderPage()
+    await act(async () => {})
+    expect(container.textContent).toContain('Evento (opcional)')
+    const select = container.querySelector('select')
+    expect(select).toBeTruthy()
+    expect(container.textContent).toContain('Rock in Rio')
+    expect(container.textContent).toContain('Lollapalooza')
+    expect(container.textContent).toContain('Todos os eventos')
+    cleanup()
+  })
+
+  it('does not render event selector when no events', () => {
+    mockFetchEventos([])
+    const { container, cleanup } = renderPage()
+    expect(container.querySelector('select')).toBeNull()
+    cleanup()
+  })
+
+  it('sends eventoId when event is selected', async () => {
+    const spy = mockFetchEventos([{ id: 42, titulo: 'Festival' }])
+    spy.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        status: 'APROVADO',
+        ingresso: { id: 5, codigo: 'EVT42', categoria: 'INTEIRA', evento: 'Festival', assento: 'A1', usuario: 'Zé' },
+      }),
+    } as Response)
+    const { container, cleanup } = renderPage()
+    await act(async () => {})
+    const select = container.querySelector('select') as HTMLSelectElement
+    act(() => { select.value = '42'; select.dispatchEvent(new Event('change', { bubbles: true })) })
+    const input = container.querySelector('input[placeholder="Código do ingresso"]') as HTMLInputElement
+    const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')!.set!
+    act(() => { nativeSetter.call(input, 'EVT42'); input.dispatchEvent(new Event('input', { bubbles: true })) })
+    const form = container.querySelector('form') as HTMLFormElement
+    await act(async () => { form.dispatchEvent(new Event('submit', { bubbles: true })) })
+    const calls = spy.mock.calls
+    const validarCall = calls.find((c) => (c[0] as string).includes('portaria/validar'))
+    expect(validarCall).toBeTruthy()
+    const body = JSON.parse((validarCall![1] as RequestInit).body as string)
+    expect(body.eventoId).toBe(42)
+    expect(body.codigo).toBe('EVT42')
+    cleanup()
+  })
+
+  it('classifies "já utilizado" error correctly', async () => {
+    const spy = mockFetchEventos()
+    spy.mockRejectedValueOnce(new Error('Ingresso já utilizado'))
+    const { container, cleanup } = renderPage()
+    const input = container.querySelector('input') as HTMLInputElement
+    const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')!.set!
+    act(() => { nativeSetter.call(input, 'XYZ'); input.dispatchEvent(new Event('input', { bubbles: true })) })
+    const form = container.querySelector('form') as HTMLFormElement
+    await act(async () => { form.dispatchEvent(new Event('submit', { bubbles: true })) })
+    expect(container.textContent).toContain('🔄')
+    cleanup()
+  })
+
+  it('classifies "outro evento" error correctly', async () => {
+    const spy = mockFetchEventos()
+    spy.mockRejectedValueOnce(new Error('Ingresso pertence a outro evento'))
+    const { container, cleanup } = renderPage()
+    const input = container.querySelector('input') as HTMLInputElement
+    const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')!.set!
+    act(() => { nativeSetter.call(input, 'XYZ'); input.dispatchEvent(new Event('input', { bubbles: true })) })
+    const form = container.querySelector('form') as HTMLFormElement
+    await act(async () => { form.dispatchEvent(new Event('submit', { bubbles: true })) })
+    expect(container.textContent).toContain('🎪')
+    cleanup()
+  })
+
+  it('classifies "cancelado" error correctly', async () => {
+    const spy = mockFetchEventos()
+    spy.mockRejectedValueOnce(new Error('Ingresso cancelado'))
+    const { container, cleanup } = renderPage()
+    const input = container.querySelector('input') as HTMLInputElement
+    const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')!.set!
+    act(() => { nativeSetter.call(input, 'XYZ'); input.dispatchEvent(new Event('input', { bubbles: true })) })
+    const form = container.querySelector('form') as HTMLFormElement
+    await act(async () => { form.dispatchEvent(new Event('submit', { bubbles: true })) })
+    expect(container.textContent).toContain('🚫')
+    cleanup()
+  })
+
+  it('classifies "não encontrado" error correctly', async () => {
+    const spy = mockFetchEventos()
+    spy.mockRejectedValueOnce(new Error('Ingresso não encontrado'))
+    const { container, cleanup } = renderPage()
+    const input = container.querySelector('input') as HTMLInputElement
+    const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')!.set!
+    act(() => { nativeSetter.call(input, 'XYZ'); input.dispatchEvent(new Event('input', { bubbles: true })) })
+    const form = container.querySelector('form') as HTMLFormElement
+    await act(async () => { form.dispatchEvent(new Event('submit', { bubbles: true })) })
+    expect(container.textContent).toContain('❌')
+    cleanup()
+  })
+
+  it('classifies unknown error with default icon', async () => {
+    const spy = mockFetchEventos()
+    spy.mockRejectedValueOnce(new Error('Something weird happened'))
+    const { container, cleanup } = renderPage()
+    const input = container.querySelector('input') as HTMLInputElement
+    const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')!.set!
+    act(() => { nativeSetter.call(input, 'XYZ'); input.dispatchEvent(new Event('input', { bubbles: true })) })
+    const form = container.querySelector('form') as HTMLFormElement
+    await act(async () => { form.dispatchEvent(new Event('submit', { bubbles: true })) })
+    expect(container.textContent).toContain('⚠️')
     cleanup()
   })
 })
