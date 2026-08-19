@@ -105,10 +105,14 @@ export default function DetalheEventoPage() {
     setSessaoErro(null)
     setCriandoSessao(true)
     try {
+      const offset = -new Date().getTimezoneOffset()
+      const sign = offset >= 0 ? '+' : '-'
+      const abs = Math.abs(offset)
+      const tz = `${sign}${String(Math.floor(abs / 60)).padStart(2, '0')}:${String(abs % 60).padStart(2, '0')}`
       await api(`/eventos/${id}/sessoes`, {
         method: 'POST',
         body: JSON.stringify({
-          dataHora: novaSessaoData,
+          dataHora: `${novaSessaoData}:00${tz}`,
           fileiras: novaSessaoFileiras,
           assentosPorFileira: novaSessaoAssentos,
         }),
