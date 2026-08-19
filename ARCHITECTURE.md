@@ -56,7 +56,7 @@ src/
 │   └── NotFoundPage.tsx
 ├── components/
 │   ├── auth/            AuthLayout, ProtectedRoute
-│   ├── portal/          PortalLayout, Sidebar, BottomNav, Header
+│   ├── portal/          PortalLayout, Sidebar, Header
 │   └── ui/              Button, Input, Card, StatusBadge, EmptyState
 ├── contexts/
 │   ├── AuthContext.tsx   Decodifica JWT, user { id, email, roles[] }
@@ -68,7 +68,7 @@ Regras:
 
 - **Portal unificado**: um único shell (sidebar + bottom nav) serve todos os papéis. O papel ativo é controlado por `PortalContext` e muda o conteúdo/rotas exibidos, não o layout.
 - **Sidebar (slide-over mobile + fixa desktop)**: sidebar fixa à esquerda em telas ≥ lg. No mobile, funciona como slide-over — abre via botão hamburger no Header, com backdrop escuro, fecha ao clicar fora ou ao navegar.
-- **Role-gating no front é só UX.** Esconder/mostrar botões por papel melhora o produto, mas não protege nada: a autorização real é feita pelos guards no backend.
+- **Role-gating no front é parcialmente enforceado.** `ProtectedRoute` valida papel contra a rota (CLIENT→`/portal/cliente/*`, ORGANIZER→`/portal/organizador/*`, PORTARIA→`/portal/portaria/*`), redirecionando para `/portal` se o papel não bater. Mas a autorização real é feita pelos guards no backend.
 - O client nunca decide preço, disponibilidade ou validade — ele exibe o que o server responde.
 - Estado de autenticação em `AuthContext`; token em `localStorage`; toda chamada protegida envia `Authorization: Bearer <token>`.
 - Tema escuro único — não há troca de tema entre papéis; shell e conteúdo são sempre dark.

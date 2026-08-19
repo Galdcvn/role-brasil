@@ -114,6 +114,19 @@ npm run test:cov
 
 > Registro das decisões tomadas ao longo do desenvolvimento, com o contexto de cada uma. Inserida em ordem cronológica; decisões novas são adicionadas no topo.
 
+### 19/08/2026 — Fix: role guard, navigate, dead code cleanup
+
+- **ProtectedRoute role-based access control**: `ProtectedRoute` agora verifica o papel do usuário contra a rota acessada. CLIENT só acessa `/portal/cliente/*`, ORGANIZER só `/portal/organizador/*`, PORTARIA só `/portal/portaria/*`. Usuário sem papel correto é redirecionado para `/portal`. Antes, qualquer usuário autenticado podia navegar para qualquer portal via URL.
+- **FavoritosPage / IngressosPage — navigate em vez de reload**: substituído `window.location.href = '/portal/cliente'` por `useNavigate()`, evitando full page reload que perdia estado React e causava flash branco.
+- **BottomNav.tsx removido**: componente implementado mas nunca importado (dead code). 136 linhas removidas.
+
+### 19/08/2026 — Testes portaria + thresholds atingidos
+
+- **ValidarPage.spec.tsx**: 7 testes — render, resultado aprovado, pendente documentação, erro API, erro genérico (non-Error), código vazio, rejeitado.
+- **HistoricoPage.spec.tsx**: 5 testes — loading skeleton, histórico com dados, estado vazio, erro API, erro genérico.
+- **Coverage thresholds atingidos**: 89.59% stmts, 82.27% branches, 86.03% functions, 91.46% lines (thresholds: 70/80/84/70).
+- **240 client tests + 258 server tests = 498 total**.
+
 ### 19/08/2026 — Batch de fixes críticos + Portal Portaria funcional
 
 - **Fix fluxo de compra (CRÍTICO)**: `CriarReservaDto` usava `@Max(10)` (validador de número) no array `itens`, causando 400 em toda `POST /api/reservas`. Substituído por `@ArrayMaxSize(10)`. Causa raiz: `typeof [] === 'number'` é sempre `false`, então o ValidationPipe rejeitava o body antes de chegar ao controller.
