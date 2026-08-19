@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { usePortal } from '../../contexts/PortalContext'
 import Sidebar from './Sidebar'
-import BottomNav from './BottomNav'
 import Header from './Header'
 
 export default function PortalLayout() {
@@ -23,8 +22,6 @@ export default function PortalLayout() {
           <Outlet />
         </main>
       </div>
-
-      <BottomNav />
     </div>
   )
 }

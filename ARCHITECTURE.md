@@ -67,7 +67,7 @@ src/
 Regras:
 
 - **Portal unificado**: um único shell (sidebar + bottom nav) serve todos os papéis. O papel ativo é controlado por `PortalContext` e muda o conteúdo/rotas exibidos, não o layout.
-- **Sidebar (desktop) + Bottom Nav (mobile)**: sidebar fixa à esquerda apenas em telas ≥ lg (`hidden lg:flex`); bottom nav fixo no fundo em telas < lg com 3 itens (cliente: Início, Favoritos, Ingressos). Sidebar e hamburger não aparecem no mobile.
+- **Sidebar (slide-over mobile + fixa desktop)**: sidebar fixa à esquerda em telas ≥ lg. No mobile, funciona como slide-over — abre via botão hamburger no Header, com backdrop escuro, fecha ao clicar fora ou ao navegar.
 - **Role-gating no front é só UX.** Esconder/mostrar botões por papel melhora o produto, mas não protege nada: a autorização real é feita pelos guards no backend.
 - O client nunca decide preço, disponibilidade ou validade — ele exibe o que o server responde.
 - Estado de autenticação em `AuthContext`; token em `localStorage`; toda chamada protegida envia `Authorization: Bearer <token>`.

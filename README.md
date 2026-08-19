@@ -114,6 +114,14 @@ npm run test:cov
 
 > Registro das decisões tomadas ao longo do desenvolvimento, com o contexto de cada uma. Inserida em ordem cronológica; decisões novas são adicionadas no topo.
 
+### 19/08/2026 — Fix: sidebar mobile, remover BottomNav
+
+- **Decisão invertida sobre mobile**: a decisão anterior (esconder sidebar no mobile, usar BottomNav) foi revertida. Agora a sidebar é usada em **todas as telas** — no mobile ela funciona como slide-over (aberta via botão hamburger no Header), com backdrop escuro e fecha ao clicar fora ou ao navegar. O BottomNav foi removido do `PortalLayout`.
+- **Sidebar**: de `hidden lg:flex` para `fixed -translate-x-full lg:relative lg:translate-x-0` com backdrop overlay no mobile. Clique em link fecha a sidebar automaticamente.
+- **Header**: botão hamburger de `hidden` para `flex lg:hidden` (visível apenas no mobile).
+- **PortalLayout**: import e render do `<BottomNav />` removidos.
+- **Testes**: teste de sidebar atualizado para validar `-translate-x-full` (mobile) e `lg:hidden` no botão hamburger.
+
 ### 18/08/2026 — Batch de fixes: UI, assentos, favoritos
 
 - **Botão Excluir vermelho + navegação**: botão "Excluir" no detalhe do evento (organizador) trocado de `bg-slate-700` para `bg-red-600` (consistente com "Cancelar Evento"). Após exclusão, `navigate('/portal/organizador/eventos')` redireciona automaticamente para a lista de eventos.

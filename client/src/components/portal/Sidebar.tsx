@@ -103,14 +103,23 @@ const LABELS_PAPEL: Record<string, string> = {
   PORTARIA: 'Portaria',
 }
 
-export default function Sidebar({ aberta: _aberta, onFechar: _onFechar }: Props) {
+export default function Sidebar({ aberta, onFechar }: Props) {
   const location = useLocation()
   const { papeisDisponiveis } = usePortal()
 
   return (
     <>
+      {aberta && (
+        <div
+          className="fixed inset-0 z-40 bg-black/60 lg:hidden"
+          onClick={onFechar}
+        />
+      )}
+
       <aside
-        className="hidden lg:flex lg:relative inset-y-0 left-0 z-50 w-64 flex-col border-r border-slate-800 bg-slate-900"
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-slate-800 bg-slate-900 transition-transform duration-200 lg:relative lg:translate-x-0 ${
+          aberta ? 'translate-x-0' : '-translate-x-full'
+        }`}
       >
         <div className="flex h-14 items-center border-b border-slate-800 px-4">
           <img src={logoTexto} alt="Rolê Brasil" className="h-10" />
@@ -137,6 +146,7 @@ export default function Sidebar({ aberta: _aberta, onFechar: _onFechar }: Props)
                       <li key={item.path}>
                         <Link
                           to={item.path}
+                          onClick={onFechar}
                           className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                             isActive
                               ? 'bg-[#00FF88]/10 text-[#00FF88]'
