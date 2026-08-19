@@ -114,6 +114,13 @@ npm run test:cov
 
 > Registro das decisões tomadas ao longo do desenvolvimento, com o contexto de cada uma. Inserida em ordem cronológica; decisões novas são adicionadas no topo.
 
+### 18/08/2026 — Fix: conflito de rotas EventoPublicoController vs EventoController
+
+- **Bug raiz**: `EventoController` (`@Roles('ORGANIZER')`) era registrado antes de `EventoPublicoController` (`@Public()`) no `EventoModule`. O Express casa `GET /api/eventos/publicos` com `GET /api/eventos/:id` (parameterizado) primeiro — o `:id` captura `"publicos"`. Resultado: 403 Forbidden resource para clientes autenticados (JWT válido, mas role ORGANIZER exigida).
+- **Fix**: ordem dos controllers invertida no `evento.module.ts` — `EventoPublicoController` primeiro, garantindo que a rota literal `/api/eventos/publicos` seja registrada antes da parameterizada.
+- **Proxy Vercel**: adicionado rewrite no `vercel.json` para rotear `/api/*` pro Railway, fallback quando `VITE_API_URL` não está setado no dashboard.
+- **ProtectedRoute fix**: componente agora usa `useAuth()` em vez de ler `localStorage` diretamente — resolve logout que não redirecionava para `/login`.
+
 ### 18/08/2026 — Módulo Organizador completo no client
 
 ### 18/08/2026 — Portal do Cliente completo (rotas, 4 páginas, chat, testes)

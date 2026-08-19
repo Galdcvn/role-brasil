@@ -7,7 +7,7 @@ import { EventoService } from './evento.service';
 
 @Module({
   imports: [CatalogModule],
-  controllers: [EventoController, EventoPublicoController],
+  controllers: [EventoPublicoController, EventoController],
   providers: [EventoService, EventoRepository],
   exports: [EventoRepository],
 })
