@@ -8,15 +8,16 @@ interface Ingresso {
   id: number
   codigo: string
   status: string
+  categoria: string
   criadoEm: string
-  sessao: {
-    id: number
-    dataHora: string
-    evento: { id: number; titulo: string; posterUrl: string | null; endereco: { cidade: string; estado: string } | null }
-    assento: { fileira: string; numero: number } | null
-  }
+  assento: { fileira: string; numero: number } | null
   reserva: {
     id: number
+    sessao: {
+      id: number
+      dataHora: string
+      evento: { id: number; titulo: string; posterUrl: string | null; endereco: { cidade: string; estado: string } | null }
+    }
     itens: { categoria: string; precoCentavos: number }[]
   }
 }
@@ -98,7 +99,7 @@ export default function DetalheIngressoPage() {
   if (!ingresso) return null
 
   const podeCancelar = ingresso.status === 'EMITIDO' || ingresso.status === 'PENDENTE'
-  const evento = ingresso.sessao.evento
+  const evento = ingresso.reserva.sessao.evento
 
   return (
     <div className="space-y-6">
@@ -119,7 +120,7 @@ export default function DetalheIngressoPage() {
         )}
         <div className="min-w-0 flex-1">
           <h1 className="text-xl font-bold text-white">{evento.titulo}</h1>
-          <p className="text-sm text-slate-400">{formatarData(ingresso.sessao.dataHora)}</p>
+          <p className="text-sm text-slate-400">{formatarData(ingresso.reserva.sessao.dataHora)}</p>
           {evento.endereco && (
             <p className="text-xs text-slate-500">
               {evento.endereco.cidade}/{evento.endereco.estado}
@@ -151,10 +152,10 @@ export default function DetalheIngressoPage() {
             <span className="text-slate-400">Status</span>
             <StatusBadge status={ingresso.status} />
           </div>
-          {ingresso.sessao.assento && (
+          {ingresso.assento && (
             <div className="flex items-center justify-between">
               <span className="text-slate-400">Assento</span>
-              <span className="text-white">{ingresso.sessao.assento.fileira}{ingresso.sessao.assento.numero}</span>
+              <span className="text-white">{ingresso.assento.fileira}{ingresso.assento.numero}</span>
             </div>
           )}
           <div className="flex items-center justify-between">

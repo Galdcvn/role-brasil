@@ -50,6 +50,12 @@ export class IngressoRepository {
                 },
               },
             },
+            itens: {
+              select: {
+                categoria: true,
+                precoCentavos: true,
+              },
+            },
           },
         },
         assento: { select: { fileira: true, numero: true } },

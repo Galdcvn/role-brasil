@@ -8,14 +8,15 @@ interface Ingresso {
   id: number
   codigo: string
   status: string
+  categoria: string
   criadoEm: string
-  sessao: {
-    dataHora: string
-    evento: { id: number; titulo: string; posterUrl: string | null }
-    assento: { fileira: string; numero: number } | null
-  }
+  assento: { fileira: string; numero: number } | null
   reserva: {
-    itens: { categoria: string }[]
+    id: number
+    sessao: {
+      dataHora: string
+      evento: { id: number; titulo: string; posterUrl: string | null }
+    }
   }
 }
 
@@ -131,10 +132,10 @@ export default function IngressosPage() {
               className="block rounded-xl border border-slate-800 bg-slate-900/50 p-3 transition-colors hover:border-slate-700"
             >
               <div className="flex items-center gap-3">
-                {ing.sessao.evento.posterUrl ? (
+                {ing.reserva.sessao.evento.posterUrl ? (
                   <img
-                    src={ing.sessao.evento.posterUrl}
-                    alt={ing.sessao.evento.titulo}
+                    src={ing.reserva.sessao.evento.posterUrl}
+                    alt={ing.reserva.sessao.evento.titulo}
                     className="h-16 w-12 rounded-lg object-cover"
                   />
                 ) : (
@@ -143,13 +144,13 @@ export default function IngressosPage() {
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <h3 className="truncate font-semibold text-white">{ing.sessao.evento.titulo}</h3>
+                  <h3 className="truncate font-semibold text-white">{ing.reserva.sessao.evento.titulo}</h3>
                   <p className="text-xs text-slate-400">
-                    {formatarData(ing.sessao.dataHora)}
-                    {ing.sessao.assento && ` — ${ing.sessao.assento.fileira}${ing.sessao.assento.numero}`}
+                    {formatarData(ing.reserva.sessao.dataHora)}
+                    {ing.assento && ` — ${ing.assento.fileira}${ing.assento.numero}`}
                   </p>
                   <p className="text-xs text-slate-500">
-                    {ing.reserva.itens[0]?.categoria}
+                    {ing.categoria}
                   </p>
                 </div>
                 <div className="shrink-0">

@@ -35,25 +35,31 @@ const ingressosFake = [
     id: 1,
     codigo: 'RB-001',
     status: 'EMITIDO',
+    categoria: 'INTEIRA',
     criadoEm: '2026-08-18T12:00:00Z',
-    sessao: {
-      dataHora: '2026-09-01T20:00:00Z',
-      evento: { id: 10, titulo: 'Show Rock', posterUrl: null },
-      assento: { fileira: 'A', numero: 1 },
+    assento: { fileira: 'A', numero: 1 },
+    reserva: {
+      id: 10,
+      sessao: {
+        dataHora: '2026-09-01T20:00:00Z',
+        evento: { id: 10, titulo: 'Show Rock', posterUrl: null },
+      },
     },
-    reserva: { itens: [{ categoria: 'INTEIRA' }] },
   },
   {
     id: 2,
     codigo: 'RB-002',
     status: 'PENDENTE',
+    categoria: 'MEIA',
     criadoEm: '2026-08-18T12:00:00Z',
-    sessao: {
-      dataHora: '2026-09-02T20:00:00Z',
-      evento: { id: 11, titulo: 'Festa', posterUrl: 'https://img.test/poster.jpg' },
-      assento: null,
+    assento: null,
+    reserva: {
+      id: 11,
+      sessao: {
+        dataHora: '2026-09-02T20:00:00Z',
+        evento: { id: 11, titulo: 'Festa', posterUrl: 'https://img.test/poster.jpg' },
+      },
     },
-    reserva: { itens: [{ categoria: 'MEIA' }] },
   },
 ]
 

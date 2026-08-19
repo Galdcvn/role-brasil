@@ -46,20 +46,21 @@ const ingressoFake = {
   id: 1,
   codigo: 'RB-001',
   status: 'EMITIDO',
+  categoria: 'INTEIRA',
   criadoEm: '2026-08-18T12:00:00Z',
-  sessao: {
-    id: 10,
-    dataHora: '2026-09-01T20:00:00Z',
-    evento: {
-      id: 1,
-      titulo: 'Show Rock',
-      posterUrl: 'https://img.test/poster.jpg',
-      endereco: { cidade: 'São Paulo', estado: 'SP' },
-    },
-    assento: { fileira: 'A', numero: 1 },
-  },
+  assento: { fileira: 'A', numero: 1 },
   reserva: {
     id: 1,
+    sessao: {
+      id: 10,
+      dataHora: '2026-09-01T20:00:00Z',
+      evento: {
+        id: 1,
+        titulo: 'Show Rock',
+        posterUrl: 'https://img.test/poster.jpg',
+        endereco: { cidade: 'São Paulo', estado: 'SP' },
+      },
+    },
     itens: [{ categoria: 'INTEIRA', precoCentavos: 8000 }],
   },
 }
@@ -197,7 +198,10 @@ describe('DetalheIngressoPage', () => {
   it('renders ticket without poster', async () => {
     mockFetch({
       ...ingressoFake,
-      sessao: { ...ingressoFake.sessao, evento: { ...ingressoFake.sessao.evento, posterUrl: null } },
+      reserva: {
+        ...ingressoFake.reserva,
+        sessao: { ...ingressoFake.reserva.sessao, evento: { ...ingressoFake.reserva.sessao.evento, posterUrl: null } },
+      },
     })
     const { container, cleanup } = renderPage('/portal/cliente/ingressos/1')
     await act(async () => {})
@@ -206,7 +210,7 @@ describe('DetalheIngressoPage', () => {
   })
 
   it('renders ticket without assento', async () => {
-    mockFetch({ ...ingressoFake, sessao: { ...ingressoFake.sessao, assento: null } })
+    mockFetch({ ...ingressoFake, assento: null })
     const { container, cleanup } = renderPage('/portal/cliente/ingressos/1')
     await act(async () => {})
     expect(container.textContent).toContain('Show Rock')
@@ -217,9 +221,12 @@ describe('DetalheIngressoPage', () => {
   it('renders ticket without endereco', async () => {
     mockFetch({
       ...ingressoFake,
-      sessao: {
-        ...ingressoFake.sessao,
-        evento: { ...ingressoFake.sessao.evento, endereco: null },
+      reserva: {
+        ...ingressoFake.reserva,
+        sessao: {
+          ...ingressoFake.reserva.sessao,
+          evento: { ...ingressoFake.reserva.sessao.evento, endereco: null },
+        },
       },
     })
     const { container, cleanup } = renderPage('/portal/cliente/ingressos/1')
