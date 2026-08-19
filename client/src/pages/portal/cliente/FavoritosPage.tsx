@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../../../api'
 import EmptyState from '../../../components/ui/EmptyState'
 
@@ -28,6 +28,7 @@ function formatarCentavos(centavos: number): string {
 }
 
 export default function FavoritosPage() {
+  const navigate = useNavigate()
   const [eventos, setEventos] = useState<EventoFavorito[]>([])
   const [loading, setLoading] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
@@ -63,7 +64,7 @@ export default function FavoritosPage() {
           titulo="Nenhum favorito"
           descricao="Explore eventos e favorite os que mais curtir."
           ctaLabel="Explorar Eventos"
-          onCtaClick={() => { window.location.href = '/portal/cliente' }}
+          onCtaClick={() => navigate('/portal/cliente')}
         />
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">

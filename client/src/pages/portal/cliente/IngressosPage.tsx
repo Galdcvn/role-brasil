@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../../../api'
 import StatusBadge from '../../../components/ui/StatusBadge'
 import EmptyState from '../../../components/ui/EmptyState'
@@ -30,6 +30,7 @@ function formatarData(iso: string): string {
 }
 
 export default function IngressosPage() {
+  const navigate = useNavigate()
   const [ingressos, setIngressos] = useState<Ingresso[]>([])
   const [loading, setLoading] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
@@ -112,7 +113,7 @@ export default function IngressosPage() {
           titulo="Nenhum ingresso encontrado"
           descricao="Compre ingressos em eventos disponíveis para vê-los aqui."
           ctaLabel="Explorar Eventos"
-          onCtaClick={() => window.location.href = '/portal/cliente'}
+          onCtaClick={() => navigate('/portal/cliente')}
         />
       ) : ingressosFiltrados.length === 0 ? (
         <EmptyState
