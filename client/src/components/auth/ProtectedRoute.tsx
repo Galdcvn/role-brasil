@@ -1,11 +1,9 @@
 import { Navigate } from 'react-router-dom'
-
-function isAutenticado(): boolean {
-  return localStorage.getItem('token') !== null
-}
+import { useAuth } from '../../contexts/AuthContext'
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  if (!isAutenticado()) {
+  const { isAutenticado } = useAuth()
+  if (!isAutenticado) {
     return <Navigate to="/login" replace />
   }
   return children
