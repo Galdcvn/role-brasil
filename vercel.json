@@ -3,6 +3,7 @@
   "outputDirectory": "client/dist",
   "framework": "vite",
   "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://role-brasil-production.up.railway.app/api/$1" },
     { "source": "/((?!assets/).*)", "destination": "/index.html" }
   ]
 }
