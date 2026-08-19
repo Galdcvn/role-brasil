@@ -10,6 +10,7 @@ describe('PortariaRepository', () => {
       update: jest.Mock;
     };
     portariaScan: { create: jest.Mock; findMany: jest.Mock };
+    $transaction: jest.Mock;
   };
 
   const ingressoBase = {
@@ -49,6 +50,13 @@ describe('PortariaRepository', () => {
         update: jest.fn(),
       },
       portariaScan: { create: jest.fn(), findMany: jest.fn() },
+      $transaction: jest.fn((cb: (tx: typeof prismaMock) => Promise<unknown>) =>
+        cb({
+          ingresso: prismaMock.ingresso,
+          portariaScan: prismaMock.portariaScan,
+          $transaction: prismaMock.$transaction,
+        }),
+      ),
     };
     repository = new PortariaRepository(prismaMock as unknown as PrismaService);
   });
@@ -100,8 +108,13 @@ describe('PortariaRepository', () => {
   });
 
   it('confirmarComprovante marca como CONFIRMADO e USADO', async () => {
+    prismaMock.ingresso.findFirst.mockResolvedValue({ id: 1 });
     prismaMock.ingresso.update.mockResolvedValue({});
     await repository.confirmarComprovante(1);
+    expect(prismaMock.ingresso.findFirst).toHaveBeenCalledWith({
+      where: { id: 1, comprovanteStatus: 'PENDENTE' },
+      select: { id: true },
+    });
     expect(prismaMock.ingresso.update).toHaveBeenCalledWith({
       where: { id: 1 },
       data: {
@@ -114,8 +127,13 @@ describe('PortariaRepository', () => {
   });
 
   it('rejeitarComprovante marca como RECUSADO', async () => {
+    prismaMock.ingresso.findFirst.mockResolvedValue({ id: 1 });
     prismaMock.ingresso.update.mockResolvedValue({});
     await repository.rejeitarComprovante(1);
+    expect(prismaMock.ingresso.findFirst).toHaveBeenCalledWith({
+      where: { id: 1, comprovanteStatus: 'PENDENTE' },
+      select: { id: true },
+    });
     expect(prismaMock.ingresso.update).toHaveBeenCalledWith({
       where: { id: 1 },
       data: { comprovanteStatus: 'RECUSADO' },

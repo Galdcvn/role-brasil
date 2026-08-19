@@ -10,6 +10,7 @@ interface Ingresso {
   status: string
   categoria: string
   criadoEm: string
+  qrDataUrl: string | null
   assento: { fileira: string; numero: number } | null
   reserva: {
     id: number
@@ -146,11 +147,15 @@ export default function DetalheIngressoPage() {
         <div className="mb-4 text-center">
           <h2 className="mb-2 text-xs font-semibold text-slate-500">QR Code</h2>
           <div className="mx-auto flex h-48 w-48 items-center justify-center rounded-xl border border-slate-700 bg-white p-2">
-            <img
-              src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(ingresso.codigo)}`}
-              alt={`QR Code do ingresso ${ingresso.codigo}`}
-              className="h-full w-full"
-            />
+            {ingresso.qrDataUrl ? (
+              <img
+                src={ingresso.qrDataUrl}
+                alt={`QR Code do ingresso ${ingresso.codigo}`}
+                className="h-full w-full"
+              />
+            ) : (
+              <span className="text-xs text-slate-400">QR indisponível</span>
+            )}
           </div>
         </div>
         <div className="text-center">

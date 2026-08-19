@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { ResultadoScan } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -35,20 +35,46 @@ export class PortariaRepository {
   }
 
   async confirmarComprovante(ingressoId: number) {
-    return this.prisma.ingresso.update({
-      where: { id: ingressoId },
-      data: {
-        comprovanteStatus: 'CONFIRMADO',
-        status: 'USADO',
-        usadoEm: new Date(),
-      },
+    return this.prisma.$transaction(async (tx) => {
+      const ingresso = await tx.ingresso.findFirst({
+        where: { id: ingressoId, comprovanteStatus: 'PENDENTE' },
+        select: { id: true },
+      });
+
+      if (!ingresso) {
+        throw new ConflictException(
+          'Comprovante não está pendente de verificação',
+        );
+      }
+
+      return tx.ingresso.update({
+        where: { id: ingressoId },
+        data: {
+          comprovanteStatus: 'CONFIRMADO',
+          status: 'USADO',
+          usadoEm: new Date(),
+        },
+      });
     });
   }
 
   async rejeitarComprovante(ingressoId: number) {
-    return this.prisma.ingresso.update({
-      where: { id: ingressoId },
-      data: { comprovanteStatus: 'RECUSADO' },
+    return this.prisma.$transaction(async (tx) => {
+      const ingresso = await tx.ingresso.findFirst({
+        where: { id: ingressoId, comprovanteStatus: 'PENDENTE' },
+        select: { id: true },
+      });
+
+      if (!ingresso) {
+        throw new ConflictException(
+          'Comprovante não está pendente de verificação',
+        );
+      }
+
+      return tx.ingresso.update({
+        where: { id: ingressoId },
+        data: { comprovanteStatus: 'RECUSADO' },
+      });
     });
   }
 

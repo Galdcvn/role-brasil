@@ -171,6 +171,9 @@ describe('PortariaService', () => {
         ...ingressoMeia,
         comprovanteStatus: 'NAO_NECESSARIO',
       });
+      repositoryMock.confirmarComprovante.mockRejectedValue(
+        new ConflictException('Comprovante não está pendente de verificação'),
+      );
       await expect(service.confirmarComprovante(7, 2)).rejects.toThrow(
         ConflictException,
       );
@@ -208,6 +211,9 @@ describe('PortariaService', () => {
         ...ingressoMeia,
         comprovanteStatus: 'CONFIRMADO',
       });
+      repositoryMock.rejeitarComprovante.mockRejectedValue(
+        new ConflictException('Comprovante não está pendente de verificação'),
+      );
       await expect(service.rejeitarComprovante(7, 2)).rejects.toThrow(
         ConflictException,
       );

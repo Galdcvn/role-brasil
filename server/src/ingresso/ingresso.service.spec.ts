@@ -48,9 +48,16 @@ describe('IngressoService', () => {
     });
 
     it('retorna o ingresso quando ownership confere', async () => {
-      repositoryMock.buscarPorId.mockResolvedValue({ id: 1, usuarioId: 7 });
+      repositoryMock.buscarPorId.mockResolvedValue({
+        id: 1,
+        usuarioId: 7,
+        codigo: 'ABC123XYZ789DEFG',
+      });
       const resultado = await service.detalhe(7, 1);
-      expect(resultado).toEqual({ id: 1, usuarioId: 7 });
+      expect(resultado).toMatchObject({ id: 1, usuarioId: 7 });
+      expect((resultado as Record<string, unknown>).qrDataUrl).toMatch(
+        /^data:image\/png;base64,/,
+      );
     });
   });
 

@@ -98,14 +98,7 @@ export class PortariaService {
   }
 
   async confirmarComprovante(usuarioId: number, ingressoId: number) {
-    const ingresso = await this.buscarIngressoOuFalhar(ingressoId);
-
-    if (ingresso.comprovanteStatus !== 'PENDENTE') {
-      throw new ConflictException(
-        'Comprovante não está pendente de verificação',
-      );
-    }
-
+    await this.buscarIngressoOuFalhar(ingressoId);
     await this.portariaRepository.confirmarComprovante(ingressoId);
     await this.registrarScan(
       usuarioId,
@@ -118,14 +111,7 @@ export class PortariaService {
   }
 
   async rejeitarComprovante(usuarioId: number, ingressoId: number) {
-    const ingresso = await this.buscarIngressoOuFalhar(ingressoId);
-
-    if (ingresso.comprovanteStatus !== 'PENDENTE') {
-      throw new ConflictException(
-        'Comprovante não está pendente de verificação',
-      );
-    }
-
+    await this.buscarIngressoOuFalhar(ingressoId);
     await this.portariaRepository.rejeitarComprovante(ingressoId);
     await this.registrarScan(
       usuarioId,

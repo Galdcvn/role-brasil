@@ -127,15 +127,15 @@ Regras:
 - **catalog** — adapter para o TMDb (`CatalogProvider`): busca e detalhe de filmes, normalizados para um formato próprio; extensível para Ticketmaster. **Implementado** (`TmdbAdapter` com `fetch`, `GET /api/catalog/buscar`).
 - **events** — CRUD do organizador: montar evento a partir do catálogo, definir local, categorias de ingresso e preços, publicar/cancelar. **Implementado** — com reservas só edita a descrição e só cancela; sem reservas edita tudo e soft-deleta; `GET :id` devolve métricas; `GET /api/eventos/publicos` para busca pública com filtros ILIKE.
 - **sessions / seats** — um evento tem várias sessões (data/hora). Cada sessão tem seu mapa de assentos, gerado a partir da configuração de fileiras. A unicidade de um lugar por sessão é garantida por constraint de banco. **Implementado** — CRUD de sessões com regras de reserva; mapa de assentos agrupados por fileira.
-- **reservations** — hold de assentos com validade (15 min): o cliente seleciona lugares e categorias, vê o subtotal, e os assentos ficam `reservados` até o pagamento ou expiração. **Implementado** — criação com `$transaction` e lock de assentos; expiração automática; listagem/detalhe com ownership.
+- **reservations** — hold de assentos com validade (10 min): o cliente seleciona lugares e categorias, vê o subtotal, e os assentos ficam `reservados` até o pagamento ou expiração. **Implementado** — criação com `$transaction` e lock de assentos; expiração automática via scheduler (`ReservaExpirationScheduler` roda a cada 60s); listagem/detalhe com ownership.
 - **payments** — provedor **simulado** com regra determinística: cartão com CVV "000" é recusado; Pix sempre aprovado. **Implementado** — transação ao aprovar (reserva→PAGO, assentos→VENDIDO, ingressos gerados); transação ao recusar (reserva→CANCELADO, assentos→DISPONIVEL).
 - **tickets** — emissão do ingresso com código de 16 chars (base64url) e `qrToken` de 32 chars (hex). **Implementado** — listar por usuário, detalhe com ownership, cancelamento (até 7 dias antes do evento) com estorno simulado, compartilhamento público (`GET /api/ingressos/publico/:codigo` com QR em base64).
-- **portaria** — valida por código (16 chars) ou qrToken; consumo atômico impede uso duplo; fluxo em 2 fases para meia-entrada/gratuidade; `eventoId` opcional para validar que o ingresso pertence ao evento selecionado. **Implementado** — registro de scan, confirmação/rejeição de comprovante, histórico global e por evento.
+- **portaria** — valida por código (16 chars) ou qrToken; consumo atômico impede uso duplo; fluxo em 2 fases para meia-entrada/gratuidade; `eventoId` opcional para validar que o ingresso pertence ao evento selecionado. **Implementado** — registro de scan, confirmação/rejeição de comprovante (atomicamente via `$transaction` no repository), histórico global e por evento. Frontend: `ValidarPage` com botões Confirmar/Rejeitar quando resultado é `PENDENTE_DOCUMENTACAO`.
 - **favorites** — eventos salvos pelo cliente. **Implementado** — toggle (adicionar/remover), listar IDs favoritados.
 - **messages** — mensagens por evento (bidirectional cliente ↔ organizador); leitura e contagem de não lidas. **Implementado** — envio, listagem, marcar como lida, contagem de não lidas.
 - **stats** — painel do organizador: ocupação por sessão, ingressos vendidos por categoria e receita. **Implementado** — `GET /api/stats/organizador` agrega métricas de todos os eventos do organizador.
 
-**Seed data** (`server/prisma/seed.ts`): `npx prisma db seed` popula 4 usuários (organizador, 2 clientes, 1 portaria, todos com senha `Senha@123`), 1 evento publicado "Rock in Rio 2026" com 2 sessões (60 assentos cada, fileira A×E, 12 por fileira) e 3 categorias (PISTA/VIP/CAMAROTE).
+**Seed data** (`server/prisma/seed.ts`): `npx prisma db seed` popula 4 usuários (organizador, 2 clientes, 1 portaria, todos com senha `Senha@123`), 1 evento publicado "Rock in Rio 2026" com 2 sessões (60 assentos cada, fileira A×E, 12 por fileira) e 3 categorias (INTEIRA/R$350, MEIA/R$800, GRATUIDADE/R$1.200).
 
 **Mapeamento para o scaffold atual (`server/src/`):**
 
@@ -340,7 +340,7 @@ log scan     POST /api/portaria/comprovantes/:id/confirmar
   - `GET /api/portaria/historico/:eventoId` — histórico filtrado por evento
 - **Cada escaneamento** gera um registro em `Portaria_Scans` com resultado, data e observação (motivo do REJEITADO, etc.).
 - **Ingressos `INTEIRA`** são validados de uma vez (marca `USADO` + `usadoEm`).
-- **Ingressos `MEIA`/`GRATUIDADE`**: o scan sinaliza `PENDENTE_DOCUMENTACAO` e **não** consome o ingresso; a portaria confere o comprovante e decide **Confirmado** (consome) ou **Recusado** (não consome).
+- **Ingressos `MEIA`/`GRATUIDADE`**: o scan sinaliza `PENDENTE_DOCUMENTACAO` e **não** consome o ingresso; a portaria confere o comprovante e decide **Confirmado** (consome atomicamente via `$transaction`) ou **Recusado** (não consome).
 
 ### Compartilhamento
 

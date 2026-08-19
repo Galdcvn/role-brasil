@@ -58,6 +58,7 @@ export default function ValidarPage() {
   const [erro, setErro] = useState<ErroInfo | null>(null)
   const [validando, setValidando] = useState(false)
   const [scannerAberto, setScannerAberto] = useState(false)
+  const [processandoAcao, setProcessandoAcao] = useState(false)
 
   const [eventos, setEventos] = useState<EventoPortaria[]>([])
   const [eventoSelecionadoId, setEventoSelecionadoId] = useState<number | null>(null)
@@ -102,6 +103,23 @@ export default function ValidarPage() {
     setCodigo(decodedText)
     validarCodigo(decodedText)
   }, [])
+
+  async function handleAcaoComprovante(acao: 'confirmar' | 'rejeitar') {
+    if (!resultado?.ingresso?.id) return
+    setProcessandoAcao(true)
+    try {
+      const res = await api<ResultadoValidacao>(
+        `/portaria/comprovantes/${resultado.ingresso.id}/${acao}`,
+        { method: 'POST' },
+      )
+      setResultado(res)
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Erro ao processar ação'
+      setErro(classificarErro(msg))
+    } finally {
+      setProcessandoAcao(false)
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -195,6 +213,24 @@ export default function ValidarPage() {
                 <span className="font-mono text-xs">{resultado.ingresso.codigo}</span>
               </div>
             </div>
+            {resultado.status === 'PENDENTE_DOCUMENTACAO' && (
+              <div className="flex gap-3 pt-2">
+                <Button
+                  onClick={() => handleAcaoComprovante('confirmar')}
+                  loading={processandoAcao}
+                  className="flex-1 border-emerald-500/40 bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30"
+                >
+                  Confirmar
+                </Button>
+                <Button
+                  onClick={() => handleAcaoComprovante('rejeitar')}
+                  loading={processandoAcao}
+                  className="flex-1 border-red-500/40 bg-red-600/20 text-red-400 hover:bg-red-600/30"
+                >
+                  Rejeitar
+                </Button>
+              </div>
+            )}
           </div>
         </Card>
       )}

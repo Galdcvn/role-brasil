@@ -29,7 +29,7 @@ role-brasil/
 
 | Serviço | O que roda | URL | Config |
 |---------|-----------|-----|--------|
-| **Vercel** | Client (React SPA) | — | `vercel.json` — builda client com deps, SPA routing |
+| **Vercel** | Client (React SPA) | [role-brasil.vercel.app](https://role-brasil.vercel.app) | `vercel.json` — builda client com deps, SPA routing |
 | **Railway** | Server (NestJS + Prisma) | `https://role-brasil-production.up.railway.app` | `Dockerfile` + `railway.json` (Node 22, prisma generate, nest build) |
 | **Supabase** | PostgreSQL (banco de dados) | — | — |
 
@@ -71,7 +71,7 @@ As migrations são escritas manualmente no SQL Editor do Supabase — **não** r
 
 ## Como rodar
 
-> **Estado atual: backend completo + client completo (organizador + cliente + portaria)** — autenticação, módulo organizador (catálogo TMDb, eventos, sessões), módulo cliente, módulo portaria implementados no server, com **262 testes** passando. O client tem Portal unificado (sidebar slide-over mobile, tema escuro), páginas de Login/Registro conectadas à API, **módulo organizador completo** (Dashboard com KPIs, listagem, criação com TMDb, edição com proteção, relatórios com métricas reais, detalhe com sessões/criação/loader), **módulo cliente completo** (explorar eventos, detalhe com fluxo de compra, ingressos, detalhe ingresso com QR, compartilhamento, chat, favoritos), **módulo portaria completo** (validar ingresso com seletor de evento, histórico de scans, erros diferenciados), e **512 testes** passando (262 server + 250 client).
+> **Estado atual: backend completo + client completo (organizador + cliente + portaria)** — autenticação, módulo organizador (catálogo TMDb, eventos, sessões), módulo cliente, módulo portaria implementados no server, com **261 testes** passando. O client tem Portal unificado (sidebar slide-over mobile, tema escuro), páginas de Login/Registro conectadas à API, **módulo organizador completo** (Dashboard com KPIs, listagem, criação com TMDb, edição com proteção, relatórios com métricas reais, detalhe com sessões/criação/loader), **módulo cliente completo** (explorar eventos, detalhe com fluxo de compra, ingressos, detalhe ingresso com QR, compartilhamento, chat, favoritos), **módulo portaria completo** (validar ingresso com seletor de evento, confirmação/rejeição de comprovante, histórico de scans, erros diferenciados), e **532 testes** passando (261 server + 271 client).
 
 ### Pré-requisitos
 
@@ -97,6 +97,33 @@ ALLOW_OTP_FALLBACK=true
 
 > O `connect_timeout=20` é obrigatório na conexão com o pooler do Supabase nesta rede — sem ele o Prisma estoura o timeout no handshake TLS e falha com `P1001`. O `JWT_SECRET` assina os tokens de acesso (gere um valor aleatório e não o compartilhe). Com `ALLOW_OTP_FALLBACK=true`, o código OTP de verificação "enviado por email" é devolvido na resposta de registro e o código `000000` sempre funciona — simula o email sem infraestrutura real (desligue em produção).
 
+### Prisma Generate
+
+Antes de rodar o server localmente, execute:
+
+```bash
+cd server
+npx prisma generate
+```
+
+Isso gera o Prisma Client em `node_modules`. É necessário apenas na primeira vez e após mudanças no `schema.prisma`.
+
+### Dados de Teste
+
+O seed popula 4 contas e 1 evento publicado. Veja `TEST_DATA.md` para a lista completa de contas, senhas e fluxo passo-a-passo.
+
+| Papel | Email | Senha |
+|-------|-------|-------|
+| Organizador | `organizador@rolebrasil.com` | `Senha@123` |
+| Cliente | `maria@rolebrasil.com` | `Senha@123` |
+| Cliente | `pedro@rolebrasil.com` | `Senha@123` |
+| Portaria | `ana@rolebrasil.com` | `Senha@123` |
+
+### Problemas Conhecidos
+
+1. **Migrations pendentes**: `20260817000001_cliente_schema` e `20260817010000_portaria_schema` precisam ser aplicadas no SQL Editor do Supabase antes do deploy.
+2. **VITE_API_URL no Vercel**: a variável de ambiente `VITE_API_URL=https://role-brasil-production.up.railway.app/api` precisa ser setada no dashboard do Vercel.
+
 Validação automática (husky, instalado pelo `npm install`):
 
 - `pre-commit` → lint, typecheck e build dos dois pacotes.
@@ -113,6 +140,18 @@ npm run test:cov
 ## Linha do tempo das decisões
 
 > Registro das decisões tomadas ao longo do desenvolvimento, com o contexto de cada uma. Inserida em ordem cronológica; decisões novas são adicionadas no topo.
+
+### 19/08/2026 — Auditoria final Elite Dev: todos os gaps fechados
+
+- **Portaria — botões Confirmar/Rejeitar para PENDENTE_DOCUMENTACAO**: `ValidarPage.tsx` agora exibe botões "Confirmar" e "Rejeitar" quando o resultado da validação é `PENDENTE_DOCUMENTACAO`. Chama `POST /portaria/comprovantes/:id/confirmar` e `/rejeitar` (endpoints backend já existentes). Atualiza o resultado em tela sem recarregar. 6 novos testes (presença dos botões, ausência para APROVADO, chamada de confirm/reject, erro na chamada).
+- **QR code unificado no server-side**: `DetalheIngressoPage.tsx` agora recebe `qrDataUrl` do backend em vez de gerar via API externa (`api.qrserver.com`). `IngressoService.detalhe()` agora retorna QR data URL usando o pacote `qrcode`. Removida dependência de serviço externo.
+- **Validação atômica de portaria**: `confirmarComprovante` e `rejeitarComprovante` no `PortariaRepository` agora usam `$transaction` — fazem check de `comprovanteStatus === 'PENDENTE'` + update na mesma transação, impedindo race condition entre dois portarias validando o mesmo ingresso simultaneamente.
+- **Scheduler de expiração de reservas**: `ReservaExpirationScheduler` roda a cada 60s via `setInterval` (NestJS `OnModuleInit`/`OnModuleDestroy`), chamando `reservaService.expirarReservas()`. Antes, o método existia mas não era chamado automaticamente.
+- **PaymentGatewayMock removido**: classe vazia (`export class PaymentGatewayMock {}`) + spec removidos. A lógica de pagamento simulado já está inline no `PagamentoService.processar()`.
+- **TEST_DATA.md criado**: documento separado com contas de seed, senhas, evento seed e fluxo passo-a-passo para avaliadores do desafio.
+- **README atualizado**: seção "Dados de Teste" com contas de seed, "Prisma Generate" instrução, "Problemas Conhecidos" (migrations pendentes + VITE_API_URL), URL do Vercel.
+- **ARCHITECTURE.md atualizado**: seções portaria (atomic validation, frontend buttons), reservations (scheduler), seed data (category names corrected).
+- **Testes**: 261 server + 271 client = **532 total**, todos passando. Typecheck + lint + build limpos.
 
 ### 19/08/2026 — Gaps do desafio Elite Dev: share, portaria evento, seed, QR local
 

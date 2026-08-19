@@ -100,12 +100,12 @@ describe('DetalheIngressoPage', () => {
   })
 
   it('shows QR code', async () => {
-    mockFetch(ingressoFake)
+    mockFetch({ ...ingressoFake, qrDataUrl: 'data:image/png;base64,abc123' })
     const { container, cleanup } = renderPage('/portal/cliente/ingressos/1')
     await act(async () => {})
     const qrImg = container.querySelector('img[alt*="QR Code"]') as HTMLImageElement
     expect(qrImg).toBeTruthy()
-    expect(qrImg.src).toContain('api.qrserver.com')
+    expect(qrImg.src).toContain('data:image/png;base64')
     cleanup()
   })
 

@@ -20,7 +20,14 @@ export class IngressoService {
     if (ingresso === null || ingresso.usuarioId !== usuarioId) {
       throw new NotFoundException('Ingresso não encontrado');
     }
-    return ingresso;
+
+    const qrDataUrl = await QRCode.toDataURL(ingresso.codigo, {
+      width: 180,
+      margin: 2,
+      color: { dark: '#000000', light: '#ffffff' },
+    });
+
+    return { ...ingresso, qrDataUrl };
   }
 
   async compartilhar(codigo: string) {

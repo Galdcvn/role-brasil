@@ -303,4 +303,124 @@ describe('ValidarPage', () => {
     expect(container.textContent).toContain('⚠️')
     cleanup()
   })
+
+  it('shows confirm/reject buttons for PENDENTE_DOCUMENTACAO', async () => {
+    const spy = mockFetchEventos()
+    spy.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        status: 'PENDENTE_DOCUMENTACAO',
+        ingresso: { id: 2, codigo: 'DEF456', categoria: 'MEIA', evento: 'Teatro', assento: 'B5', usuario: 'Maria' },
+      }),
+    } as Response)
+    const { container, cleanup } = renderPage()
+    const input = container.querySelector('input') as HTMLInputElement
+    const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')!.set!
+    act(() => { nativeSetter.call(input, 'DEF456'); input.dispatchEvent(new Event('input', { bubbles: true })) })
+    const form = container.querySelector('form') as HTMLFormElement
+    await act(async () => { form.dispatchEvent(new Event('submit', { bubbles: true })) })
+    const confirmBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Confirmar')
+    const rejectBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Rejeitar')
+    expect(confirmBtn).toBeTruthy()
+    expect(rejectBtn).toBeTruthy()
+    cleanup()
+  })
+
+  it('does not show confirm/reject buttons for APROVADO', async () => {
+    const spy = mockFetchEventos()
+    spy.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        status: 'APROVADO',
+        ingresso: { id: 1, codigo: 'ABC123', categoria: 'INTEIRA', evento: 'Show', assento: 'A1', usuario: 'João' },
+      }),
+    } as Response)
+    const { container, cleanup } = renderPage()
+    const input = container.querySelector('input') as HTMLInputElement
+    const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')!.set!
+    act(() => { nativeSetter.call(input, 'ABC123'); input.dispatchEvent(new Event('input', { bubbles: true })) })
+    const form = container.querySelector('form') as HTMLFormElement
+    await act(async () => { form.dispatchEvent(new Event('submit', { bubbles: true })) })
+    const confirmBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Confirmar')
+    expect(confirmBtn).toBeFalsy()
+    cleanup()
+  })
+
+  it('calls confirm endpoint and updates result', async () => {
+    const spy = mockFetchEventos()
+    spy.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        status: 'PENDENTE_DOCUMENTACAO',
+        ingresso: { id: 2, codigo: 'DEF456', categoria: 'MEIA', evento: 'Teatro', assento: 'B5', usuario: 'Maria' },
+      }),
+    } as Response)
+    spy.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        status: 'APROVADO',
+        ingresso: { id: 2, codigo: 'DEF456', categoria: 'MEIA', evento: 'Teatro', assento: 'B5', usuario: 'Maria' },
+      }),
+    } as Response)
+    const { container, cleanup } = renderPage()
+    const input = container.querySelector('input') as HTMLInputElement
+    const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')!.set!
+    act(() => { nativeSetter.call(input, 'DEF456'); input.dispatchEvent(new Event('input', { bubbles: true })) })
+    const form = container.querySelector('form') as HTMLFormElement
+    await act(async () => { form.dispatchEvent(new Event('submit', { bubbles: true })) })
+    const confirmBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Confirmar') as HTMLButtonElement
+    await act(async () => { confirmBtn.click() })
+    expect(container.textContent).toContain('APROVADO')
+    cleanup()
+  })
+
+  it('calls reject endpoint and updates result', async () => {
+    const spy = mockFetchEventos()
+    spy.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        status: 'PENDENTE_DOCUMENTACAO',
+        ingresso: { id: 2, codigo: 'DEF456', categoria: 'MEIA', evento: 'Teatro', assento: 'B5', usuario: 'Maria' },
+      }),
+    } as Response)
+    spy.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        status: 'REJEITADO',
+        ingresso: { id: 2, codigo: 'DEF456', categoria: 'MEIA', evento: 'Teatro', assento: 'B5', usuario: 'Maria' },
+      }),
+    } as Response)
+    const { container, cleanup } = renderPage()
+    const input = container.querySelector('input') as HTMLInputElement
+    const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')!.set!
+    act(() => { nativeSetter.call(input, 'DEF456'); input.dispatchEvent(new Event('input', { bubbles: true })) })
+    const form = container.querySelector('form') as HTMLFormElement
+    await act(async () => { form.dispatchEvent(new Event('submit', { bubbles: true })) })
+    const rejectBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Rejeitar') as HTMLButtonElement
+    await act(async () => { rejectBtn.click() })
+    expect(container.textContent).toContain('REJEITADO')
+    cleanup()
+  })
+
+  it('shows error when confirm/reject fails', async () => {
+    const spy = mockFetchEventos()
+    spy.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        status: 'PENDENTE_DOCUMENTACAO',
+        ingresso: { id: 2, codigo: 'DEF456', categoria: 'MEIA', evento: 'Teatro', assento: 'B5', usuario: 'Maria' },
+      }),
+    } as Response)
+    spy.mockRejectedValueOnce(new Error('Comprovante não está pendente'))
+    const { container, cleanup } = renderPage()
+    const input = container.querySelector('input') as HTMLInputElement
+    const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')!.set!
+    act(() => { nativeSetter.call(input, 'DEF456'); input.dispatchEvent(new Event('input', { bubbles: true })) })
+    const form = container.querySelector('form') as HTMLFormElement
+    await act(async () => { form.dispatchEvent(new Event('submit', { bubbles: true })) })
+    const confirmBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Confirmar') as HTMLButtonElement
+    await act(async () => { confirmBtn.click() })
+    expect(container.textContent).toContain('Comprovante não está pendente')
+    cleanup()
+  })
 })
