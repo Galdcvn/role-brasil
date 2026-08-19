@@ -1,8 +1,19 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest'
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
+import { MemoryRouter } from 'react-router-dom'
+import { AuthProvider } from '../../../contexts/AuthContext'
 import ValidarPage from './ValidarPage'
 import { criarTokenFake } from '../../../test-utils'
+
+vi.mock('../../../components/ui/QRScanner', () => ({
+  default: ({ onScan, onClose }: { onScan: (t: string) => void; onClose: () => void }) => (
+    <div data-testid="qr-scanner">
+      <button onClick={() => onScan('SCANNED-CODE')}>Simular Scan</button>
+      <button onClick={onClose}>Fechar Scanner</button>
+    </div>
+  ),
+}))
 
 function renderPage() {
   localStorage.setItem('token', criarTokenFake({ roles: ['PORTARIA'] }))
@@ -10,7 +21,13 @@ function renderPage() {
   document.body.appendChild(container)
   const root = createRoot(container)
   act(() => {
-    root.render(<ValidarPage />)
+    root.render(
+      <MemoryRouter>
+        <AuthProvider>
+          <ValidarPage />
+        </AuthProvider>
+      </MemoryRouter>,
+    )
   })
   return { container, cleanup: () => { act(() => root.unmount()); container.remove() } }
 }
@@ -39,7 +56,7 @@ describe('ValidarPage', () => {
     act(() => { nativeSetter.call(input, 'ABC123'); input.dispatchEvent(new Event('input', { bubbles: true })) })
     const form = container.querySelector('form') as HTMLFormElement
     await act(async () => { form.dispatchEvent(new Event('submit', { bubbles: true })) })
-    expect(container.textContent).toContain('Aprovado')
+    expect(container.textContent).toContain('APROVADO')
     expect(container.textContent).toContain('Show')
     expect(container.textContent).toContain('João')
     expect(container.textContent).toContain('ABC123')
@@ -60,7 +77,7 @@ describe('ValidarPage', () => {
     act(() => { nativeSetter.call(input, 'DEF456'); input.dispatchEvent(new Event('input', { bubbles: true })) })
     const form = container.querySelector('form') as HTMLFormElement
     await act(async () => { form.dispatchEvent(new Event('submit', { bubbles: true })) })
-    expect(container.textContent).toContain('Pendente Documentação')
+    expect(container.textContent).toContain('PENDENTE_DOCUMENTACAO')
     expect(container.textContent).toContain('MEIA')
     cleanup()
   })
@@ -115,8 +132,46 @@ describe('ValidarPage', () => {
     act(() => { nativeSetter.call(input, 'GHI789'); input.dispatchEvent(new Event('input', { bubbles: true })) })
     const form = container.querySelector('form') as HTMLFormElement
     await act(async () => { form.dispatchEvent(new Event('submit', { bubbles: true })) })
-    expect(container.textContent).toContain('Rejeitado')
+    expect(container.textContent).toContain('REJEITADO')
     expect(container.textContent).toContain('Festival')
+    cleanup()
+  })
+
+  it('shows scan QR button', () => {
+    const { container, cleanup } = renderPage()
+    expect(container.textContent).toContain('Escanear QR Code')
+    cleanup()
+  })
+
+  it('opens scanner when scan button is clicked', async () => {
+    const { container, cleanup } = renderPage()
+    const scanBtn = Array.from(container.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Escanear QR Code'),
+    ) as HTMLButtonElement
+    await act(async () => { scanBtn.click() })
+    expect(container.querySelector('[data-testid="qr-scanner"]')).toBeTruthy()
+    cleanup()
+  })
+
+  it('auto-submits after QR scan', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        status: 'APROVADO',
+        ingresso: { id: 4, codigo: 'SCANNED-CODE', categoria: 'INTEIRA', evento: 'Festival', assento: 'D1', usuario: 'Ana' },
+      }),
+    } as Response)
+    const { container, cleanup } = renderPage()
+    const scanBtn = Array.from(container.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Escanear QR Code'),
+    ) as HTMLButtonElement
+    await act(async () => { scanBtn.click() })
+    const simulateBtn = Array.from(container.querySelectorAll('button')).find((b) =>
+      b.textContent === 'Simular Scan',
+    ) as HTMLButtonElement
+    await act(async () => { simulateBtn.click() })
+    expect(container.textContent).toContain('APROVADO')
+    expect(container.textContent).toContain('SCANNED-CODE')
     cleanup()
   })
 })

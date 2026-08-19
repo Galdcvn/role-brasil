@@ -114,7 +114,15 @@ npm run test:cov
 
 > Registro das decisões tomadas ao longo do desenvolvimento, com o contexto de cada uma. Inserida em ordem cronológica; decisões novas são adicionadas no topo.
 
-### 19/08/2026 — Fix: role guard, navigate, dead code cleanup
+### 19/08/2026 — QR Code scanner + modo kiosk + design system portaria
+
+- **QR Code scanner**: integrado `html5-qrcode` na `ValidarPage`. Botão "Escanear QR Code" abre câmera fullscreen com viewfinder; ao detectar QR, valida automaticamente. Componente `QRScanner.tsx` encapsula `Html5Qrcode` com lifecycle seguro (stop + clear no unmount).
+- **Modo kiosk / fullscreen**: botão de fullscreen na `Header` visível apenas para papel PORTARIA. Usa Fullscreen API (`requestFullscreen` / `exitFullscreen`). Permite usar tablet na entrada do evento como "modo vitrine" sem barra de navegador.
+- **Design system portaria — StatusBadge**: removidos `CORES_RESULTADO` duplicados em `ValidarPage` e `HistoricoPage`. Status agora usa `<StatusBadge>` do design system centralizado (APROVADO, PENDENTE_DOCUMENTACAO, REJEITADO, etc).
+- **Design system portaria — EmptyState**: `HistoricoPage` agora usa `<EmptyState>` quando não há scans, consistente com todas as outras páginas.
+- **Design system portaria — error card + spacing**: `HistoricoPage` usa `<Card>` vermelho para erros (igual ao `ValidarPage`) e `space-y-6` consistente.
+- **Fix tela branca Meus Ingressos (CRÍTICO)**: interface `Ingresso` no frontend não batia com backend — `sessao` era na verdade `reserva.sessao`, `assento` estava no nível raiz (não dentro de `sessao`), `categoria` vinha direto do `Ingresso` (não de `reserva.itens`). Corrigido em `IngressosPage.tsx`, `DetalheIngressoPage.tsx` e `ingresso.repository.ts` (adicionado `reserva.itens` no `buscarPorId`).
+- **Testes**: 250 client + 258 server = 508 total. Coverage: 89.93% stmts, 84.74% branches, 84.03% functions, 92.07% lines.
 
 - **ProtectedRoute role-based access control**: `ProtectedRoute` agora verifica o papel do usuário contra a rota acessada. CLIENT só acessa `/portal/cliente/*`, ORGANIZER só `/portal/organizador/*`, PORTARIA só `/portal/portaria/*`. Usuário sem papel correto é redirecionado para `/portal`. Antes, qualquer usuário autenticado podia navegar para qualquer portal via URL.
 - **FavoritosPage / IngressosPage — navigate em vez de reload**: substituído `window.location.href = '/portal/cliente'` por `useNavigate()`, evitando full page reload que perdia estado React e causava flash branco.

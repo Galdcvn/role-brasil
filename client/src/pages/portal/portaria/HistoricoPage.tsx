@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { api } from '../../../api'
 import Card from '../../../components/ui/Card'
+import StatusBadge from '../../../components/ui/StatusBadge'
+import EmptyState from '../../../components/ui/EmptyState'
 
 interface Scan {
   portariaId: number
@@ -28,14 +30,6 @@ interface Scan {
   }
 }
 
-const CORES_RESULTADO: Record<string, string> = {
-  APROVADO: 'bg-emerald-900/60 text-emerald-400',
-  PENDENTE_DOCUMENTACAO: 'bg-yellow-900/60 text-yellow-400',
-  REJEITADO: 'bg-red-900/60 text-red-400',
-  DOCUMENTACAO_CONFIRMADA: 'bg-emerald-900/60 text-emerald-400',
-  DOCUMENTACAO_RECUSADA: 'bg-red-900/60 text-red-400',
-}
-
 function formatarData(iso: string): string {
   return new Date(iso).toLocaleString('pt-BR', {
     day: '2-digit',
@@ -44,17 +38,6 @@ function formatarData(iso: string): string {
     hour: '2-digit',
     minute: '2-digit',
   })
-}
-
-function formatarResultado(resultado: string): string {
-  const labels: Record<string, string> = {
-    APROVADO: 'Aprovado',
-    PENDENTE_DOCUMENTACAO: 'Pend. Doc.',
-    REJEITADO: 'Rejeitado',
-    DOCUMENTACAO_CONFIRMADA: 'Doc. Confirmada',
-    DOCUMENTACAO_RECUSADA: 'Doc. Recusada',
-  }
-  return labels[resultado] ?? resultado
 }
 
 export default function HistoricoPage() {
@@ -71,7 +54,7 @@ export default function HistoricoPage() {
 
   if (loading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-6">
         <h1 className="text-2xl font-bold">Histórico</h1>
         <div className="space-y-2">
           {[1, 2, 3, 4, 5].map((i) => (
@@ -83,13 +66,20 @@ export default function HistoricoPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <h1 className="text-2xl font-bold">Histórico</h1>
 
-      {erro && <p className="text-sm text-red-400">{erro}</p>}
+      {erro && (
+        <Card className="border-red-500/60 bg-red-900/20">
+          <p className="text-sm text-red-400">{erro}</p>
+        </Card>
+      )}
 
-      {scans.length === 0 ? (
-        <p className="text-sm text-slate-400">Nenhum scan realizado ainda.</p>
+      {!erro && scans.length === 0 ? (
+        <EmptyState
+          titulo="Nenhum scan realizado ainda"
+          descricao="Valide ingressos na aba anterior para vê-los aqui."
+        />
       ) : (
         <div className="space-y-2">
           {scans.map((scan, idx) => {
@@ -102,16 +92,10 @@ export default function HistoricoPage() {
                       <p className="truncate text-sm font-medium text-white">
                         {evento.titulo}
                       </p>
-                      <span
-                        className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                          CORES_RESULTADO[scan.resultado] ?? 'bg-slate-700 text-slate-300'
-                        }`}
-                      >
-                        {formatarResultado(scan.resultado)}
-                      </span>
+                      <StatusBadge status={scan.resultado} />
                     </div>
                     <p className="mt-0.5 text-xs text-slate-400">
-                      {scan.ingresso.categoria} — Assento {scan.ingresso.codigo}
+                      {scan.ingresso.categoria} — {scan.ingresso.codigo}
                     </p>
                   </div>
                   <span className="shrink-0 text-xs text-slate-500">

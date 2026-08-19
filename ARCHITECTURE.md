@@ -92,8 +92,10 @@ Regras:
 
 ### Páginas do Portal da Portaria
 
-- **ValidarPage** (`/portal/portaria`): input para código do ingresso, valida via `POST /portaria/validar`, exibe resultado (APROVADO/PENDENTE_DOCUMENTACAO/REJEITADO) com cores semáforo e detalhes do ingresso (evento, assento, categoria, usuário, código).
-- **HistoricoPage** (`/portal/portaria/historico`): lista cronológica de scans realizados pelo portaria logado, com cores por resultado e detalhes do evento/ingresso.
+- **ValidarPage** (`/portal/portaria`): input para código do ingresso + botão "Escanear QR Code" que abre câmera via `html5-qrcode`. Valida via `POST /portaria/validar`, exibe resultado (APROVADO/PENDENTE_DOCUMENTACAO/REJEITADO) com `<StatusBadge>` e detalhes do ingresso em `<Card>` colorido.
+- **HistoricoPage** (`/portal/portaria/historico`): lista cronológica de scans realizados pelo portaria logado, com `<StatusBadge>` por resultado e `<EmptyState>` quando vazio.
+- **QR Scanner** (`components/ui/QRScanner.tsx`): componente fullscreen que usa `Html5Qrcode` para ler QR pela câmera do dispositivo. Ao detectar, chama `onScan(decodedText)` e encerra a câmera.
+- **Modo kiosk / fullscreen**: botão na `Header` visível apenas para papel PORTARIA. Usa Fullscreen API para esconder barra do navegador — ideal para tablet na entrada do evento.
 
 ## 4. Server (NestJS) — mapa de módulos
 
