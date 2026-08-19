@@ -24,7 +24,12 @@ export class SessaoService {
         'Evento cancelado não pode receber novas sessões',
       );
     }
-    return this.sessaoRepository.criar(eventoId, new Date(dto.dataHora));
+    return this.sessaoRepository.criar(
+      eventoId,
+      new Date(dto.dataHora),
+      dto.fileiras,
+      dto.assentosPorFileira,
+    );
   }
 
   async listar(organizadorId: number, eventoId: number) {

@@ -21,4 +21,18 @@ export class FavoritoService {
     const favoritos = await this.favoritoRepository.listarEventosIds(usuarioId);
     return favoritos.map((f) => f.eventoId);
   }
+
+  async listarEventos(usuarioId: number) {
+    const favoritos = await this.favoritoRepository.listarEventos(usuarioId);
+    return favoritos.map((f) => ({
+      ...f.evento,
+      proximaSessao: f.evento.sessoes[0]
+        ? {
+            dataHora: f.evento.sessoes[0].dataHora,
+            vagasDisponiveis: f.evento.sessoes[0]._count.assentos,
+          }
+        : null,
+      sessoes: undefined,
+    }));
+  }
 }

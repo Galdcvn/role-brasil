@@ -11,7 +11,9 @@ describe('SessaoRepository', () => {
       findFirst: jest.Mock;
       update: jest.Mock;
     };
+    assentosSessao: { createMany: jest.Mock };
     reserva: { count: jest.Mock };
+    $transaction: jest.Mock;
   };
 
   beforeEach(() => {
@@ -23,7 +25,9 @@ describe('SessaoRepository', () => {
         findFirst: jest.fn(),
         update: jest.fn(),
       },
+      assentosSessao: { createMany: jest.fn() },
       reserva: { count: jest.fn() },
+      $transaction: jest.fn(),
     };
     repository = new SessaoRepository(prismaMock as unknown as PrismaService);
   });
@@ -41,15 +45,34 @@ describe('SessaoRepository', () => {
     expect(resultado).toEqual({ id: 3, status: 'PUBLICADO' });
   });
 
-  it('criar cria a sessão com dataHora', async () => {
+  it('criar cria a sessão com assentos via transação', async () => {
     const dataHora = new Date('2026-08-10T20:00:00Z');
-    prismaMock.sessaoEvento.create.mockResolvedValue({ id: 1 });
-    const resultado = await repository.criar(3, dataHora);
-    expect(prismaMock.sessaoEvento.create).toHaveBeenCalledWith({
-      data: { eventoId: 3, dataHora },
-      select: expect.any(Object) as object,
-    });
-    expect(resultado).toEqual({ id: 1 });
+    const sessaoCriada = { id: 1, eventoId: 3, dataHora };
+
+    prismaMock.$transaction.mockImplementation(
+      async (fn: (tx: PrismaService) => Promise<unknown>) => {
+        return fn({
+          sessaoEvento: {
+            create: jest.fn().mockResolvedValue(sessaoCriada),
+            findMany: jest.fn(),
+            findFirst: jest.fn(),
+            update: jest.fn(),
+          },
+          assentosSessao: {
+            createMany: jest.fn().mockResolvedValue({ count: 10 }),
+            findMany: jest.fn(),
+            findFirst: jest.fn(),
+            update: jest.fn(),
+          },
+          reserva: { count: jest.fn() },
+          $transaction: jest.fn(),
+        } as unknown as PrismaService);
+      },
+    );
+
+    const resultado = await repository.criar(3, dataHora, 2, 5);
+    expect(prismaMock.$transaction).toHaveBeenCalled();
+    expect(resultado).toEqual(sessaoCriada);
   });
 
   it('buscar lista sessões ativas do evento com contagem de reservas', async () => {

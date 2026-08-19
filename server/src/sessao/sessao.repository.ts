@@ -21,10 +21,35 @@ export class SessaoRepository {
     });
   }
 
-  criar(eventoId: number, dataHora: Date) {
-    return this.prisma.sessaoEvento.create({
-      data: { eventoId, dataHora },
-      select: SELECT_SESSAO,
+  criar(
+    eventoId: number,
+    dataHora: Date,
+    fileiras: number,
+    assentosPorFileira: number,
+  ) {
+    const FILEIRAS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+    return this.prisma.$transaction(async (tx) => {
+      const sessao = await tx.sessaoEvento.create({
+        data: { eventoId, dataHora },
+        select: SELECT_SESSAO,
+      });
+
+      const assentosData: {
+        sessaoId: number;
+        fileira: string;
+        numero: number;
+      }[] = [];
+      for (let f = 0; f < fileiras; f++) {
+        const letra = FILEIRAS[f];
+        for (let a = 1; a <= assentosPorFileira; a++) {
+          assentosData.push({ sessaoId: sessao.id, fileira: letra, numero: a });
+        }
+      }
+
+      await tx.assentosSessao.createMany({ data: assentosData });
+
+      return sessao;
     });
   }
 

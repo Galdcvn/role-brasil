@@ -29,4 +29,33 @@ export class FavoritoRepository {
       select: { eventoId: true },
     });
   }
+
+  listarEventos(usuarioId: number) {
+    return this.prisma.favorito.findMany({
+      where: { usuarioId },
+      select: {
+        evento: {
+          select: {
+            id: true,
+            titulo: true,
+            posterUrl: true,
+            status: true,
+            categorias: { select: { nome: true, precoCentavos: true } },
+            endereco: { select: { cidade: true, estado: true } },
+            sessoes: {
+              where: { status: 'ATIVA', excluidoEm: null },
+              orderBy: { dataHora: 'asc' },
+              take: 1,
+              select: {
+                dataHora: true,
+                _count: {
+                  select: { assentos: { where: { status: 'DISPONIVEL' } } },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+  }
 }

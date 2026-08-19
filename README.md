@@ -114,6 +114,16 @@ npm run test:cov
 
 > Registro das decisões tomadas ao longo do desenvolvimento, com o contexto de cada uma. Inserida em ordem cronológica; decisões novas são adicionadas no topo.
 
+### 18/08/2026 — Batch de fixes: UI, assentos, favoritos
+
+- **Botão Excluir vermelho + navegação**: botão "Excluir" no detalhe do evento (organizador) trocado de `bg-slate-700` para `bg-red-600` (consistente com "Cancelar Evento"). Após exclusão, `navigate('/portal/organizador/eventos')` redireciona automaticamente para a lista de eventos.
+- **Sidebar removida do mobile**: sidebar agora é `hidden lg:flex` — não aparece em telas menores que `lg`. Botão hamburger no Header também escondido (`hidden`). BottomNav (3 itens: Início, Favoritos, Ingressos) continua visível no mobile.
+- **Logo com texto aumentada**: `RB_Logo_Texto.png` no Sidebar de `h-8` para `h-10`; ícone `RB_Logo.png` no Header de `h-6` para `h-8`.
+- **Assentos auto-gerados ao criar sessão**: `CriarSessaoDto` agora aceita `fileiras` (1-26) e `assentosPorFileira` (1-100). `SessaoRepository.criar()` usa `$transaction` para criar a sessão + gerar todos os `AssentosSessao` (fileiras A-Z, status DISPONIVEL). Form no client atualizado com inputs de fileiras e assentos/fileira (defaults 5x20 = 100 assentos).
+- **Página de Favoritos**: novo endpoint `GET /api/favoritos/eventos` retorna eventos completos (poster, título, categorias, endereço, próxima sessão com vagas). `FavoritosPage.tsx` criada com grid de cards. Rota `cliente/favoritos` adicionada ao `App.tsx`. Links "Favoritos" adicionados à Sidebar e BottomNav do cliente.
+- **Meus Ingressos**: rota, componente e links já existiam; agora visíveis via BottomNav no mobile (3 itens).
+- **Testes**: 476 (258 server + 218 client). Teste de sidebar mobile atualizado para validar `hidden` em vez de overlay.
+
 ### 18/08/2026 — Fix: conflito de rotas EventoPublicoController vs EventoController
 
 - **Bug raiz**: `EventoController` (`@Roles('ORGANIZER')`) era registrado antes de `EventoPublicoController` (`@Public()`) no `EventoModule`. O Express casa `GET /api/eventos/publicos` com `GET /api/eventos/:id` (parameterizado) primeiro — o `:id` captura `"publicos"`. Resultado: 403 Forbidden resource para clientes autenticados (JWT válido, mas role ORGANIZER exigida).

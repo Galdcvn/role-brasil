@@ -40,10 +40,14 @@ describe('SessaoService', () => {
       repositoryMock.criar.mockResolvedValue({ id: 1 });
       const dto = new CriarSessaoDto();
       dto.dataHora = '2026-08-10T20:00:00.000Z';
+      dto.fileiras = 5;
+      dto.assentosPorFileira = 20;
       const resultado = await service.criar(7, 3, dto);
       expect(repositoryMock.criar).toHaveBeenCalledWith(
         3,
         new Date('2026-08-10T20:00:00.000Z'),
+        5,
+        20,
       );
       expect(resultado).toEqual({ id: 1 });
     });

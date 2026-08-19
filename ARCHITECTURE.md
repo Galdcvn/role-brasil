@@ -67,7 +67,7 @@ src/
 Regras:
 
 - **Portal unificado**: um único shell (sidebar + bottom nav) serve todos os papéis. O papel ativo é controlado por `PortalContext` e muda o conteúdo/rotas exibidos, não o layout.
-- **Sidebar (desktop) + Bottom Nav (mobile)**: sidebar fixa à esquerda em telas ≥ lg; bottom nav fixo no fundo em telas < lg. Ambos mostram apenas os papéis que o usuário possui.
+- **Sidebar (desktop) + Bottom Nav (mobile)**: sidebar fixa à esquerda apenas em telas ≥ lg (`hidden lg:flex`); bottom nav fixo no fundo em telas < lg com 3 itens (cliente: Início, Favoritos, Ingressos). Sidebar e hamburger não aparecem no mobile.
 - **Role-gating no front é só UX.** Esconder/mostrar botões por papel melhora o produto, mas não protege nada: a autorização real é feita pelos guards no backend.
 - O client nunca decide preço, disponibilidade ou validade — ele exibe o que o server responde.
 - Estado de autenticação em `AuthContext`; token em `localStorage`; toda chamada protegida envia `Authorization: Bearer <token>`.
@@ -77,6 +77,7 @@ Regras:
 
 - **InicioPage** (`/portal/cliente`): busca de eventos públicos com filtros (texto, cidade, estado, data, preço) e paginação. Cards com poster, endereço, categorias, próxima sessão.
 - **DetalheEventoPage** (`/portal/cliente/evento/:id`): state machine de compra — INFO → ASSENTOS → RESERVA → CONFIRMAÇÃO. Info do evento, mapa de assentos, timer de expiração (10 min), pagamento (PIX/cartão), confirmação. Favoritos toggle. Chat integrado para quem tem ingresso (polling 10s).
+- **FavoritosPage** (`/portal/cliente/favoritos`): grid de eventos favoritados com poster, título, categorias, endereço, próxima sessão. Backend `GET /api/favoritos/eventos` retorna eventos completos.
 - **IngressosPage** (`/portal/cliente/ingressos`): lista de ingressos do cliente com filtros por status (EMITIDO, PENDENTE, TODOS).
 - **DetalheIngressoPage** (`/portal/cliente/ingressos/:id`): detalhe do ingresso com QR code, código de 16 chars, cancelamento com confirmação dupla (até 7 dias antes do evento).
 
@@ -133,13 +134,13 @@ Regras:
 | usuario | `usuario/` | **implementado** — `usuario.repository.ts`, `usuario.service.ts`, `usuario.controller.ts`, `dto/` |
 | catalog | `catalog/` | **implementado** — `providers/` (`TmdbAdapter` + `CatalogProvider`), `catalog.service.ts`, `catalog.controller.ts`, `dto/` |
 | evento | `evento/` | **implementado** — `evento.repository.ts`, `evento.service.ts`, `evento.controller.ts`, `evento-publico.controller.ts`, `dto/` |
-| sessao | `sessao/` | **implementado** — `sessao.repository.ts`, `sessao.service.ts`, `sessao.controller.ts`, `dto/` |
+| sessao | `sessao/` | **implementado** — `sessao.repository.ts`, `sessao.service.ts`, `sessao.controller.ts`, `dto/` — criação auto-gera assentos via `$transaction` |
 | assento | `assento/` | **implementado** — `assento.repository.ts`, `assento.service.ts`, `assento.controller.ts` |
 | reserva | `reserva/` | **implementado** — `reserva.repository.ts`, `reserva.service.ts`, `reserva.controller.ts`, `dto/` |
 | pagamento | `pagamento/` | **implementado** — `pagamento.repository.ts`, `pagamento.service.ts`, `pagamento.controller.ts`, `dto/` |
 | ingresso | `ingresso/` | **implementado** — `ingresso.repository.ts`, `ingresso.service.ts`, `ingresso.controller.ts` |
 | portaria | `portaria/` | **implementado** — `portaria.repository.ts`, `portaria.service.ts`, `portaria.controller.ts`, `dto/` |
-| favorito | `favorito/` | **implementado** — `favorito.repository.ts`, `favorito.service.ts`, `favorito.controller.ts` |
+| favorito | `favorito/` | **implementado** — `favorito.repository.ts`, `favorito.service.ts`, `favorito.controller.ts` — toggle + listar IDs + listar eventos completos |
 | mensagem | `mensagem/` | **implementado** — `mensagem.repository.ts`, `mensagem.service.ts`, `mensagem.controller.ts`, `mensagem-global.controller.ts` |
 | stats | `stats/` | **implementado** — `stats.service.ts`, `stats.controller.ts` |
 | infra | `common/` | decorators `@Roles`/`@Public`, guards JWT/papéis, `NotificationService` |

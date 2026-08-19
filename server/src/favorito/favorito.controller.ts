@@ -24,4 +24,9 @@ export class FavoritoController {
   listar(@Req() requisicao: { user: { sub: number } }) {
     return this.favoritoService.listar(requisicao.user.sub);
   }
+
+  @Get('eventos')
+  listarEventos(@Req() requisicao: { user: { sub: number } }) {
+    return this.favoritoService.listarEventos(requisicao.user.sub);
+  }
 }

@@ -17,6 +17,7 @@ import InicioPage from './pages/portal/cliente/InicioPage'
 import DetalheEventoPage from './pages/portal/cliente/DetalheEventoPage'
 import IngressosPage from './pages/portal/cliente/IngressosPage'
 import DetalheIngressoPage from './pages/portal/cliente/DetalheIngressoPage'
+import FavoritosPage from './pages/portal/cliente/FavoritosPage'
 import NotFoundPage from './pages/NotFoundPage'
 
 function PortalIndex() {
@@ -41,6 +42,7 @@ function PortalRoutes() {
           <Route index element={<PortalIndex />} />
           <Route path="cliente" element={<InicioPage />} />
           <Route path="cliente/evento/:id" element={<DetalheEventoPage />} />
+          <Route path="cliente/favoritos" element={<FavoritosPage />} />
           <Route path="cliente/ingressos" element={<IngressosPage />} />
           <Route path="cliente/ingressos/:id" element={<DetalheIngressoPage />} />
           <Route path="organizador" element={<DashboardPage />} />

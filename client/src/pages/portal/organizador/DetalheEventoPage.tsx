@@ -69,6 +69,8 @@ export default function DetalheEventoPage() {
   const [erro, setErro] = useState<string | null>(null)
   const [acaoLoading, setAcaoLoading] = useState<string | null>(null)
   const [novaSessaoData, setNovaSessaoData] = useState('')
+  const [novaSessaoFileiras, setNovaSessaoFileiras] = useState(5)
+  const [novaSessaoAssentos, setNovaSessaoAssentos] = useState(20)
   const [sessaoErro, setSessaoErro] = useState<string | null>(null)
 
   useEffect(() => {
@@ -82,6 +84,10 @@ export default function DetalheEventoPage() {
     setAcaoLoading(acao)
     try {
       await api<Evento>(endpoint, { method })
+      if (method === 'DELETE') {
+        navigate('/portal/organizador/eventos')
+        return
+      }
       const atualizado = await api<Evento>(`/eventos/${id}`)
       setEvento(atualizado)
     } catch (e: unknown) {
@@ -98,7 +104,11 @@ export default function DetalheEventoPage() {
     try {
       await api(`/eventos/${id}/sessoes`, {
         method: 'POST',
-        body: JSON.stringify({ dataHora: novaSessaoData }),
+        body: JSON.stringify({
+          dataHora: novaSessaoData,
+          fileiras: novaSessaoFileiras,
+          assentosPorFileira: novaSessaoAssentos,
+        }),
       })
       setNovaSessaoData('')
       const atualizado = await api<Evento>(`/eventos/${id}`)
@@ -257,16 +267,42 @@ export default function DetalheEventoPage() {
           </div>
         )}
 
-        <form onSubmit={criarSessao} className="mt-4 flex gap-2">
-          <input
-            type="datetime-local"
-            value={novaSessaoData}
-            onChange={(e) => setNovaSessaoData(e.target.value)}
-            className="flex-1 rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm text-white focus:border-[#00FF88] focus:outline-none"
-          />
-          <Button type="submit" className="w-auto px-4 py-2 text-xs">
-            Adicionar
-          </Button>
+        <form onSubmit={criarSessao} className="mt-4 space-y-2">
+          <div className="flex gap-2">
+            <input
+              type="datetime-local"
+              value={novaSessaoData}
+              onChange={(e) => setNovaSessaoData(e.target.value)}
+              className="flex-1 rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm text-white focus:border-[#00FF88] focus:outline-none"
+            />
+            <Button type="submit" className="w-auto px-4 py-2 text-xs">
+              Adicionar
+            </Button>
+          </div>
+          <div className="flex gap-2">
+            <label className="flex items-center gap-1.5 text-xs text-slate-400">
+              Fileiras
+              <input
+                type="number"
+                min={1}
+                max={26}
+                value={novaSessaoFileiras}
+                onChange={(e) => setNovaSessaoFileiras(Number(e.target.value))}
+                className="w-14 rounded-lg border border-slate-700 bg-slate-800/60 px-2 py-1.5 text-sm text-white focus:border-[#00FF88] focus:outline-none"
+              />
+            </label>
+            <label className="flex items-center gap-1.5 text-xs text-slate-400">
+              Assentos/fileira
+              <input
+                type="number"
+                min={1}
+                max={100}
+                value={novaSessaoAssentos}
+                onChange={(e) => setNovaSessaoAssentos(Number(e.target.value))}
+                className="w-14 rounded-lg border border-slate-700 bg-slate-800/60 px-2 py-1.5 text-sm text-white focus:border-[#00FF88] focus:outline-none"
+              />
+            </label>
+          </div>
         </form>
         {sessaoErro && <p className="mt-2 text-xs text-red-400">{sessaoErro}</p>}
       </Card>
@@ -294,7 +330,7 @@ export default function DetalheEventoPage() {
           <Button
             onClick={() => executarAcao('excluir', `/eventos/${id}`, 'DELETE')}
             loading={acaoLoading === 'excluir'}
-            className="w-auto bg-slate-700 px-6 py-2 text-xs shadow-none hover:bg-slate-600"
+            className="w-auto bg-red-600 px-6 py-2 text-xs shadow-red-600/20 hover:bg-red-500"
           >
             Excluir
           </Button>

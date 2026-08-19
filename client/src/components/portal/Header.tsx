@@ -13,14 +13,14 @@ export default function Header({ onMenuClick }: Props) {
       <div className="flex items-center gap-3">
         <button
           onClick={onMenuClick}
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-800 hover:text-white lg:hidden"
+          className="hidden h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
           aria-label="Abrir menu"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
           </svg>
         </button>
-        <img src={logo} alt="Rolê Brasil" className="h-6 lg:hidden" />
+        <img src={logo} alt="Rolê Brasil" className="h-8 lg:hidden" />
       </div>
 
       <div className="flex items-center gap-3">

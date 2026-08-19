@@ -201,16 +201,16 @@ describe('App', () => {
     cleanup()
   })
 
-  it('opens sidebar on mobile via menu button', () => {
+  it('hides sidebar and menu button on mobile, shows on desktop', () => {
     mockFetch({ totalEventos: 0, eventosPorStatus: {}, totalReservas: 0, totalReceitaCentavos: 0, totalIngressos: 0 })
     localStorage.setItem('token', criarTokenFake({ roles: ['ORGANIZER'] }))
     const { container, cleanup } = renderAt(['/portal/organizador'])
     const menuBtn = container.querySelector('button[aria-label="Abrir menu"]') as HTMLButtonElement
     expect(menuBtn).toBeTruthy()
-    act(() => menuBtn.click())
-    const overlay = container.querySelector('.fixed.inset-0')
-    expect(overlay).toBeTruthy()
-    act(() => (overlay as HTMLElement).click())
+    expect(menuBtn.classList.contains('hidden')).toBe(true)
+    const sidebar = container.querySelector('aside')
+    expect(sidebar).toBeTruthy()
+    expect(sidebar?.classList.contains('hidden')).toBe(true)
     cleanup()
   })
 })
