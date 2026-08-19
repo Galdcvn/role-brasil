@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import * as QRCode from 'qrcode';
 import { IngressoRepository } from './ingresso.repository';
 
 @Injectable()
@@ -20,6 +21,22 @@ export class IngressoService {
       throw new NotFoundException('Ingresso não encontrado');
     }
     return ingresso;
+  }
+
+  async compartilhar(codigo: string) {
+    const ingresso =
+      await this.ingressoRepository.buscarPorCodigoPublico(codigo);
+    if (ingresso === null) {
+      throw new NotFoundException('Ingresso não encontrado');
+    }
+
+    const qrDataUrl = await QRCode.toDataURL(codigo, {
+      width: 180,
+      margin: 2,
+      color: { dark: '#000000', light: '#ffffff' },
+    });
+
+    return { ...ingresso, qrDataUrl };
   }
 
   async cancelar(usuarioId: number, ingressoId: number) {

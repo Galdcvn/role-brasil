@@ -20,6 +20,7 @@ import DetalheIngressoPage from './pages/portal/cliente/DetalheIngressoPage'
 import FavoritosPage from './pages/portal/cliente/FavoritosPage'
 import ValidarPage from './pages/portal/portaria/ValidarPage'
 import HistoricoPage from './pages/portal/portaria/HistoricoPage'
+import CompartilharIngressoPage from './pages/CompartilharIngressoPage'
 import NotFoundPage from './pages/NotFoundPage'
 
 function PortalIndex() {
@@ -78,6 +79,7 @@ function App() {
           element={<RegistroPage papel="PORTARIA" />}
         />
         <Route path="/404" element={<NotFoundPage />} />
+        <Route path="/ingressos/compartilhar/:codigo" element={<CompartilharIngressoPage />} />
         <Route
           path="/portal/*"
           element={

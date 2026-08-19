@@ -71,7 +71,7 @@ As migrations são escritas manualmente no SQL Editor do Supabase — **não** r
 
 ## Como rodar
 
-> **Estado atual: backend completo + client completo (organizador + cliente + portaria)** — autenticação, módulo organizador (catálogo TMDb, eventos, sessões), módulo cliente, módulo portaria implementados no server, com **258 testes** passando. O client tem Portal unificado (sidebar slide-over mobile, tema escuro), páginas de Login/Registro conectadas à API, **módulo organizador completo** (Dashboard com KPIs, listagem, criação com TMDb, edição com proteção, relatórios com métricas reais, detalhe com sessões/criação/loader), **módulo cliente completo** (explorar eventos, detalhe com fluxo de compra, ingressos, detalhe ingresso com QR, chat, favoritos), **módulo portaria completo** (validar ingresso, histórico de scans), e **228 testes** passando com coverage ≥ 84%.
+> **Estado atual: backend completo + client completo (organizador + cliente + portaria)** — autenticação, módulo organizador (catálogo TMDb, eventos, sessões), módulo cliente, módulo portaria implementados no server, com **262 testes** passando. O client tem Portal unificado (sidebar slide-over mobile, tema escuro), páginas de Login/Registro conectadas à API, **módulo organizador completo** (Dashboard com KPIs, listagem, criação com TMDb, edição com proteção, relatórios com métricas reais, detalhe com sessões/criação/loader), **módulo cliente completo** (explorar eventos, detalhe com fluxo de compra, ingressos, detalhe ingresso com QR, compartilhamento, chat, favoritos), **módulo portaria completo** (validar ingresso com seletor de evento, histórico de scans, erros diferenciados), e **512 testes** passando (262 server + 250 client).
 
 ### Pré-requisitos
 
@@ -113,6 +113,16 @@ npm run test:cov
 ## Linha do tempo das decisões
 
 > Registro das decisões tomadas ao longo do desenvolvimento, com o contexto de cada uma. Inserida em ordem cronológica; decisões novas são adicionadas no topo.
+
+### 19/08/2026 — Gaps do desafio Elite Dev: share, portaria evento, seed, QR local
+
+- **Compartilhamento de ingresso (backend + frontend)**: novo endpoint público `GET /api/ingressos/publico/:codigo` (`@Public()`) que retorna dados do ingresso + `qrDataUrl` (data URL com QR em base64, gerado localmente via pacote `qrcode` — sem API externa). `CompartilharIngressoPage.tsx` rota pública em `/ingressos/compartilhar/:codigo` (sem auth). Botão "Compartilhar" no `DetalheIngressoPage` usa `navigator.share` com fallback para clipboard.
+- **Portaria — check de evento**: campo opcional `eventoId` no `ValidarIngressoDto`. Portaria agora valida que o ingresso pertence ao evento selecionado — rejeita com "Ingresso pertence a outro evento" se não bater. `ValidarPage` busca eventos públicos em mount e exibe dropdown de seleção.
+- **Portaria — erros diferenciados**: `classificarErro()` mapeia mensagens de erro em ícones/cores distintos — não encontrado (X), já utilizado (ciclo), evento errado (cruz), cancelado (proibido). Cada caso exibe card visual diferente.
+- **Seed data completo**: `npx prisma db seed` popula 4 usuários (organizador, 2 clientes, 1 portaria — todos `Senha@123`), 1 evento publicado "Rock in Rio 2026" com 2 sessões (60 assentos cada), 3 categorias (PISTA/VIP/CAMAROTE).
+- **QR code local (server)**: `ingresso.service.ts` usa `qrcode` package para gerar data URL — eliminada dependência de API externa (api.qrserver.com).
+- **Pagamento — hint de recusa**: texto "Dica: CVV 000 simula recusa" abaixo do input CVV para facilitar demonstração.
+- **Testes**: 262 server + 250 client = 512 total, todos passando.
 
 ### 19/08/2026 — Layout teatro + categorias dinâmicas + fix timezone sessão
 

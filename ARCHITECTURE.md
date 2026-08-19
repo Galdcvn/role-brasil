@@ -50,7 +50,9 @@ src/
 ├── pages/
 │   ├── portal/
 │   │   ├── organizador/ Dashboard, Eventos, DetalheEvento, NovoEvento, EditarEvento, Relatorios
-│   │   └── cliente/     InicioPage, DetalheEventoPage, IngressosPage, DetalheIngressoPage
+│   │   ├── cliente/     InicioPage, DetalheEventoPage, IngressosPage, DetalheIngressoPage, FavoritosPage
+│   │   └── portaria/    ValidarPage, HistoricoPage
+│   ├── CompartilharIngressoPage.tsx   (rota pública /ingressos/compartilhar/:codigo)
 │   ├── LoginPage.tsx, RegistroPage.tsx, SelecaoPapelPage.tsx
 │   ├── HomePage.tsx
 │   └── NotFoundPage.tsx
@@ -127,11 +129,13 @@ Regras:
 - **sessions / seats** — um evento tem várias sessões (data/hora). Cada sessão tem seu mapa de assentos, gerado a partir da configuração de fileiras. A unicidade de um lugar por sessão é garantida por constraint de banco. **Implementado** — CRUD de sessões com regras de reserva; mapa de assentos agrupados por fileira.
 - **reservations** — hold de assentos com validade (15 min): o cliente seleciona lugares e categorias, vê o subtotal, e os assentos ficam `reservados` até o pagamento ou expiração. **Implementado** — criação com `$transaction` e lock de assentos; expiração automática; listagem/detalhe com ownership.
 - **payments** — provedor **simulado** com regra determinística: cartão com CVV "000" é recusado; Pix sempre aprovado. **Implementado** — transação ao aprovar (reserva→PAGO, assentos→VENDIDO, ingressos gerados); transação ao recusar (reserva→CANCELADO, assentos→DISPONIVEL).
-- **tickets** — emissão do ingresso com código de 16 chars (base64url) e `qrToken` de 32 chars (hex). **Implementado** — listar por usuário, detalhe com ownership, cancelamento (até 7 dias antes do evento) com estorno simulado.
-- **portaria** — valida por código (16 chars) ou qrToken; consumo atômico impede uso duplo; fluxo em 2 fases para meia-entrada/gratuidade. **Implementado** — registro de scan, confirmação/rejeição de comprovante, histórico global e por evento.
+- **tickets** — emissão do ingresso com código de 16 chars (base64url) e `qrToken` de 32 chars (hex). **Implementado** — listar por usuário, detalhe com ownership, cancelamento (até 7 dias antes do evento) com estorno simulado, compartilhamento público (`GET /api/ingressos/publico/:codigo` com QR em base64).
+- **portaria** — valida por código (16 chars) ou qrToken; consumo atômico impede uso duplo; fluxo em 2 fases para meia-entrada/gratuidade; `eventoId` opcional para validar que o ingresso pertence ao evento selecionado. **Implementado** — registro de scan, confirmação/rejeição de comprovante, histórico global e por evento.
 - **favorites** — eventos salvos pelo cliente. **Implementado** — toggle (adicionar/remover), listar IDs favoritados.
 - **messages** — mensagens por evento (bidirectional cliente ↔ organizador); leitura e contagem de não lidas. **Implementado** — envio, listagem, marcar como lida, contagem de não lidas.
 - **stats** — painel do organizador: ocupação por sessão, ingressos vendidos por categoria e receita. **Implementado** — `GET /api/stats/organizador` agrega métricas de todos os eventos do organizador.
+
+**Seed data** (`server/prisma/seed.ts`): `npx prisma db seed` popula 4 usuários (organizador, 2 clientes, 1 portaria, todos com senha `Senha@123`), 1 evento publicado "Rock in Rio 2026" com 2 sessões (60 assentos cada, fileira A×E, 12 por fileira) e 3 categorias (PISTA/VIP/CAMAROTE).
 
 **Mapeamento para o scaffold atual (`server/src/`):**
 
@@ -145,7 +149,7 @@ Regras:
 | assento | `assento/` | **implementado** — `assento.repository.ts`, `assento.service.ts`, `assento.controller.ts` |
 | reserva | `reserva/` | **implementado** — `reserva.repository.ts`, `reserva.service.ts`, `reserva.controller.ts`, `dto/` |
 | pagamento | `pagamento/` | **implementado** — `pagamento.repository.ts`, `pagamento.service.ts`, `pagamento.controller.ts`, `dto/` |
-| ingresso | `ingresso/` | **implementado** — `ingresso.repository.ts`, `ingresso.service.ts`, `ingresso.controller.ts` |
+| ingresso | `ingresso/` | **implementado** — `ingresso.repository.ts`, `ingresso.service.ts`, `ingresso.controller.ts` — inclui endpoint público de compartilhamento |
 | portaria | `portaria/` | **implementado** — `portaria.repository.ts`, `portaria.service.ts`, `portaria.controller.ts`, `dto/` |
 | favorito | `favorito/` | **implementado** — `favorito.repository.ts`, `favorito.service.ts`, `favorito.controller.ts` — toggle + listar IDs + listar eventos completos |
 | mensagem | `mensagem/` | **implementado** — `mensagem.repository.ts`, `mensagem.service.ts`, `mensagem.controller.ts`, `mensagem-global.controller.ts` |
@@ -213,9 +217,10 @@ Regras:
 ## 6. Segurança do ingresso
 
 ```
-   QR gerado com ──────▶  token = payload + HMAC
-   segredo do servidor    (assinado; cliente não
-                          consegue forjar)
+   QR gerado com ──────▶  código de 16 chars (base64url)
+   randomBytes(12)        + qrToken de 32 chars (hex)
+   (não forjável pelo     gerados na emissão do ingresso
+    cliente)
                                    │
        Validação na portaria ──────┤
        (código de 16 chars ou      │
@@ -328,7 +333,7 @@ log scan     POST /api/portaria/comprovantes/:id/confirmar
 ```
 
 - **Rotas** (todas exigem JWT + `@Roles('PORTARIA')`):
-  - `POST /api/portaria/validar` — `{ codigo }` → valida ingresso
+  - `POST /api/portaria/validar` — `{ codigo, eventoId? }` → valida ingresso (eventoId opcional para validar que pertence ao evento selecionado)
   - `POST /api/portaria/comprovantes/:id/confirmar` — confirma documentação
   - `POST /api/portaria/comprovantes/:id/rejeitar` — rejeita documentação
   - `GET /api/portaria/historico` — histórico global do portaria logado
@@ -343,11 +348,22 @@ log scan     POST /api/portaria/comprovantes/:id/confirmar
   cliente toca "compartilhar"
         │
         ▼
-  link público /ingressos/compartilhado/:token
+  navigator.share() ou copia link
         │
         ▼
-  qualquer pessoa vê o ingresso + QR (sem dados de conta)
+  link público /ingressos/compartilhar/:codigo
+        │
+        ▼
+  backend gera QR com randomBytes + monta
+  data URL (qrcode package, sem API externa)
+        │
+        ▼
+  qualquer pessoa vê o ingresso + QR
+  (sem dados de conta)
 ```
+
+- **Rota pública** `GET /api/ingressos/publico/:codigo` (`@Public()`) — retorna dados do ingresso + `qrDataUrl` (data URL com QR em base64). Não expõe dados da conta do titular.
+- **QR gerado no servidor** usando o pacote `qrcode` — sem dependência de API externa (api.qrserver.com).
 
 ## 8. Catálogo externo
 

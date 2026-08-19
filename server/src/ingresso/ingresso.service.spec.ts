@@ -11,6 +11,7 @@ describe('IngressoService', () => {
   let repositoryMock: {
     listarPorUsuario: jest.Mock;
     buscarPorId: jest.Mock;
+    buscarPorCodigoPublico: jest.Mock;
     cancelar: jest.Mock;
   };
 
@@ -18,6 +19,7 @@ describe('IngressoService', () => {
     repositoryMock = {
       listarPorUsuario: jest.fn(),
       buscarPorId: jest.fn(),
+      buscarPorCodigoPublico: jest.fn(),
       cancelar: jest.fn(),
     };
     service = new IngressoService(
@@ -95,6 +97,27 @@ describe('IngressoService', () => {
       const resultado = await service.cancelar(7, 1);
       expect(repositoryMock.cancelar).toHaveBeenCalledWith(1);
       expect(resultado).toEqual({ id: 1 });
+    });
+  });
+
+  describe('compartilhar', () => {
+    it('lança NotFound quando código não existe', async () => {
+      repositoryMock.buscarPorCodigoPublico.mockResolvedValue(null);
+      await expect(service.compartilhar('INVALIDO')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('retorna dados públicos com qrDataUrl quando código é válido', async () => {
+      const ingressoFake = {
+        codigo: 'ABC123',
+        status: 'EMITIDO',
+        categoria: 'PISTA',
+      };
+      repositoryMock.buscarPorCodigoPublico.mockResolvedValue(ingressoFake);
+      const resultado = await service.compartilhar('ABC123');
+      expect(resultado.codigo).toBe('ABC123');
+      expect(resultado.qrDataUrl).toMatch(/^data:image\/png;base64,/);
     });
   });
 });

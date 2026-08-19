@@ -606,6 +606,7 @@ export default function DetalheEventoPage() {
                     onChange={(e) => setCartao((c) => ({ ...c, cvv: e.target.value }))}
                     className="w-full rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2.5 text-sm text-white placeholder-slate-400 focus:border-[#00FF88] focus:outline-none"
                   />
+                  <p className="text-[10px] text-slate-600">Dica: CVV 000 simula recusa</p>
                 </div>
               </div>
             )}

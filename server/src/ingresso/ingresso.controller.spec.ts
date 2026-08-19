@@ -7,6 +7,7 @@ describe('IngressoController', () => {
     listar: jest.Mock;
     detalhe: jest.Mock;
     cancelar: jest.Mock;
+    compartilhar: jest.Mock;
   };
 
   beforeEach(() => {
@@ -14,6 +15,7 @@ describe('IngressoController', () => {
       listar: jest.fn(),
       detalhe: jest.fn(),
       cancelar: jest.fn(),
+      compartilhar: jest.fn(),
     };
     controller = new IngressoController(
       serviceMock as unknown as IngressoService,
@@ -41,5 +43,18 @@ describe('IngressoController', () => {
     const resultado = await controller.cancelar(requisicao, 1);
     expect(serviceMock.cancelar).toHaveBeenCalledWith(7, 1);
     expect(resultado).toEqual({ id: 1 });
+  });
+
+  it('compartilhar delega com o codigo', async () => {
+    serviceMock.compartilhar.mockResolvedValue({
+      codigo: 'ABC',
+      qrDataUrl: 'data:image/png;base64,...',
+    });
+    const resultado = await controller.compartilhar('ABC');
+    expect(serviceMock.compartilhar).toHaveBeenCalledWith('ABC');
+    expect(resultado).toEqual({
+      codigo: 'ABC',
+      qrDataUrl: 'data:image/png;base64,...',
+    });
   });
 });

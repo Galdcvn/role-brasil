@@ -63,6 +63,36 @@ export class IngressoRepository {
     });
   }
 
+  buscarPorCodigoPublico(codigo: string) {
+    return this.prisma.ingresso.findUnique({
+      where: { codigo },
+      select: {
+        codigo: true,
+        status: true,
+        categoria: true,
+        criadoEm: true,
+        assento: { select: { fileira: true, numero: true } },
+        reserva: {
+          select: {
+            sessao: {
+              select: {
+                dataHora: true,
+                evento: {
+                  select: {
+                    titulo: true,
+                    posterUrl: true,
+                    endereco: { select: { cidade: true, estado: true } },
+                  },
+                },
+              },
+            },
+            itens: { select: { categoria: true, precoCentavos: true } },
+          },
+        },
+      },
+    });
+  }
+
   async cancelar(ingressoId: number) {
     return this.prisma.$transaction(async (tx) => {
       const ingresso = await tx.ingresso.findUniqueOrThrow({

@@ -32,10 +32,16 @@ function renderPage() {
   return { container, cleanup: () => { act(() => root.unmount()); container.remove() } }
 }
 
+function mockFetchEventos() {
+  return vi.spyOn(globalThis, 'fetch')
+    .mockResolvedValueOnce({ ok: true, json: async () => [] } as Response)
+}
+
 describe('ValidarPage', () => {
   beforeEach(() => { localStorage.clear(); vi.restoreAllMocks() })
 
   it('renders input and button', () => {
+    mockFetchEventos()
     const { container, cleanup } = renderPage()
     expect(container.textContent).toContain('Validar Ingresso')
     expect(container.querySelector('input[placeholder="Código do ingresso"]')).toBeTruthy()
@@ -43,7 +49,8 @@ describe('ValidarPage', () => {
   })
 
   it('shows approved result', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+    const spy = mockFetchEventos()
+    spy.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
         status: 'APROVADO',
@@ -64,7 +71,8 @@ describe('ValidarPage', () => {
   })
 
   it('shows pending documentation result', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+    const spy = mockFetchEventos()
+    spy.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
         status: 'PENDENTE_DOCUMENTACAO',
@@ -83,7 +91,8 @@ describe('ValidarPage', () => {
   })
 
   it('shows error on API failure', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+    const spy = mockFetchEventos()
+    spy.mockResolvedValueOnce({
       ok: false,
       json: async () => ({ message: 'Ingresso não encontrado' }),
     } as Response)
@@ -98,7 +107,8 @@ describe('ValidarPage', () => {
   })
 
   it('shows generic error on non-Error throw', async () => {
-    vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce('network error')
+    const spy = mockFetchEventos()
+    spy.mockRejectedValueOnce('network error')
     const { container, cleanup } = renderPage()
     const input = container.querySelector('input') as HTMLInputElement
     const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')!.set!
@@ -110,16 +120,17 @@ describe('ValidarPage', () => {
   })
 
   it('does not submit with empty code', async () => {
-    const spy = vi.spyOn(globalThis, 'fetch')
+    const spy = mockFetchEventos()
     const { container, cleanup } = renderPage()
     const form = container.querySelector('form') as HTMLFormElement
     await act(async () => { form.dispatchEvent(new Event('submit', { bubbles: true })) })
-    expect(spy).not.toHaveBeenCalled()
+    expect(spy).toHaveBeenCalledTimes(1)
     cleanup()
   })
 
   it('shows rejected result with correct color card', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+    const spy = mockFetchEventos()
+    spy.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
         status: 'REJEITADO',
@@ -138,12 +149,14 @@ describe('ValidarPage', () => {
   })
 
   it('shows scan QR button', () => {
+    mockFetchEventos()
     const { container, cleanup } = renderPage()
     expect(container.textContent).toContain('Escanear QR Code')
     cleanup()
   })
 
   it('opens scanner when scan button is clicked', async () => {
+    mockFetchEventos()
     const { container, cleanup } = renderPage()
     const scanBtn = Array.from(container.querySelectorAll('button')).find((b) =>
       b.textContent?.includes('Escanear QR Code'),
@@ -154,7 +167,8 @@ describe('ValidarPage', () => {
   })
 
   it('auto-submits after QR scan', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+    const spy = mockFetchEventos()
+    spy.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
         status: 'APROVADO',

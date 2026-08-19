@@ -6,6 +6,7 @@ import {
   Post,
   Req,
 } from '@nestjs/common';
+import { Public } from '../common/decorators/public.decorator';
 import { IngressoService } from './ingresso.service';
 
 @Controller('ingressos')
@@ -31,5 +32,11 @@ export class IngressoController {
     @Param('id', ParseIntPipe) id: number,
   ) {
     return this.ingressoService.cancelar(requisicao.user.sub, id);
+  }
+
+  @Public()
+  @Get('publico/:codigo')
+  compartilhar(@Param('codigo') codigo: string) {
+    return this.ingressoService.compartilhar(codigo);
   }
 }

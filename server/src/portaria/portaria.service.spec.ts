@@ -24,7 +24,7 @@ describe('PortariaService', () => {
     comprovanteStatus: 'NAO_NECESSARIO',
     reserva: {
       sessao: {
-        evento: { titulo: 'Show Teste' },
+        evento: { id: 1, titulo: 'Show Teste' },
       },
     },
     assento: { fileira: 'A', numero: 1 },
@@ -142,6 +142,19 @@ describe('PortariaService', () => {
       });
       expect(resultado.status).toBe('APROVADO');
       expect(resultado.ingresso.evento).toBe('Show Teste');
+    });
+
+    it('lança ConflictException quando ingresso pertence a outro evento', async () => {
+      repositoryMock.buscarPorCodigo.mockResolvedValue(ingressoInteira);
+      await expect(
+        service.validar(7, { codigo: 'ABC123XYZ789DEFG', eventoId: 99 }),
+      ).rejects.toThrow(ConflictException);
+      expect(repositoryMock.registrarScan).toHaveBeenCalledWith({
+        portariaId: 7,
+        ingressoId: 1,
+        resultado: 'REJEITADO',
+        observacao: 'Ingresso pertence a outro evento',
+      });
     });
   });
 

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { api } from '../../../api'
 import Card from '../../../components/ui/Card'
 import Button from '../../../components/ui/Button'
@@ -19,18 +19,54 @@ interface ResultadoValidacao {
   ingresso: IngressoInfo
 }
 
+interface EventoPortaria {
+  id: number
+  titulo: string
+}
+
 const CARD_POR_STATUS: Record<string, string> = {
   APROVADO: 'border-emerald-500/60 bg-emerald-900/20',
   PENDENTE_DOCUMENTACAO: 'border-yellow-500/60 bg-yellow-900/20',
   REJEITADO: 'border-red-500/60 bg-red-900/20',
 }
 
+interface ErroInfo {
+  mensagem: string
+  icone: string
+  cor: string
+}
+
+function classificarErro(msg: string): ErroInfo {
+  if (msg.includes('já utilizado') || msg.includes('ja utilizado')) {
+    return { mensagem: msg, icone: '🔄', cor: 'border-orange-500/60 bg-orange-900/20' }
+  }
+  if (msg.includes('outro evento') || msg.includes('evento errado')) {
+    return { mensagem: msg, icone: '🎪', cor: 'border-amber-500/60 bg-amber-900/20' }
+  }
+  if (msg.includes('cancelado')) {
+    return { mensagem: msg, icone: '🚫', cor: 'border-red-500/60 bg-red-900/20' }
+  }
+  if (msg.includes('não encontrado') || msg.includes('nao encontrado')) {
+    return { mensagem: msg, icone: '❌', cor: 'border-red-500/60 bg-red-900/20' }
+  }
+  return { mensagem: msg, icone: '⚠️', cor: 'border-red-500/60 bg-red-900/20' }
+}
+
 export default function ValidarPage() {
   const [codigo, setCodigo] = useState('')
   const [resultado, setResultado] = useState<ResultadoValidacao | null>(null)
-  const [erro, setErro] = useState<string | null>(null)
+  const [erro, setErro] = useState<ErroInfo | null>(null)
   const [validando, setValidando] = useState(false)
   const [scannerAberto, setScannerAberto] = useState(false)
+
+  const [eventos, setEventos] = useState<EventoPortaria[]>([])
+  const [eventoSelecionadoId, setEventoSelecionadoId] = useState<number | null>(null)
+
+  useEffect(() => {
+    api<EventoPortaria[]>('/eventos/publicos?limit=100')
+      .then((res) => setEventos(res as unknown as EventoPortaria[]))
+      .catch(() => {})
+  }, [])
 
   async function validarCodigo(codigoLimpo: string) {
     if (!codigoLimpo) return
@@ -40,15 +76,17 @@ export default function ValidarPage() {
     setErro(null)
 
     try {
+      const body: { codigo: string; eventoId?: number } = { codigo: codigoLimpo }
+      if (eventoSelecionadoId) body.eventoId = eventoSelecionadoId
       const res = await api<ResultadoValidacao>('/portaria/validar', {
         method: 'POST',
-        body: JSON.stringify({ codigo: codigoLimpo }),
+        body: JSON.stringify(body),
       })
       setResultado(res)
       setCodigo('')
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Erro ao validar ingresso'
-      setErro(msg)
+      setErro(classificarErro(msg))
     } finally {
       setValidando(false)
     }
@@ -68,6 +106,22 @@ export default function ValidarPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Validar Ingresso</h1>
+
+      {eventos.length > 0 && (
+        <div>
+          <label className="mb-1 block text-xs font-semibold text-slate-500">Evento (opcional)</label>
+          <select
+            value={eventoSelecionadoId ?? ''}
+            onChange={(e) => setEventoSelecionadoId(e.target.value ? Number(e.target.value) : null)}
+            className="w-full rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2.5 text-sm text-white focus:border-[#00FF88] focus:outline-none"
+          >
+            <option value="">Todos os eventos</option>
+            {eventos.map((ev) => (
+              <option key={ev.id} value={ev.id}>{ev.titulo}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <form onSubmit={handleFormSubmit} className="flex gap-2">
         <input
@@ -99,8 +153,14 @@ export default function ValidarPage() {
       )}
 
       {erro && (
-        <Card className="border-red-500/60 bg-red-900/20">
-          <p className="text-sm text-red-400">{erro}</p>
+        <Card className={erro.cor}>
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">{erro.icone}</span>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-red-400">Erro</p>
+              <p className="mt-0.5 text-sm text-slate-300">{erro.mensagem}</p>
+            </div>
+          </div>
         </Card>
       )}
 

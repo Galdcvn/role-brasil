@@ -10,7 +10,7 @@ import { PortariaRepository } from './portaria.repository';
 export class PortariaService {
   constructor(private readonly portariaRepository: PortariaRepository) {}
 
-  async validar(usuarioId: number, dto: { codigo: string }) {
+  async validar(usuarioId: number, dto: { codigo: string; eventoId?: number }) {
     const ingresso = await this.portariaRepository.buscarPorCodigo(dto.codigo);
 
     if (ingresso === null) {
@@ -21,6 +21,19 @@ export class PortariaService {
         'Ingresso não encontrado',
       );
       throw new NotFoundException('Ingresso não encontrado');
+    }
+
+    if (dto.eventoId) {
+      const eventoIdIngresso = ingresso.reserva.sessao.evento.id;
+      if (eventoIdIngresso !== dto.eventoId) {
+        await this.registrarScan(
+          usuarioId,
+          ingresso.id,
+          'REJEITADO',
+          'Ingresso pertence a outro evento',
+        );
+        throw new ConflictException('Ingresso pertence a outro evento');
+      }
     }
 
     if (ingresso.status === 'USADO') {

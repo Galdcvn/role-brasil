@@ -44,6 +44,7 @@ export default function DetalheIngressoPage() {
   const [erro, setErro] = useState<string | null>(null)
   const [cancelando, setCancelando] = useState(false)
   const [confirmado, setConfirmado] = useState(false)
+  const [copiado, setCopiado] = useState(false)
 
   useEffect(() => {
     async function carregar() {
@@ -101,6 +102,18 @@ export default function DetalheIngressoPage() {
   const podeCancelar = ingresso.status === 'EMITIDO' || ingresso.status === 'PENDENTE'
   const evento = ingresso.reserva.sessao.evento
 
+  function compartilhar() {
+    const url = `${window.location.origin}/ingressos/compartilhar/${ingresso!.codigo}`
+    if (navigator.share) {
+      navigator.share({ title: `Ingresso - ${evento.titulo}`, url }).catch(() => {})
+    } else {
+      navigator.clipboard.writeText(url).then(() => {
+        setCopiado(true)
+        setTimeout(() => setCopiado(false), 2000)
+      })
+    }
+  }
+
   return (
     <div className="space-y-6">
       <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-slate-400 hover:text-white transition-colors">
@@ -143,6 +156,12 @@ export default function DetalheIngressoPage() {
         <div className="text-center">
           <p className="font-mono text-lg font-bold text-[#00FF88]">{ingresso.codigo}</p>
         </div>
+        <button
+          onClick={compartilhar}
+          className="mt-3 w-full rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:border-[#00FF88] hover:text-[#00FF88]"
+        >
+          {copiado ? 'Link copiado!' : 'Compartilhar Ingresso'}
+        </button>
       </Card>
 
       <Card>
