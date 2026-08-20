@@ -4,6 +4,8 @@ import Card from '../../../components/ui/Card'
 import Button from '../../../components/ui/Button'
 import StatusBadge from '../../../components/ui/StatusBadge'
 import QRScanner from '../../../components/ui/QRScanner'
+import ConfirmDialog from '../../../components/ui/ConfirmDialog'
+import { useDocumentTitle } from '../../../hooks/useDocumentTitle'
 
 interface IngressoInfo {
   id: number
@@ -58,19 +60,26 @@ export default function ValidarPage() {
   const [erro, setErro] = useState<ErroInfo | null>(null)
   const [validando, setValidando] = useState(false)
   const [scannerAberto, setScannerAberto] = useState(false)
-  const [processandoAcao, setProcessandoAcao] = useState(false)
+  const [confirmacaoId, setConfirmacaoId] = useState<number | null>(null)
+  const [rejeitacaoId, setRejeitacaoId] = useState<number | null>(null)
+  const [confirmandoRejeicao, setConfirmandoRejeicao] = useState(false)
 
   const [eventos, setEventos] = useState<EventoPortaria[]>([])
   const [eventoSelecionadoId, setEventoSelecionadoId] = useState<number | null>(null)
 
+  useDocumentTitle('Validar Ingresso')
+
   useEffect(() => {
     api<EventoPortaria[]>('/eventos/publicos?limit=100')
       .then((res) => setEventos(res as unknown as EventoPortaria[]))
-      .catch(() => {})
+      .catch(() => setErro({ mensagem: 'Não foi possível carregar a lista de eventos.', icone: '⚠️', cor: 'border-amber-500/60 bg-amber-900/20' }))
   }, [])
 
   async function validarCodigo(codigoLimpo: string) {
-    if (!codigoLimpo) return
+    if (!codigoLimpo) {
+      setErro({ mensagem: 'Digite ou escaneie um código de ingresso.', icone: '⚠️', cor: 'border-amber-500/60 bg-amber-900/20' })
+      return
+    }
 
     setValidando(true)
     setResultado(null)
@@ -102,11 +111,13 @@ export default function ValidarPage() {
     setScannerAberto(false)
     setCodigo(decodedText)
     validarCodigo(decodedText)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function handleAcaoComprovante(acao: 'confirmar' | 'rejeitar') {
     if (!resultado?.ingresso?.id) return
-    setProcessandoAcao(true)
+    if (acao === 'confirmar') setConfirmacaoId(resultado.ingresso.id)
+    else setRejeitacaoId(resultado.ingresso.id)
     try {
       const res = await api<ResultadoValidacao>(
         `/portaria/comprovantes/${resultado.ingresso.id}/${acao}`,
@@ -117,7 +128,8 @@ export default function ValidarPage() {
       const msg = e instanceof Error ? e.message : 'Erro ao processar ação'
       setErro(classificarErro(msg))
     } finally {
-      setProcessandoAcao(false)
+      setConfirmacaoId(null)
+      setRejeitacaoId(null)
     }
   }
 
@@ -127,7 +139,7 @@ export default function ValidarPage() {
 
       {eventos.length > 0 && (
         <div>
-          <label className="mb-1 block text-xs font-semibold text-slate-500">Evento (opcional)</label>
+          <label className="mb-1 block text-xs font-semibold text-slate-500">Evento (recomendado)</label>
           <select
             value={eventoSelecionadoId ?? ''}
             onChange={(e) => setEventoSelecionadoId(e.target.value ? Number(e.target.value) : null)}
@@ -148,6 +160,7 @@ export default function ValidarPage() {
           onChange={(e) => setCodigo(e.target.value)}
           placeholder="Código do ingresso"
           autoFocus
+          aria-label="Código do ingresso"
           className="flex-1 rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-[#00FF88] focus:outline-none"
         />
         <Button type="submit" loading={validando} className="w-auto px-6 py-3 text-sm">
@@ -217,14 +230,14 @@ export default function ValidarPage() {
               <div className="flex gap-3 pt-2">
                 <Button
                   onClick={() => handleAcaoComprovante('confirmar')}
-                  loading={processandoAcao}
+                  loading={confirmacaoId === resultado?.ingresso?.id}
                   className="flex-1 border-emerald-500/40 bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30"
                 >
                   Confirmar
                 </Button>
                 <Button
-                  onClick={() => handleAcaoComprovante('rejeitar')}
-                  loading={processandoAcao}
+                  onClick={() => setConfirmandoRejeicao(true)}
+                  loading={rejeitacaoId === resultado?.ingresso?.id}
                   className="flex-1 border-red-500/40 bg-red-600/20 text-red-400 hover:bg-red-600/30"
                 >
                   Rejeitar
@@ -233,6 +246,16 @@ export default function ValidarPage() {
             )}
           </div>
         </Card>
+      )}
+      {confirmandoRejeicao && (
+        <ConfirmDialog
+          titulo="Rejeitar comprovante"
+          mensagem="O ingresso será recusado e o participante não terá acesso. Confirmar rejeição?"
+          variante="perigo"
+          confirmarLabel="Rejeitar"
+          onConfirmar={() => { setConfirmandoRejeicao(false); handleAcaoComprovante('rejeitar') }}
+          onCancelar={() => setConfirmandoRejeicao(false)}
+        />
       )}
     </div>
   )

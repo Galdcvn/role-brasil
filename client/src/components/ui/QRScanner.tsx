@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Html5Qrcode } from 'html5-qrcode'
 
 interface QRScannerProps {
@@ -11,6 +11,7 @@ export default function QRScanner({ onScan, onClose }: QRScannerProps) {
   const scannerRef = useRef<Html5Qrcode | null>(null)
   const onScanRef = useRef(onScan)
   const onCloseRef = useRef(onClose)
+  const [erroCamera, setErroCamera] = useState(false)
 
   onScanRef.current = onScan
   onCloseRef.current = onClose
@@ -31,7 +32,12 @@ export default function QRScanner({ onScan, onClose }: QRScannerProps) {
         },
         () => {},
       )
-      .catch(() => { if (active) onCloseRef.current() })
+      .catch(() => {
+        if (active) {
+          setErroCamera(true)
+          setTimeout(() => onCloseRef.current(), 2000)
+        }
+      })
 
     return () => {
       active = false
@@ -57,7 +63,14 @@ export default function QRScanner({ onScan, onClose }: QRScannerProps) {
         </button>
       </div>
       <div className="flex-1 flex items-center justify-center">
-        <div id="qr-reader" ref={containerRef} className="w-full max-w-sm" />
+        {erroCamera ? (
+          <div className="text-center">
+            <p className="text-sm text-red-400">Não foi possível acessar a câmera</p>
+            <p className="mt-1 text-xs text-slate-500">Verifique as permissões e tente novamente</p>
+          </div>
+        ) : (
+          <div id="qr-reader" ref={containerRef} className="w-full max-w-sm" />
+        )}
       </div>
       <div className="bg-slate-900 p-4 text-center">
         <p className="text-xs text-slate-400">Posicione o QR Code dentro da moldura</p>

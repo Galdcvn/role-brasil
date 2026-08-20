@@ -16,7 +16,7 @@ function renderBadge(status: string) {
 describe('StatusBadge', () => {
   it('renders the status text', () => {
     const { container, cleanup } = renderBadge('PUBLICADO')
-    expect(container.textContent).toContain('PUBLICADO')
+    expect(container.textContent).toContain('Publicado')
     cleanup()
   })
 

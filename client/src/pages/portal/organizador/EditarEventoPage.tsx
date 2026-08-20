@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../../../api'
 import Button from '../../../components/ui/Button'
 import Input from '../../../components/ui/Input'
+import { useDocumentTitle } from '../../../hooks/useDocumentTitle'
+import { useBeforeUnload } from '../../../hooks/useBeforeUnload'
 
 interface Categoria {
   nome: string
@@ -60,6 +62,10 @@ export default function EditarEventoPage() {
   const [estado, setEstado] = useState('')
 
   const [categorias, setCategorias] = useState<Categoria[]>([])
+  const [alterado, setAlterado] = useState(false)
+
+  useDocumentTitle(titulo ? `Editar ${titulo}` : 'Editar Evento')
+  useBeforeUnload(alterado)
 
   useEffect(() => {
     api<Evento>(`/eventos/${id}`)
@@ -85,6 +91,7 @@ export default function EditarEventoPage() {
   }, [id])
 
   function atualizarCategoria(idx: number, campo: keyof Categoria, valor: string | number | boolean) {
+    setAlterado(true)
     setCategorias((prev) =>
       prev.map((c, i) => (i === idx ? { ...c, [campo]: valor } : c)),
     )
@@ -138,12 +145,29 @@ export default function EditarEventoPage() {
   }
 
   if (erro && !titulo) {
-    return <p className="text-red-400">{erro}</p>
+    return (
+      <div>
+        <p className="text-red-400">{erro}</p>
+        <div className="mt-3 flex gap-3">
+          <button onClick={() => { setErro(null); window.location.reload() }} className="text-sm text-[#00FF88] hover:underline">
+            Tentar novamente
+          </button>
+          <button onClick={() => navigate(-1)} className="text-sm text-slate-400 hover:text-white">
+            ← Voltar
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="mx-auto max-w-lg">
-      <h1 className="mb-6 text-2xl font-bold">Editar Evento</h1>
+      <div className="mb-6 flex items-center gap-3">
+        <button onClick={() => navigate(-1)} className="text-sm text-slate-400 hover:text-white">
+          ← Voltar
+        </button>
+        <h1 className="text-2xl font-bold">Editar Evento</h1>
+      </div>
 
       {temReservas && (
         <div className="mb-4 rounded-lg bg-yellow-900/30 px-3 py-2 text-xs text-yellow-400">

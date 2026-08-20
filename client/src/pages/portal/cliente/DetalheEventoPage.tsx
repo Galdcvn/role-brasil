@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../../../api'
 import Card from '../../../components/ui/Card'
 import Button from '../../../components/ui/Button'
+import { useDocumentTitle } from '../../../hooks/useDocumentTitle'
+import { useBeforeUnload } from '../../../hooks/useBeforeUnload'
 
 interface Endereco {
   rua: string
@@ -139,6 +141,11 @@ export default function DetalheEventoPage() {
   const [temIngresso, setTemIngresso] = useState(false)
   const chatRef = useRef<HTMLDivElement>(null)
 
+  const [assentoLimiteMsg, setAssentoLimiteMsg] = useState(false)
+
+  useDocumentTitle(evento?.titulo ?? 'Carregando...')
+  useBeforeUnload(etapa === 'reserva', 'Você tem uma reserva em andamento. Deseja sair?')
+
   const carregarEvento = useCallback(async () => {
     try {
       const data = await api<Evento>(`/eventos/publicos/${id}`)
@@ -196,7 +203,11 @@ export default function DetalheEventoPage() {
       if (idx >= 0) {
         return prev.filter((_, i) => i !== idx)
       }
-      if (prev.length >= 10) return prev
+      if (prev.length >= 10) {
+        setAssentoLimiteMsg(true)
+        setTimeout(() => setAssentoLimiteMsg(false), 2000)
+        return prev
+      }
       return [...prev, { assentoSessaoId: assento.id, categoria: primeiraCategoria, fileira: assento.fileira, numero: assento.numero }]
     })
   }
@@ -284,7 +295,9 @@ export default function DetalheEventoPage() {
       if (chatRef.current) {
         chatRef.current.scrollTop = chatRef.current.scrollHeight
       }
-    } catch {}
+    } catch {
+      setErro('Não foi possível enviar a mensagem. Tente novamente.')
+    }
   }
 
   useEffect(() => {
@@ -494,6 +507,10 @@ export default function DetalheEventoPage() {
                 </span>
               </div>
 
+              {assentoLimiteMsg && (
+                <p className="text-xs text-amber-400">Limite de 10 assentos por reserva</p>
+              )}
+
               {itensSelecionados.length > 0 && (
                 <Card>
                   <h3 className="mb-2 text-xs font-semibold text-slate-500">Assentos Selecionados</h3>
@@ -588,7 +605,12 @@ export default function DetalheEventoPage() {
                   type="text"
                   placeholder="Número do cartão"
                   value={cartao.numero}
-                  onChange={(e) => setCartao((c) => ({ ...c, numero: e.target.value }))}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/\D/g, '').slice(0, 16)
+                    const formatted = raw.replace(/(.{4})/g, '$1 ').trim()
+                    setCartao((c) => ({ ...c, numero: formatted }))
+                  }}
+                  maxLength={19}
                   className="w-full rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2.5 text-sm text-white placeholder-slate-400 focus:border-[#00FF88] focus:outline-none"
                 />
                 <div className="grid grid-cols-2 gap-3">
@@ -596,14 +618,22 @@ export default function DetalheEventoPage() {
                     type="text"
                     placeholder="Validade (MM/AA)"
                     value={cartao.validade}
-                    onChange={(e) => setCartao((c) => ({ ...c, validade: e.target.value }))}
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/\D/g, '').slice(0, 4)
+                      const formatted = raw.length >= 3 ? `${raw.slice(0, 2)}/${raw.slice(2)}` : raw
+                      setCartao((c) => ({ ...c, validade: formatted }))
+                    }}
+                    maxLength={5}
+                    inputMode="numeric"
                     className="w-full rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2.5 text-sm text-white placeholder-slate-400 focus:border-[#00FF88] focus:outline-none"
                   />
                   <input
                     type="text"
                     placeholder="CVV"
                     value={cartao.cvv}
-                    onChange={(e) => setCartao((c) => ({ ...c, cvv: e.target.value }))}
+                    onChange={(e) => setCartao((c) => ({ ...c, cvv: e.target.value.replace(/\D/g, '').slice(0, 4) }))}
+                    maxLength={4}
+                    inputMode="numeric"
                     className="w-full rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2.5 text-sm text-white placeholder-slate-400 focus:border-[#00FF88] focus:outline-none"
                   />
                   <p className="text-[10px] text-slate-600">Dica: CVV 000 simula recusa</p>

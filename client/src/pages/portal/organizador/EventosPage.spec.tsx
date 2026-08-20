@@ -61,7 +61,7 @@ describe('EventosPage', () => {
     await act(async () => {})
     expect(container.textContent).toContain('Show Rock')
     expect(container.textContent).toContain('Festa')
-    expect(container.textContent).toContain('3 sessão(ões)')
+    expect(container.textContent).toContain('3 sessões')
     expect(container.querySelector('img[src="https://img.test/poster.jpg"]')).toBeTruthy()
     cleanup()
   })

@@ -77,7 +77,7 @@ describe('Login fluxo', () => {
     fillForm(container, ['a@b.com', '123456'])
     await submitForm(container)
 
-    expect(container.textContent).toContain('Credenciais inválidas')
+    expect(container.textContent).toContain('Email ou senha incorretos')
     cleanup()
   })
 

@@ -195,6 +195,9 @@ describe('PortariaService', () => {
         observacao: 'Documentação confirmada — acesso liberado',
       });
       expect(resultado.status).toBe('APROVADO');
+      expect(resultado.ingresso.evento).toBe('Show Teste');
+      expect(resultado.ingresso.assento).toBe('A1');
+      expect(resultado.ingresso.usuario).toBe('João');
     });
   });
 
@@ -235,6 +238,8 @@ describe('PortariaService', () => {
         observacao: 'Documentação rejeitada',
       });
       expect(resultado.status).toBe('REJEITADO');
+      expect(resultado.ingresso.evento).toBe('Show Teste');
+      expect(resultado.ingresso.assento).toBe('A1');
     });
   });
 

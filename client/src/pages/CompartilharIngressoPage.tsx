@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { api } from '../api'
 import Card from '../components/ui/Card'
 import StatusBadge from '../components/ui/StatusBadge'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 interface IngressoPublico {
   codigo: string
@@ -44,6 +45,8 @@ export default function CompartilharIngressoPage() {
   const [erro, setErro] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
+  useDocumentTitle('Ingresso Compartilhado')
+
   useEffect(() => {
     if (!codigo) return
     api<IngressoPublico>(`/ingressos/publico/${codigo}`)
@@ -74,6 +77,12 @@ export default function CompartilharIngressoPage() {
               <p className="text-4xl">🎫</p>
               <h1 className="mt-2 text-lg font-bold text-white">Ingresso não encontrado</h1>
               <p className="mt-1 text-sm text-slate-400">{erro ?? 'Código inválido ou expirado.'}</p>
+              <Link
+                to="/portal/cliente"
+                className="mt-4 inline-block text-sm font-semibold text-[#00FF88] hover:underline"
+              >
+                ← Voltar para o início
+              </Link>
             </div>
           </Card>
         </div>

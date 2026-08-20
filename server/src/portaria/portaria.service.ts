@@ -98,7 +98,7 @@ export class PortariaService {
   }
 
   async confirmarComprovante(usuarioId: number, ingressoId: number) {
-    await this.buscarIngressoOuFalhar(ingressoId);
+    const ingresso = await this.buscarIngressoOuFalhar(ingressoId);
     await this.portariaRepository.confirmarComprovante(ingressoId);
     await this.registrarScan(
       usuarioId,
@@ -107,11 +107,21 @@ export class PortariaService {
       'Documentação confirmada — acesso liberado',
     );
 
-    return { status: 'APROVADO' as const };
+    return {
+      status: 'APROVADO' as const,
+      ingresso: {
+        id: ingresso.id,
+        codigo: ingresso.codigo,
+        categoria: ingresso.categoria,
+        evento: ingresso.reserva.sessao.evento.titulo,
+        assento: `${ingresso.assento.fileira}${ingresso.assento.numero}`,
+        usuario: ingresso.usuario.nome,
+      },
+    };
   }
 
   async rejeitarComprovante(usuarioId: number, ingressoId: number) {
-    await this.buscarIngressoOuFalhar(ingressoId);
+    const ingresso = await this.buscarIngressoOuFalhar(ingressoId);
     await this.portariaRepository.rejeitarComprovante(ingressoId);
     await this.registrarScan(
       usuarioId,
@@ -120,7 +130,17 @@ export class PortariaService {
       'Documentação rejeitada',
     );
 
-    return { status: 'REJEITADO' as const };
+    return {
+      status: 'REJEITADO' as const,
+      ingresso: {
+        id: ingresso.id,
+        codigo: ingresso.codigo,
+        categoria: ingresso.categoria,
+        evento: ingresso.reserva.sessao.evento.titulo,
+        assento: `${ingresso.assento.fileira}${ingresso.assento.numero}`,
+        usuario: ingresso.usuario.nome,
+      },
+    };
   }
 
   async listarHistorico(usuarioId: number) {

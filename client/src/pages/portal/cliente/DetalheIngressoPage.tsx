@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../../../api'
 import Card from '../../../components/ui/Card'
 import StatusBadge from '../../../components/ui/StatusBadge'
+import { useDocumentTitle } from '../../../hooks/useDocumentTitle'
 
 interface Ingresso {
   id: number
@@ -46,6 +47,8 @@ export default function DetalheIngressoPage() {
   const [cancelando, setCancelando] = useState(false)
   const [confirmado, setConfirmado] = useState(false)
   const [copiado, setCopiado] = useState(false)
+
+  useDocumentTitle('Meu Ingresso')
 
   useEffect(() => {
     async function carregar() {
@@ -133,7 +136,7 @@ export default function DetalheIngressoPage() {
           />
         )}
         <div className="min-w-0 flex-1">
-          <h1 className="text-xl font-bold text-white">{evento.titulo}</h1>
+          <h1 className="text-2xl font-bold text-white">{evento.titulo}</h1>
           <p className="text-sm text-slate-400">{formatarData(ingresso.reserva.sessao.dataHora)}</p>
           {evento.endereco && (
             <p className="text-xs text-slate-500">

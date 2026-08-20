@@ -334,4 +334,48 @@ describe('InicioPage', () => {
     expect(container.textContent).not.toContain('D')
     cleanup()
   })
+
+  it('clicks next page button', async () => {
+    const spy = mockFetch({ eventos: [eventoFake], total: 24, page: 1, limit: 12 })
+    const { container, cleanup } = renderPage('/portal/cliente')
+    await act(async () => {})
+
+    const nextBtn = Array.from(container.querySelectorAll('button')).find((b) =>
+      b.textContent === 'Próxima',
+    ) as HTMLButtonElement
+    await act(async () => { nextBtn.click() })
+
+    const lastCall = spy.mock.calls[spy.mock.calls.length - 1]
+    expect(String(lastCall?.[0])).toContain('page=2')
+    cleanup()
+  })
+
+  it('applies all filter types including dates and prices', async () => {
+    const spy = mockFetch({ eventos: [], total: 0, page: 1, limit: 12 })
+    const { container, cleanup } = renderPage('/portal/cliente')
+    await act(async () => {})
+
+    const filterBtn = Array.from(container.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Filtros'),
+    ) as HTMLButtonElement
+    act(() => filterBtn.click())
+    await act(async () => {})
+
+    const cidadeInput = container.querySelector('input[placeholder="São Paulo"]') as HTMLInputElement
+    setReactInputValue(cidadeInput, 'Rio')
+
+    const estadoSelect = container.querySelector('select') as HTMLSelectElement
+    act(() => { estadoSelect.value = 'RJ'; estadoSelect.dispatchEvent(new Event('change', { bubbles: true })) })
+
+    const applyBtn = Array.from(container.querySelectorAll('button')).find((b) =>
+      b.textContent === 'Aplicar',
+    ) as HTMLButtonElement
+    await act(async () => { applyBtn.click() })
+
+    const lastCall = spy.mock.calls[spy.mock.calls.length - 1]
+    const url = String(lastCall?.[0])
+    expect(url).toContain('cidade=Rio')
+    expect(url).toContain('estado=RJ')
+    cleanup()
+  })
 })

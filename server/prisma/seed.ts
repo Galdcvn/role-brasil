@@ -98,9 +98,9 @@ async function main() {
       },
       categorias: {
         create: [
-          { nome: CategoriaIngresso.INTEIRA, precoCentavos: 35000 },
-          { nome: CategoriaIngresso.MEIA, precoCentavos: 80000 },
-          { nome: CategoriaIngresso.GRATUIDADE, precoCentavos: 120000 },
+          { nome: CategoriaIngresso.INTEIRA, precoCentavos: 30000 },
+          { nome: CategoriaIngresso.MEIA, precoCentavos: 15000 },
+          { nome: CategoriaIngresso.GRATUIDADE, precoCentavos: 0 },
         ],
       },
     },

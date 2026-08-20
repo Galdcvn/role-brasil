@@ -5,6 +5,7 @@ import AuthLayout from '../components/auth/AuthLayout'
 import Input from '../components/ui/Input'
 import Button from '../components/ui/Button'
 import logoTexto from '../assets/RB_Logo_Texto.png'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 const MailIcon = (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -29,6 +30,8 @@ export default function LoginPage() {
   const [erro, setErro] = useState('')
   const [carregando, setCarregando] = useState(false)
 
+  useDocumentTitle('Entrar')
+
   const sucesso = (location.state as { sucesso?: string } | null)?.sucesso
 
   async function handleSubmit(e: React.FormEvent) {
@@ -44,7 +47,7 @@ export default function LoginPage() {
       })
 
       if (!res.ok) {
-        setErro('Credenciais inválidas.')
+        setErro('Email ou senha incorretos. Verifique e tente novamente.')
         return
       }
 

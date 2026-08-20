@@ -63,7 +63,7 @@ describe('ValidarPage', () => {
     act(() => { nativeSetter.call(input, 'ABC123'); input.dispatchEvent(new Event('input', { bubbles: true })) })
     const form = container.querySelector('form') as HTMLFormElement
     await act(async () => { form.dispatchEvent(new Event('submit', { bubbles: true })) })
-    expect(container.textContent).toContain('APROVADO')
+    expect(container.textContent).toContain('Aprovado')
     expect(container.textContent).toContain('Show')
     expect(container.textContent).toContain('João')
     expect(container.textContent).toContain('ABC123')
@@ -85,7 +85,7 @@ describe('ValidarPage', () => {
     act(() => { nativeSetter.call(input, 'DEF456'); input.dispatchEvent(new Event('input', { bubbles: true })) })
     const form = container.querySelector('form') as HTMLFormElement
     await act(async () => { form.dispatchEvent(new Event('submit', { bubbles: true })) })
-    expect(container.textContent).toContain('PENDENTE_DOCUMENTACAO')
+    expect(container.textContent).toContain('Pendente Doc.')
     expect(container.textContent).toContain('MEIA')
     cleanup()
   })
@@ -124,6 +124,7 @@ describe('ValidarPage', () => {
     const { container, cleanup } = renderPage()
     const form = container.querySelector('form') as HTMLFormElement
     await act(async () => { form.dispatchEvent(new Event('submit', { bubbles: true })) })
+    expect(container.textContent).toContain('Digite ou escaneie um código')
     expect(spy).toHaveBeenCalledTimes(1)
     cleanup()
   })
@@ -143,7 +144,7 @@ describe('ValidarPage', () => {
     act(() => { nativeSetter.call(input, 'GHI789'); input.dispatchEvent(new Event('input', { bubbles: true })) })
     const form = container.querySelector('form') as HTMLFormElement
     await act(async () => { form.dispatchEvent(new Event('submit', { bubbles: true })) })
-    expect(container.textContent).toContain('REJEITADO')
+    expect(container.textContent).toContain('Rejeitado')
     expect(container.textContent).toContain('Festival')
     cleanup()
   })
@@ -184,7 +185,7 @@ describe('ValidarPage', () => {
       b.textContent === 'Simular Scan',
     ) as HTMLButtonElement
     await act(async () => { simulateBtn.click() })
-    expect(container.textContent).toContain('APROVADO')
+    expect(container.textContent).toContain('Aprovado')
     expect(container.textContent).toContain('SCANNED-CODE')
     cleanup()
   })
@@ -196,7 +197,7 @@ describe('ValidarPage', () => {
     ])
     const { container, cleanup } = renderPage()
     await act(async () => {})
-    expect(container.textContent).toContain('Evento (opcional)')
+    expect(container.textContent).toContain('Evento (recomendado)')
     const select = container.querySelector('select')
     expect(select).toBeTruthy()
     expect(container.textContent).toContain('Rock in Rio')
@@ -370,7 +371,7 @@ describe('ValidarPage', () => {
     await act(async () => { form.dispatchEvent(new Event('submit', { bubbles: true })) })
     const confirmBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Confirmar') as HTMLButtonElement
     await act(async () => { confirmBtn.click() })
-    expect(container.textContent).toContain('APROVADO')
+    expect(container.textContent).toContain('Aprovado')
     cleanup()
   })
 
@@ -398,7 +399,9 @@ describe('ValidarPage', () => {
     await act(async () => { form.dispatchEvent(new Event('submit', { bubbles: true })) })
     const rejectBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Rejeitar') as HTMLButtonElement
     await act(async () => { rejectBtn.click() })
-    expect(container.textContent).toContain('REJEITADO')
+    const confirmRejectBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Rejeitar' && b !== rejectBtn) as HTMLButtonElement
+    await act(async () => { confirmRejectBtn.click() })
+    expect(container.textContent).toContain('Rejeitado')
     cleanup()
   })
 

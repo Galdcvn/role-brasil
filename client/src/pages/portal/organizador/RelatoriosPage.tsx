@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { api } from '../../../api'
 import Card from '../../../components/ui/Card'
+import { useDocumentTitle } from '../../../hooks/useDocumentTitle'
+import { formatarCentavos } from '../../../utils/formatarCentavos'
 
 interface EventoResumo {
   id: number
@@ -30,11 +32,8 @@ interface EventoCompleto {
   metricas: Metricas
 }
 
-function formatarCentavos(centavos: number): string {
-  return `R$ ${(centavos / 100).toFixed(2).replace('.', ',')}`
-}
-
 export default function RelatoriosPage() {
+  useDocumentTitle('Relatórios')
   const [eventos, setEventos] = useState<EventoResumo[]>([])
   const [eventoSelecionadoId, setEventoSelecionadoId] = useState<number | null>(null)
   const [detalhe, setDetalhe] = useState<EventoCompleto | null>(null)
@@ -124,7 +123,9 @@ export default function RelatoriosPage() {
                   <div className="space-y-2">
                     {detalhe.metricas.reservasPorSessao.map((s) => (
                       <div key={s.sessaoId} className="flex items-center justify-between rounded-lg bg-slate-800/50 px-3 py-2 text-sm">
-                        <span className="text-slate-400">Sessão #{s.sessaoId}</span>
+                        <span className="text-slate-400">
+                          {new Date(s.dataHora).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                        </span>
                         <div className="flex gap-4">
                           <span className="text-white">{s.total} reservas</span>
                           <span className="font-semibold text-[#00FF88]">

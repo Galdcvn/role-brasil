@@ -172,7 +172,7 @@ describe('DetalheIngressoPage', () => {
     ) as HTMLButtonElement
     await act(async () => { confirmBtn.click() })
 
-    expect(container.textContent).toContain('CANCELADO')
+    expect(container.textContent).toContain('Cancelado')
     cleanup()
   })
 
@@ -251,6 +251,41 @@ describe('DetalheIngressoPage', () => {
     const { container, cleanup } = renderPage('/portal/cliente/ingressos/1')
     await act(async () => {})
     expect(container.textContent).toContain('Tem certeza que deseja cancelar este ingresso?')
+    cleanup()
+  })
+
+  it('copies share link to clipboard', async () => {
+    const writeTextMock = vi.fn().mockResolvedValue(undefined)
+    vi.stubGlobal('navigator', { clipboard: { writeText: writeTextMock } })
+
+    mockFetch(ingressoFake)
+    const { container, cleanup } = renderPage('/portal/cliente/ingressos/1')
+    await act(async () => {})
+
+    const shareBtn = Array.from(container.querySelectorAll('button')).find((b) =>
+      b.textContent === 'Compartilhar Ingresso',
+    ) as HTMLButtonElement
+    await act(async () => { shareBtn.click() })
+
+    expect(writeTextMock).toHaveBeenCalled()
+    expect(container.textContent).toContain('Link copiado!')
+    cleanup()
+  })
+
+  it('uses navigator.share when available', async () => {
+    const shareMock = vi.fn().mockResolvedValue(undefined)
+    vi.stubGlobal('navigator', { share: shareMock })
+
+    mockFetch(ingressoFake)
+    const { container, cleanup } = renderPage('/portal/cliente/ingressos/1')
+    await act(async () => {})
+
+    const shareBtn = Array.from(container.querySelectorAll('button')).find((b) =>
+      b.textContent === 'Compartilhar Ingresso',
+    ) as HTMLButtonElement
+    await act(async () => { shareBtn.click() })
+
+    expect(shareMock).toHaveBeenCalled()
     cleanup()
   })
 })

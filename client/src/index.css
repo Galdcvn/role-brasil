@@ -2,6 +2,11 @@
 
 @theme {
   --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-heading: "Space Grotesk", system-ui, sans-serif;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-heading);
 }
 
 @keyframes fade-in-down {

@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { api } from '../../../api'
 import Card from '../../../components/ui/Card'
 import EmptyState from '../../../components/ui/EmptyState'
+import Input from '../../../components/ui/Input'
+import { useDocumentTitle } from '../../../hooks/useDocumentTitle'
 
 interface EventoListItem {
   id: number
@@ -81,6 +83,8 @@ export default function InicioPage() {
   const [precoMax, setPrecoMax] = useState('')
   const [page, setPage] = useState(1)
 
+  useDocumentTitle('Explorar Eventos')
+
   const buscarEventos = useCallback(async (params: BuscaParams) => {
     setLoading(true)
     setErro(null)
@@ -135,12 +139,11 @@ export default function InicioPage() {
 
       <form onSubmit={handleBuscar} className="mb-4 space-y-3">
         <div className="flex gap-2">
-          <input
-            type="text"
+          <Input
             placeholder="Buscar eventos..."
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
-            className="flex-1 rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2.5 text-sm text-white placeholder-slate-400 focus:border-[#00FF88] focus:outline-none"
+            className="flex-1"
           />
           <button
             type="submit"

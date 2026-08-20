@@ -15,7 +15,7 @@
 - **Status:** PUBLICADO
 - **Sessões:** 15/09/2026 20:00 e 16/09/2026 20:00
 - **Assentos:** 5 fileiras (A-E) × 12 assentos = 60 por sessão
-- **Categorias:** INTEIRA (R$ 350,00), MEIA (R$ 800,00), GRATUIDADE (R$ 1.200,00)
+- **Categorias:** INTEIRA (R$ 300,00), MEIA (R$ 150,00), GRATUIDADE (Grátis)
 
 ---
 

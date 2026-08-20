@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { api } from '../../../api'
 import Button from '../../../components/ui/Button'
 import Input from '../../../components/ui/Input'
+import { useDocumentTitle } from '../../../hooks/useDocumentTitle'
+import { useBeforeUnload } from '../../../hooks/useBeforeUnload'
 
 interface ResultadoTmdb {
   id: number
@@ -25,6 +27,7 @@ const ESTADOS_UF = [
 
 export default function NovoEventoPage() {
   const navigate = useNavigate()
+  useDocumentTitle('Criar Evento')
 
   const [busca, setBusca] = useState('')
   const [resultados, setResultados] = useState<ResultadoTmdb[]>([])
@@ -51,6 +54,9 @@ export default function NovoEventoPage() {
   const [erro, setErro] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
 
+  const temAlteracoes = titulo.trim() !== '' || descricao.trim() !== '' || categorias.length > 1 || categorias[0].precoCentavos > 0
+  useBeforeUnload(temAlteracoes)
+
   async function buscarTmdb(e: React.FormEvent) {
     e.preventDefault()
     if (!busca.trim()) return
@@ -59,6 +65,7 @@ export default function NovoEventoPage() {
       const res = await api<ResultadoTmdb[]>(`/catalog/buscar?q=${encodeURIComponent(busca)}`)
       setResultados(res)
     } catch {
+      setErro('Não foi possível buscar filmes. Tente novamente.')
       setResultados([])
     } finally {
       setBuscando(false)
@@ -139,7 +146,12 @@ export default function NovoEventoPage() {
 
   return (
     <div className="mx-auto max-w-lg">
-      <h1 className="mb-6 text-2xl font-bold">Criar Evento</h1>
+      <div className="mb-6 flex items-center gap-3">
+        <button onClick={() => navigate(-1)} className="text-sm text-slate-400 hover:text-white">
+          ← Voltar
+        </button>
+        <h1 className="text-2xl font-bold">Criar Evento</h1>
+      </div>
 
       <form onSubmit={buscarTmdb} className="mb-6 flex gap-2">
         <input

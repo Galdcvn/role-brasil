@@ -10,7 +10,10 @@ export default function Button({ loading, children, className = '', disabled, ..
       {...props}
     >
       {loading ? (
-        <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-slate-950 border-t-transparent" />
+        <>
+          <span className="sr-only">Carregando...</span>
+          <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-slate-950 border-t-transparent" />
+        </>
       ) : (
         children
       )}

@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../../../api'
 import StatusBadge from '../../../components/ui/StatusBadge'
 import EmptyState from '../../../components/ui/EmptyState'
+import Button from '../../../components/ui/Button'
+import { useDocumentTitle } from '../../../hooks/useDocumentTitle'
 
 interface Ingresso {
   id: number
@@ -37,19 +39,18 @@ export default function IngressosPage() {
   const [erro, setErro] = useState<string | null>(null)
   const [filtro, setFiltro] = useState<string | null>(null)
 
-  useEffect(() => {
-    async function carregar() {
-      try {
-        const data = await api<Ingresso[]>('/ingressos')
-        setIngressos(data)
-      } catch (e: unknown) {
-        setErro(e instanceof Error ? e.message : 'Erro')
-      } finally {
-        setLoading(false)
-      }
-    }
-    carregar()
-  }, [])
+  useDocumentTitle('Meus Ingressos')
+
+  function carregar() {
+    setLoading(true)
+    setErro(null)
+    api<Ingresso[]>('/ingressos')
+      .then(setIngressos)
+      .catch((e: unknown) => setErro(e instanceof Error ? e.message : 'Erro'))
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => { carregar() }, [])
 
   const ingressosFiltrados = filtro
     ? ingressos.filter((i) => i.status === filtro)
@@ -108,7 +109,10 @@ export default function IngressosPage() {
       )}
 
       {erro ? (
-        <p className="text-red-400">{erro}</p>
+        <div className="text-center">
+          <p className="mb-3 text-red-400">{erro}</p>
+          <Button onClick={carregar}>Tentar novamente</Button>
+        </div>
       ) : ingressos.length === 0 ? (
         <EmptyState
           titulo="Nenhum ingresso encontrado"

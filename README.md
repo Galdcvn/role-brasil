@@ -141,6 +141,24 @@ npm run test:cov
 
 > Registro das decisões tomadas ao longo do desenvolvimento, com o contexto de cada uma. Inserida em ordem cronológica; decisões novas são adicionadas no topo.
 
+### 19/08/2026 — Auditoria UX completa: 124 problemas identificados e corrigidos
+
+- **Auditoria usando 10 Heurísticas de Nielsen**: análise completa dos 3 portais (Organizador, Cliente, Portaria) + Design System. 124 problemas identificados, classificados por severidade (Crítico/Alto/Médio/Baixo), agrupados em 32 itens de correção.
+- **Novos componentes criados**: `ConfirmDialog` (modal reutilizável com variante perigo/padrão), `useDocumentTitle` (define `document.title` por página), `useBeforeUnload` (avisa antes de sair com mudanças não salvas), `formatarCentavos` (utility compartilhado).
+- **Portaria — crash corrigido**: `portaria.service.ts` `confirmarComprovante`/`rejeitarComprovante` agora retornam `{status, ingresso: {id, codigo, categoria, evento, assento, usuario}}` em vez de apenas `{status}`. Antes, o frontend tentava acessar `resultado.ingresso.id` e crashava com `Cannot read property 'id' of undefined`.
+- **Portaria — loading states separados**: Confirmar e Rejeitar agora têm loading independentes (`confirmacaoId` vs `rejeitacaoId`) — antes, a flag compartilhada `processandoAcao` fazia o botão de Rejeitar ficar desabilitado enquanto Confirmar processava (e vice-versa).
+- **Portaria — busca e filtro**: Histórico agora tem campo de busca por código + dropdown de filtro por status + exibição do campo `observação`.
+- **Organizador — confirmações em ações destrutivas**: Publicar evento, cancelar evento, excluir evento e cancelar sessão agora usam `ConfirmDialog` antes de executar. Publicar valida se há sessões antes de publicar.
+- **Organizador — busca e filtro**: EventosPage agora tem campo de busca + dropdown de filtro por status + pluralização correta de sessões.
+- **Cliente — feedback de erros**: Chat agora mostra erro ao falhar (antes era silenciado). Erros de login mudaram de "Credenciais inválidas" para "Email ou senha incorretos. Verifique e tente novamente."
+- **Cliente — validações visíveis**: Requisitos de senha visíveis no registro ("Mínimo 6 caracteres"). Máscara em cartão de crédito (espaços a cada 4 dígitos) e validade (XX/XX). Feedback de limite de 10 assentos.
+- **QR Scanner — fallback de câmera**: Mensagem amigável quando a câmera falha + auto-close após 2 segundos.
+- **StatusBadge — labels human-readable**: Labels como "Pendente Doc.", "Publicado", "Cancelado" em vez de enums brutos (`PENDENTE_DOCUMENTACAO`, `PUBLICADO`, `CANCELADO`). Cor de USADO alterada de azul para amber.
+- **Tipografia**: Space Grotesk carregada via Google Fonts para headings (h1/h2/h3). Inter mantida para corpo.
+- **Paleta refinada**: HomePage e NotFoundPage migraram de `neutral-950` para `slate-950`. Link de NotFoundPage de `amber-400` para `#00FF88`.
+- **EmptyState**: Ícone de checkbox (☐) substituído por 📋.
+- **Testes**: Todos os 532 testes (261 server + 271 client) passando. Specs atualizados para refletir novos labels, confirmações e estrutura reorganizada.
+
 ### 19/08/2026 — Auditoria final Elite Dev: todos os gaps fechados
 
 - **Portaria — botões Confirmar/Rejeitar para PENDENTE_DOCUMENTACAO**: `ValidarPage.tsx` agora exibe botões "Confirmar" e "Rejeitar" quando o resultado da validação é `PENDENTE_DOCUMENTACAO`. Chama `POST /portaria/comprovantes/:id/confirmar` e `/rejeitar` (endpoints backend já existentes). Atualiza o resultado em tela sem recarregar. 6 novos testes (presença dos botões, ausência para APROVADO, chamada de confirm/reject, erro na chamada).

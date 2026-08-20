@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  icon: React.ReactNode
+  icon?: React.ReactNode
   showToggle?: boolean
 }
 
@@ -12,12 +12,14 @@ export default function Input({ icon, showToggle, type, className = '', ...props
 
   return (
     <div className="relative">
-      <span className="pointer-events-none absolute left-3 top-3.5 h-5 w-5 text-slate-400">
-        {icon}
-      </span>
+      {icon && (
+        <span className="pointer-events-none absolute left-3 top-3.5 h-5 w-5 text-slate-400">
+          {icon}
+        </span>
+      )}
       <input
         type={resolvedType}
-        className={`w-full rounded-lg border border-slate-700 bg-slate-800/60 py-3 pl-10 pr-10 text-white placeholder-slate-400 transition-colors focus:border-[#00FF88] focus:outline-none ${className}`}
+        className={`w-full rounded-lg border border-slate-700 bg-slate-800/60 py-3 ${icon ? 'pl-10' : 'px-3'} pr-10 text-white placeholder-slate-400 transition-colors focus:border-[#00FF88] focus:outline-none ${className}`}
         {...props}
       />
       {isPassword && (

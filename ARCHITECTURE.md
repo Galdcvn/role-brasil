@@ -135,7 +135,7 @@ Regras:
 - **messages** — mensagens por evento (bidirectional cliente ↔ organizador); leitura e contagem de não lidas. **Implementado** — envio, listagem, marcar como lida, contagem de não lidas.
 - **stats** — painel do organizador: ocupação por sessão, ingressos vendidos por categoria e receita. **Implementado** — `GET /api/stats/organizador` agrega métricas de todos os eventos do organizador.
 
-**Seed data** (`server/prisma/seed.ts`): `npx prisma db seed` popula 4 usuários (organizador, 2 clientes, 1 portaria, todos com senha `Senha@123`), 1 evento publicado "Rock in Rio 2026" com 2 sessões (60 assentos cada, fileira A×E, 12 por fileira) e 3 categorias (INTEIRA/R$350, MEIA/R$800, GRATUIDADE/R$1.200).
+**Seed data** (`server/prisma/seed.ts`): `npx prisma db seed` popula 4 usuários (organizador, 2 clientes, 1 portaria, todos com senha `Senha@123`), 1 evento publicado "Rock in Rio 2026" com 2 sessões (60 assentos cada, fileira A×E, 12 por fileira) e 3 categorias (INTEIRA/R$300, MEIA/R$150, GRATUIDADE/Grátis).
 
 **Mapeamento para o scaffold atual (`server/src/`):**
 
@@ -382,7 +382,44 @@ log scan     POST /api/portaria/comprovantes/:id/confirmar
 - O organizador monta o evento a partir de um item do catálogo. O item é **snapshotado** para o banco no momento da criação — o evento sobrevive e é exibido mesmo se a API externa falhar ou a chave expirar.
 - A interface `CatalogProvider` isola o TMDb; plugar Ticketmaster no futuro é criar um novo adapter.
 
-## 9. Fora do escopo (deliberado)
+## 9. UX e design system
+
+O design system segue paleta `#00FF88` (verde elétrico) sobre fundo escuro (`slate-950`), com tipografia **Space Grotesk** para headings e **Inter** para corpo. Tema escuro único (sem toggle light/dark).
+
+Componentes compartilhados em `client/src/components/ui/`:
+
+| Componente | Propósito |
+|---|---|
+| `Button` | Loading com `sr-only` text para acessibilidade |
+| `Input` | Ícone opcional, mensagens de erro, variante dark |
+| `StatusBadge` | Labels human-readable (ex.: "Pendente Doc.") em vez de enums brutos |
+| `EmptyState` | Ícone semântico (📋) + botão de retry |
+| `ConfirmDialog` | Modal de confirmação reutilizável (variante perigo/padrão) |
+| `Card`, `Modal`, `Select`, `TextArea` | Primitivos de layout |
+
+Hooks compartilhados:
+
+| Hook | Propósito |
+|---|---|
+| `useDocumentTitle` | Define `document.title` com cleanup automático |
+| `useBeforeUnload` | Avisa antes de sair com mudanças não salvas |
+| `usePolling` | Requisição periódica (portaria history) |
+| `useCountdown` | Timer regressivo (reserva 15 min) |
+
+Utility: `formatarCentavos` em `client/src/utils/formatarCentavos.ts` — formata centavos como `R$ XX,XX` sem separador de milhar.
+
+**Heurísticas de Nielsen aplicadas (124 problemas identificados → todos corrigidos):**
+- Confirmação em ações destrutivas (`ConfirmDialog`)
+- Feedback pós-ação (mensagem de sucesso/erro visível)
+- Retry em estados de erro
+- Botão Voltar em páginas de criação/edição
+- Unificação de componentes (Input, Button, StatusBadge)
+- Máscara em campos de pagamento (cartão, CVV, validade)
+- Validações visíveis (senha, data, sessões para publicar)
+- Filtros e busca em listas (EventosPage, Histórico)
+- Feedback de estados vazios e loading
+
+## 10. Fora do escopo (deliberado)
 
 | Item | Por quê |
 |---|---|

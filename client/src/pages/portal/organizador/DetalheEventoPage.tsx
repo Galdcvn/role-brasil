@@ -4,6 +4,8 @@ import { api } from '../../../api'
 import Card from '../../../components/ui/Card'
 import Button from '../../../components/ui/Button'
 import StatusBadge from '../../../components/ui/StatusBadge'
+import ConfirmDialog from '../../../components/ui/ConfirmDialog'
+import { useDocumentTitle } from '../../../hooks/useDocumentTitle'
 
 interface Sessao {
   id: number
@@ -74,6 +76,9 @@ export default function DetalheEventoPage() {
   const [novaSessaoAssentos, setNovaSessaoAssentos] = useState(20)
   const [sessaoErro, setSessaoErro] = useState<string | null>(null)
   const [criandoSessao, setCriandoSessao] = useState(false)
+  const [confirmacao, setConfirmacao] = useState<{ titulo: string; mensagem: string; variante: 'perigo' | 'padrao'; onConfirmar: () => void } | null>(null)
+
+  useDocumentTitle(evento?.titulo ?? 'Carregando...')
 
   useEffect(() => {
     api<Evento>(`/eventos/${id}`)
@@ -82,8 +87,8 @@ export default function DetalheEventoPage() {
       .finally(() => setLoading(false))
   }, [id])
 
-  async function executarAcao(acao: string, endpoint: string, method = 'POST') {
-    setAcaoLoading(acao)
+  async function executarAcao(endpoint: string, method = 'POST') {
+    setAcaoLoading(method === 'DELETE' ? 'excluir' : method === 'POST' && endpoint.includes('publicar') ? 'publicar' : 'cancelar')
     try {
       await api<Evento>(endpoint, { method })
       if (method === 'DELETE') {
@@ -102,6 +107,10 @@ export default function DetalheEventoPage() {
   async function criarSessao(e: React.FormEvent) {
     e.preventDefault()
     if (!novaSessaoData) return
+    if (new Date(novaSessaoData) <= new Date()) {
+      setSessaoErro('A data e hora devem ser no futuro.')
+      return
+    }
     setSessaoErro(null)
     setCriandoSessao(true)
     try {
@@ -128,13 +137,33 @@ export default function DetalheEventoPage() {
   }
 
   async function cancelarSessao(sessaoId: number) {
-    try {
-      await api(`/sessoes/${sessaoId}/cancelar`, { method: 'POST' })
-      const atualizado = await api<Evento>(`/eventos/${id}`)
-      setEvento(atualizado)
-    } catch (e: unknown) {
-      setErro(e instanceof Error ? e.message : 'Erro desconhecido')
-    }
+    setConfirmacao({
+      titulo: 'Cancelar sessão',
+      mensagem: 'Tem certeza que deseja cancelar esta sessão? Esta ação não pode ser desfeita.',
+      variante: 'perigo',
+      onConfirmar: async () => {
+        setConfirmacao(null)
+        try {
+          await api(`/sessoes/${sessaoId}/cancelar`, { method: 'POST' })
+          const atualizado = await api<Evento>(`/eventos/${id}`)
+          setEvento(atualizado)
+        } catch (e: unknown) {
+          setErro(e instanceof Error ? e.message : 'Erro ao cancelar sessão')
+        }
+      },
+    })
+  }
+
+  function confirmarAcao(titulo: string, mensagem: string, endpoint: string, method: string, variante: 'perigo' | 'padrao' = 'perigo') {
+    setConfirmacao({
+      titulo,
+      mensagem,
+      variante,
+      onConfirmar: async () => {
+        setConfirmacao(null)
+        await executarAcao(endpoint, method)
+      },
+    })
   }
 
   if (loading) {
@@ -151,9 +180,14 @@ export default function DetalheEventoPage() {
     return (
       <div>
         <p className="text-red-400">{erro ?? 'Evento não encontrado'}</p>
-        <button onClick={() => navigate(-1)} className="mt-2 text-sm text-[#00FF88]">
-          ← Voltar
-        </button>
+        <div className="mt-3 flex gap-3">
+          <button onClick={() => { setErro(null); setLoading(true); api<Evento>(`/eventos/${id}`).then(setEvento).catch((e: unknown) => setErro(e instanceof Error ? e.message : 'Erro')).finally(() => setLoading(false)) }} className="text-sm text-[#00FF88] hover:underline">
+            Tentar novamente
+          </button>
+          <button onClick={() => navigate(-1)} className="text-sm text-slate-400 hover:text-white">
+            ← Voltar
+          </button>
+        </div>
       </div>
     )
   }
@@ -322,7 +356,19 @@ export default function DetalheEventoPage() {
       <div className="flex flex-wrap gap-2">
         {evento.status === 'RASCUNHO' && (
           <Button
-            onClick={() => executarAcao('publicar', `/eventos/${id}/publicar`)}
+            onClick={() => {
+              if (evento.sessoes.length === 0) {
+                setErro('Adicione pelo menos uma sessão antes de publicar.')
+                return
+              }
+              confirmarAcao(
+                'Publicar evento',
+                'O evento ficará visível para os clientes. Deseja continuar?',
+                `/eventos/${id}/publicar`,
+                'POST',
+                'padrao',
+              )
+            }}
             loading={acaoLoading === 'publicar'}
             className="w-auto px-6 py-2 text-xs"
           >
@@ -331,7 +377,12 @@ export default function DetalheEventoPage() {
         )}
         {evento.status === 'PUBLICADO' && (
           <Button
-            onClick={() => executarAcao('cancelar', `/eventos/${id}/cancelar`)}
+            onClick={() => confirmarAcao(
+              'Cancelar evento',
+              'O evento será cancelado e ficará inacessível. Sessões ativas serão canceladas. Deseja continuar?',
+              `/eventos/${id}/cancelar`,
+              'POST',
+            )}
             loading={acaoLoading === 'cancelar'}
             className="w-auto bg-red-600 px-6 py-2 text-xs shadow-red-600/20 hover:bg-red-500"
           >
@@ -340,7 +391,12 @@ export default function DetalheEventoPage() {
         )}
         {evento.status === 'RASCUNHO' && evento.metricas.reservasTotais === 0 && (
           <Button
-            onClick={() => executarAcao('excluir', `/eventos/${id}`, 'DELETE')}
+            onClick={() => confirmarAcao(
+              'Excluir evento',
+              'Esta ação é irreversível. O evento e todas as sessões serão removidos permanentemente.',
+              `/eventos/${id}`,
+              'DELETE',
+            )}
             loading={acaoLoading === 'excluir'}
             className="w-auto bg-red-600 px-6 py-2 text-xs shadow-red-600/20 hover:bg-red-500"
           >
@@ -348,6 +404,17 @@ export default function DetalheEventoPage() {
           </Button>
         )}
       </div>
+
+      {confirmacao && (
+        <ConfirmDialog
+          titulo={confirmacao.titulo}
+          mensagem={confirmacao.mensagem}
+          variante={confirmacao.variante}
+          confirmarLabel={confirmacao.variante === 'perigo' ? 'Sim, excluir' : 'Confirmar'}
+          onConfirmar={confirmacao.onConfirmar}
+          onCancelar={() => setConfirmacao(null)}
+        />
+      )}
     </div>
   )
 }

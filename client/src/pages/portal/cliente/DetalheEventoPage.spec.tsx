@@ -697,4 +697,58 @@ describe('DetalheEventoPage', () => {
     expect(container.textContent).toContain('Sessões')
     cleanup()
   })
+
+  it('clicks PIX payment button explicitly', async () => {
+    const spy = mountPage()
+    spy.mockResolvedValueOnce({ ok: true, json: async () => assentosFake } as Response)
+    spy.mockResolvedValueOnce({ ok: true, json: async () => reservaFake } as Response)
+    const { container, cleanup } = renderPage('/portal/cliente/evento/1')
+    await act(async () => {})
+
+    const buyBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Comprar' && !(b as HTMLButtonElement).disabled) as HTMLButtonElement
+    await act(async () => { buyBtn.click() })
+
+    const seat1 = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === '1') as HTMLButtonElement
+    await act(async () => { seat1.click() })
+
+    const reservarBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent?.includes('Reservar')) as HTMLButtonElement
+    await act(async () => { reservarBtn.click() })
+
+    const cartaoBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Cartão') as HTMLButtonElement
+    act(() => cartaoBtn.click())
+
+    const pixBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'PIX') as HTMLButtonElement
+    act(() => pixBtn.click())
+
+    expect(container.textContent).toContain('Pagamento via PIX')
+    cleanup()
+  })
+
+  it('navigates to ingressos after confirmation', async () => {
+    const spy = mountPage()
+    spy.mockResolvedValueOnce({ ok: true, json: async () => assentosFake } as Response)
+    spy.mockResolvedValueOnce({ ok: true, json: async () => reservaFake } as Response)
+    spy.mockResolvedValueOnce({ ok: true, json: async () => ({ status: 'PAGO', ingressos: [{ id: 1, codigo: 'RB-001' }] }) } as Response)
+    const { container, cleanup } = renderPage('/portal/cliente/evento/1')
+    await act(async () => {})
+
+    const buyBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Comprar' && !(b as HTMLButtonElement).disabled) as HTMLButtonElement
+    await act(async () => { buyBtn.click() })
+
+    const seat1 = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === '1') as HTMLButtonElement
+    await act(async () => { seat1.click() })
+
+    const reservarBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent?.includes('Reservar')) as HTMLButtonElement
+    await act(async () => { reservarBtn.click() })
+
+    const pagarBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent?.includes('Pagar')) as HTMLButtonElement
+    await act(async () => { pagarBtn.click() })
+
+    const verIngressosBtn = Array.from(container.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Ver Meus Ingressos'),
+    ) as HTMLButtonElement
+    expect(verIngressosBtn).toBeTruthy()
+    await act(async () => { verIngressosBtn.click() })
+    cleanup()
+  })
 })

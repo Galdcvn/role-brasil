@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../../../api'
 import EmptyState from '../../../components/ui/EmptyState'
+import Button from '../../../components/ui/Button'
+import { useDocumentTitle } from '../../../hooks/useDocumentTitle'
 
 interface EventoFavorito {
   id: number
@@ -33,12 +35,18 @@ export default function FavoritosPage() {
   const [loading, setLoading] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
 
-  useEffect(() => {
+  useDocumentTitle('Favoritos')
+
+  function carregar() {
+    setLoading(true)
+    setErro(null)
     api<EventoFavorito[]>('/favoritos/eventos')
       .then(setEventos)
       .catch((e: unknown) => setErro(e instanceof Error ? e.message : 'Erro'))
       .finally(() => setLoading(false))
-  }, [])
+  }
+
+  useEffect(() => { carregar() }, [])
 
   if (loading) {
     return (
@@ -58,7 +66,10 @@ export default function FavoritosPage() {
       <h1 className="mb-4 text-2xl font-bold">Meus Favoritos</h1>
 
       {erro ? (
-        <p className="text-red-400">{erro}</p>
+        <div className="text-center">
+          <p className="mb-3 text-red-400">{erro}</p>
+          <Button onClick={carregar}>Tentar novamente</Button>
+        </div>
       ) : eventos.length === 0 ? (
         <EmptyState
           titulo="Nenhum favorito"

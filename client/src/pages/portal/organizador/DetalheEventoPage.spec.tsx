@@ -50,14 +50,17 @@ describe('DetalheEventoPage interactions', () => {
 
   it('publishes a draft event', async () => {
     const { container, root, cleanup, entry } = renderPage()
+    const rascunhoComSessao = { ...MOCK_RASCUNHO, sessoes: [{ id: 1, dataHora: '2027-09-01T20:00:00Z', status: 'ATIVA' }] }
     vi.spyOn(globalThis, 'fetch')
-      .mockResolvedValueOnce({ ok: true, json: async () => MOCK_RASCUNHO } as Response)
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ ...MOCK_RASCUNHO, status: 'PUBLICADO' }) } as Response)
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ ...MOCK_RASCUNHO, status: 'PUBLICADO' }) } as Response)
+      .mockResolvedValueOnce({ ok: true, json: async () => rascunhoComSessao } as Response)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ ...rascunhoComSessao, status: 'PUBLICADO' }) } as Response)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ ...rascunhoComSessao, status: 'PUBLICADO' }) } as Response)
     await act(async () => { root.render(<MemoryRouter initialEntries={[entry]}><AuthProvider><PortalProvider><Routes><Route path="/portal/organizador/evento/:id" element={<DetalheEventoPage />} /></Routes></PortalProvider></AuthProvider></MemoryRouter>) })
     const pubBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Publicar')
     await act(async () => { pubBtn?.click() })
-    expect(container.textContent).toContain('PUBLICADO')
+    const confirmBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Confirmar')
+    await act(async () => { confirmBtn?.click() })
+    expect(container.textContent).toContain('Publicado')
     cleanup()
   })
 
@@ -86,7 +89,9 @@ describe('DetalheEventoPage interactions', () => {
     await act(async () => { root.render(<MemoryRouter initialEntries={[entry]}><AuthProvider><PortalProvider><Routes><Route path="/portal/organizador/evento/:id" element={<DetalheEventoPage />} /></Routes></PortalProvider></AuthProvider></MemoryRouter>) })
     const cancelBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Cancelar' && !b.textContent.includes('Evento'))
     await act(async () => { cancelBtn?.click() })
-    expect(container.textContent).toContain('CANCELADA')
+    const confirmBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Sim, excluir') as HTMLButtonElement
+    await act(async () => { confirmBtn?.click() })
+    expect(container.textContent).toContain('Cancelada')
     cleanup()
   })
 
@@ -98,6 +103,8 @@ describe('DetalheEventoPage interactions', () => {
     await act(async () => { root.render(<MemoryRouter initialEntries={[entry]}><AuthProvider><PortalProvider><Routes><Route path="/portal/organizador/evento/:id" element={<DetalheEventoPage />} /></Routes></PortalProvider></AuthProvider></MemoryRouter>) })
     const cancelBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Cancelar Evento')
     await act(async () => { cancelBtn?.click() })
+    const confirmBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Sim, excluir') as HTMLButtonElement
+    await act(async () => { confirmBtn?.click() })
     expect(container.textContent).toContain('Falha ao cancelar')
     cleanup()
   })
@@ -110,7 +117,7 @@ describe('DetalheEventoPage interactions', () => {
     await act(async () => { root.render(<MemoryRouter initialEntries={[entry]}><AuthProvider><PortalProvider><Routes><Route path="/portal/organizador/evento/:id" element={<DetalheEventoPage />} /></Routes></PortalProvider></AuthProvider></MemoryRouter>) })
     const dateInput = container.querySelector('input[type="datetime-local"]') as HTMLInputElement
     const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')!.set!
-    act(() => { nativeSetter.call(dateInput, '2026-09-01T20:00'); dateInput.dispatchEvent(new Event('input', { bubbles: true })) })
+    act(() => { nativeSetter.call(dateInput, '2027-09-01T20:00'); dateInput.dispatchEvent(new Event('input', { bubbles: true })) })
     const addBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Adicionar')
     await act(async () => { addBtn?.click() })
     expect(container.textContent).toContain('Sessao invalida')
@@ -125,7 +132,7 @@ describe('DetalheEventoPage interactions', () => {
     await act(async () => { root.render(<MemoryRouter initialEntries={[entry]}><AuthProvider><PortalProvider><Routes><Route path="/portal/organizador/evento/:id" element={<DetalheEventoPage />} /></Routes></PortalProvider></AuthProvider></MemoryRouter>) })
     const dateInput = container.querySelector('input[type="datetime-local"]') as HTMLInputElement
     const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')!.set!
-    act(() => { nativeSetter.call(dateInput, '2026-09-01T20:00'); dateInput.dispatchEvent(new Event('input', { bubbles: true })) })
+    act(() => { nativeSetter.call(dateInput, '2027-09-01T20:00'); dateInput.dispatchEvent(new Event('input', { bubbles: true })) })
     const addBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Adicionar')
     await act(async () => { addBtn?.click() })
     expect(container.textContent).toContain('Erro')
@@ -151,6 +158,8 @@ describe('DetalheEventoPage interactions', () => {
     await act(async () => { root.render(<MemoryRouter initialEntries={[entry]}><AuthProvider><PortalProvider><Routes><Route path="/portal/organizador/evento/:id" element={<DetalheEventoPage />} /></Routes></PortalProvider></AuthProvider></MemoryRouter>) })
     const cancelBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Cancelar Evento')
     await act(async () => { cancelBtn?.click() })
+    const confirmBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Sim, excluir') as HTMLButtonElement
+    await act(async () => { confirmBtn?.click() })
     expect(container.textContent).toContain('Erro desconhecido')
     cleanup()
   })
@@ -163,7 +172,9 @@ describe('DetalheEventoPage interactions', () => {
     await act(async () => { root.render(<MemoryRouter initialEntries={[entry]}><AuthProvider><PortalProvider><Routes><Route path="/portal/organizador/evento/:id" element={<DetalheEventoPage />} /></Routes></PortalProvider></AuthProvider></MemoryRouter>) })
     const cancelBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Cancelar' && !b.textContent.includes('Evento'))
     await act(async () => { cancelBtn?.click() })
-    expect(container.textContent).toContain('Erro desconhecido')
+    const confirmBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Sim, excluir') as HTMLButtonElement
+    await act(async () => { confirmBtn?.click() })
+    expect(container.textContent).toContain('Erro ao cancelar sessão')
     cleanup()
   })
 
@@ -209,7 +220,7 @@ describe('DetalheEventoPage interactions', () => {
     }
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({ ok: true, json: async () => mockCancelada } as Response)
     await act(async () => { root.render(<MemoryRouter initialEntries={[entry]}><AuthProvider><PortalProvider><Routes><Route path="/portal/organizador/evento/:id" element={<DetalheEventoPage />} /></Routes></PortalProvider></AuthProvider></MemoryRouter>) })
-    expect(container.textContent).toContain('CANCELADA')
+    expect(container.textContent).toContain('Cancelada')
     const cancelButtons = Array.from(container.querySelectorAll('button')).filter((b) => b.textContent === 'Cancelar' && !b.textContent.includes('Evento'))
     expect(cancelButtons.length).toBe(0)
     cleanup()

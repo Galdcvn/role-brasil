@@ -4,6 +4,7 @@ import AuthLayout from '../components/auth/AuthLayout'
 import Input from '../components/ui/Input'
 import Button from '../components/ui/Button'
 import logoTexto from '../assets/RB_Logo_Texto.png'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 const API_URL = import.meta.env.VITE_API_URL ?? '/api'
 
@@ -52,6 +53,8 @@ export default function RegistroPage({ papel }: Props) {
   const [etapa, setEtapa] = useState<'formulario' | 'verificacao'>('formulario')
   const [codigo, setCodigo] = useState('')
   const [cooldown, setCooldown] = useState(0)
+
+  useDocumentTitle('Criar Conta')
 
   const labels = ROTULOS_PAPEL[papel] ?? ROTULOS_PAPEL.CLIENT;
 
@@ -178,6 +181,7 @@ export default function RegistroPage({ papel }: Props) {
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
           />
+          <p className="-mt-2 text-xs text-slate-500">Mínimo 6 caracteres</p>
 
           <Input
             icon={LockIcon}
