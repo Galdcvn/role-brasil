@@ -141,6 +141,13 @@ npm run test:cov
 
 > Registro das decisões tomadas ao longo do desenvolvimento, com o contexto de cada uma. Inserida em ordem cronológica; decisões novas são adicionadas no topo.
 
+### 20/08/2026 — Encerramento da implementação: Rolê Brasil entregue
+
+- **Aplicação hospedada em**: https://role-brasil.vercel.app/
+- **Resumo final**: Backend (NestJS + Prisma + Supabase) + Client (React + Vite + Tailwind) completos. 3 portais (Organizador, Cliente, Portaria), 46 endpoints, 609 testes (283 server + 326 client), lint/typecheck/build limpos.
+- **Bugs corrigidos nesta sessão**: pagamento cartão 500 (CartaoDto whitelist), Meu Perfil routing (ProtectedRoute allowlist), pagamento recusado bloqueava retry, dupla scrollbar + área branca, mensagem de erro inline substituída por toast, migrations pendentes aplicadas.
+- **Próximos passos (futuro)**: melhorias de UI/UX, animações de transição, eventos recomendados baseados em histórico, sistema de notificações push, integração com gateway de pagamento real, relatórios avançados para organizadores.
+
 ### 20/08/2026 — Quinto batch: pagamento UX + recusa de pagamento
 
 - **Pagamento recusado — toast**: Erro de pagamento agora exibe apenas toast (era mensagem inline + toast). Removido state `pagamentoErro` e seu elemento de renderização.
