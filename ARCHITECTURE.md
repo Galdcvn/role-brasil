@@ -186,7 +186,7 @@ Regras:
 | Identidade | `Usuarios`, `Papeis`, `Papeis_Usuario` | conta com papéis N:N (Organizador/Cliente/Portaria); `verificado` + campos de OTP + `ativo` (desativação de conta) |
 | Catálogo do organizador | `Eventos`, `Enderecos_Eventos`, `Categorias_Evento` | evento snapshotado do TMDb; endereço 1:1; catálogo de preços por categoria (INTEIRA/MEIA/GRATUIDADE) |
 | Sessão e assentos | `Sessao_Eventos`, `Assentos_Sessao` | sessões múltiplas por evento; mapa de assentos com estado por sessão |
-| Venda | `Reservas`, `Reservas_Itens`, `Pagamentos` | hold de 15 min; um item por assento com preço congelado; pagamento mock determinístico |
+| Venda | `Reservas`, `Reservas_Itens`, `Pagamentos` | hold de 10 min; um item por assento com preço congelado; pagamento mock determinístico |
 | Pós-venda | `Ingressos`, `Favoritos` | ingresso com código curto + token do QR; favoritos por cliente |
 | Comunicação | `Mensagens` | mensagens por evento (bidirectional cliente ↔ organizador) |
 | Portaria | `Portaria_Scans` | log de cada escaneamento na entrada (resultado, data, portaria responsável) |
@@ -278,7 +278,7 @@ Regras:
   seleciona assentos (categoria por lugar) ──▶ subtotal no cliente
         │
         ▼
-  reserva com hold de 15 min (assentos reservados)
+  reserva com hold de 10 min (assentos reservados)
         │
         ▼
   pagamento: PIX (sempre aprova)  ou  CARTÃO (dígito ímpar recusa)
@@ -403,8 +403,6 @@ Hooks compartilhados:
 |---|---|
 | `useDocumentTitle` | Define `document.title` com cleanup automático |
 | `useBeforeUnload` | Avisa antes de sair com mudanças não salvas |
-| `usePolling` | Requisição periódica (portaria history) |
-| `useCountdown` | Timer regressivo (reserva 15 min) |
 
 Utility: `formatarCentavos` em `client/src/utils/formatarCentavos.ts` — formata centavos como `R$ XX,XX` sem separador de milhar.
 
@@ -427,11 +425,10 @@ Utility: `formatarCentavos` em `client/src/utils/formatarCentavos.ts` — format
 | Email real (verificação/reset) | Substituído por OTP simulado com fallback dev — demonstra o fluxo sem infra |
 | Provedor de pagamento real | Substituído por mock determinístico |
 | Assentos em tempo real (websockets) | A consulta a cada interação já é suficiente; reserva com hold evita corrida |
-| Docker / orquestração | Deploy simples é o suficiente |
 | Nota fiscal, revenda, app nativo | Fora do enunciado |
 | Banco não-relacional ou cache distribuído | Sem caso de uso que justifique |
 
-## 10. Ligações
+## 11. Ligações
 
 - **Decisões com contexto e linha do tempo** → [README](./README.md)
 - **Modelo de dados e migração** → `server/prisma/schema.prisma` + `server/prisma/migrations/`

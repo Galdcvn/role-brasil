@@ -53,7 +53,7 @@
 3. Selecione o evento (opcional)
 4. Digite o código do ingresso ou escaneie o QR Code
 5. **INTEIRA:** aprovação automática → resultado APROVADO
-6. **MEIA/GRATITUDE:** resultado PENDENTE_DOCUMENTACAO → botões Confirmar/Rejeitar
+6. **MEIA/GRATUIDADE:** resultado PENDENTE_DOCUMENTACAO → botões Confirmar/Rejeitar
 7. Confirme ou rejeite a documentação
 8. Consulte o histórico na aba **Histórico**
 

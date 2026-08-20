@@ -1,34 +1,34 @@
-# Rolê Brasil — Design System & Especificações Técnicas UI/UX
+# Rolê Brasil — Design System
 
 > Documento de design. Define os tokens visuais, componentes e fluxos de interface para as três frentes da plataforma.
 > Stack: React 19 + Vite 8 + Tailwind CSS 4 + React Router 7.
 
 ---
 
-## 1. Global Design Tokens (Tailwind Config)
+## 1. Design Tokens
 
-A consistência da marca "Rolê Brasil" é mantida através de tokens globais que adaptam sua aplicação de acordo com o contexto (B2C vs B2B).
+### 1.1 Cores
 
-### 1.1 Cores (Paleta Principal)
-
-| Token | Hex | Uso |
-|-------|-----|-----|
-| **Brand Primary (Verde Elétrico)** | `#00FF88` | CTAs principais (Comprar Ingresso, Validação de Sucesso) |
-| **Brand Dark (Fundo B2C)** | `#0B0F17` | Base para Dark Mode do cliente |
-| **Brand Light (Fundo B2B)** | `#F8FAFC` | Base para Dashboard do Organizador |
-| **Semantic Success** | `#22C55E` | Pagamento aprovado, ingresso "Válido" na portaria |
-| **Semantic Error** | `#EF4444` | Erros, assentos ocupados, pagamento recusado, ingresso "Inválido" |
-| **Semantic Warning** | `#F59E0B` | Ingresso "Já utilizado" ou "Evento errado" |
-| **Secondary Gray** | `#94A3B8` | Textos secundários, bordas de formulários |
-| **Text Dark** | `#0F172A` | Títulos principais e textos de leitura |
-| **Background Light** | `#F8FAFC` | Fundo principal (B2B) |
+| Token | Valor | Uso |
+|-------|-------|-----|
+| **Primary** | `#00FF88` (verde elétrico) | CTAs principais, links de ação, status de sucesso |
+| **Background** | `slate-950` (`#020617`) | Fundo único para toda a plataforma |
+| **Surface** | `slate-900` / `slate-800` | Cards, formulários, modais |
+| **Border** | `slate-700` | Bordas sutis em cards e inputs |
+| **Text Primary** | `white` | Títulos e textos principais |
+| **Text Secondary** | `slate-300` / `slate-400` | Textos auxiliares, labels |
+| **Success** | `#00FF88` | Aprovação, ingresso válido |
+| **Error** | `red-500` | Erros, pagamento recusado, ingresso inválido |
+| **Warning** | `amber-500` | Pendente de documentação, atenção |
 
 ### 1.2 Tipografia
 
 | Contexto | Fonte | Pesos | Uso |
 |----------|-------|-------|-----|
-| **Headings (Títulos/Destaques)** | `Space Grotesk` ou `Syne` | 700, 800 | Energia "urbana e festiva" — títulos de eventos, banners |
-| **Body (Textos/Interface)** | `Inter` | 400, 500, 600 | Alta legibilidade — dados, painéis, ingressos, formulários |
+| **Headings (h1/h2/h3)** | Space Grotesk | 700, 800 | Títulos de página, cards, banners |
+| **Body** | Inter | 400, 500, 600 | Textos, formulários, dados, badges |
+
+Fontes carregadas via Google Fonts em `client/index.html`.
 
 ### 1.3 Espaçamento e Bordas
 
@@ -41,145 +41,151 @@ A consistência da marca "Rolê Brasil" é mantida através de tokens globais qu
 
 ---
 
-## 2. Customer Facing (B2C — Vitrine e Compras)
+## 2. Tema
 
-**Objetivo UI/UX:** Imersão, descoberta de eventos e checkout sem fricção.
-**Tema Principal:** Dark Mode nativo para destacar o brilho das imagens dos eventos e a cor verde neon da marca.
-
-### 2.1 Estrutura de Layout
-
-- **Header:** Transparente com blur (`backdrop-blur-md`), logotipo à esquerda, barra de busca centralizada e avatar do usuário/menu à direita.
-- **Hero Section:** Destaque carrossel ou banner estático de eventos patrocinados. Título forte: *"Seu próximo Rolê começa aqui."*
-- **Filtros (Pills):** Botões arredondados (`rounded-full`) com ícones para categorias (Shows, Festivais, Teatro).
-- **Grid de Eventos:** Grid responsivo (`grid-cols-1 md:grid-cols-2 lg:grid-cols-4`).
-
-### 2.2 Componentes
-
-#### `<EventCard />`
-- Imagem de capa com `aspect-video` e `object-cover`.
-- Efeito hover: `hover:scale-[1.02] transition-transform duration-300`.
-- Badge flutuante absoluto sobre a imagem para categoria (ex: "FESTIVAL").
-- Botão primário no rodapé: `w-full bg-[#00FF88] text-black font-bold rounded-lg py-2`.
-
-#### `<TicketQR />`
-- Simula fisicamente um ingresso. Bordas perfuradas (`border-dashed border-2`) ou recortes laterais (pseudo-elementos ou máscaras SVG).
-- Fundo branco (`bg-white`) mesmo no Dark Mode para contraste máximo com o QR Code.
-- Conteúdo: título do evento, Data/Hora, Local, Setor/Assento.
-- QR Code grande e escaneável + código alfanumérico como fallback.
-- Botão "Compartilhar Link" (copia URL ou usa Web Share API).
-
-### 2.3 Seletores de Capacidade
-
-#### Mapa de Assentos (Grid)
-- Matriz visual onde assentos têm estados: *Livre (Gray), Selecionado (#00FF88), Ocupado (Error)*.
-- Em mobile: container com `overflow: auto` (ou `touch-action: pan-x pan-y`) para rolar sem quebrar o layout.
-
-#### Stepper de Pista (+ / -)
-- Para eventos sem lugar marcado. Botão `-`, número de ingressos, botão `+`.
-- Desativa `+` ao atingir capacidade máxima.
-
-### 2.4 Boas Práticas B2C
-
-- **Estado do carrinho:** Context API para manter estado durante Reserva → Checkout → Sucesso (evita perda no refresh).
-- **Feedback de pagamento:** `setTimeout` de ~2 segundos com spinner no botão para simular gateway bancário.
-- **Compartilhamento:** Copiar link único (ex: `role-brasil.com/ticket/A1B2C3D4`) ou Web Share API nativa (WhatsApp, Email).
+**Tema escuro único.** Não há toggle light/dark e não há diferença de tema entre papéis. Todo o conteúdo usa fundo `slate-950` com superfícies em `slate-900`/`slate-800`.
 
 ---
 
-## 3. Organizer Dashboard (B2B — Gestão de Eventos)
+## 3. Componentes Compartilhados (`client/src/components/ui/`)
 
-**Objetivo UI/UX:** Clareza, gestão de dados densos e análise de performance.
-**Tema Principal:** Light Mode / High-Contrast. Reduz fadiga visual durante uso prolongado.
+### `<Button>`
+- Variantes: `primary` (verde), `danger` (vermelho), `secondary` (slate)
+- Loading state: spinner + `<span className="sr-only">Carregando...</span>` para acessibilidade
+- Tamanhos: `sm`, `md`, `lg`
+- Mobile: `min-h-[44px]` para touch targets adequados
 
-### 3.1 Estrutura de Layout
+### `<Input>`
+- Ícone opcional (prop `icon` — `ReactNode`)
+- Mensagens de erro (`error` prop)
+- Variante dark (fundo `slate-900`, borda `slate-700`, foco `#00FF88`)
 
-- **Sidebar:** Navegação lateral fixa (`w-64 bg-white border-r border-slate-200`). Links para Visão Geral, Ingressos, Relatórios, Check-in, etc.
-- **Top Bar:** Breadcrumbs do evento atual, seletor de eventos rápido e menu de configurações do gestor.
-- **Main Content Area:** Fundo cinza claro (`bg-slate-50`).
+### `<StatusBadge>`
+- Cores automáticas por status usando mapa:
+  - `PUBLICADO`, `EMITIDO`, `APROVADO`, `ATIVA`, `CONFIRMADO` → verde
+  - `PENDENTE_DOCUMENTACAO` → amber
+  - `CANCELADO`, `REJEITADO`, `RECUSADO`, `CANCELADA` → vermelho
+  - `RASCUNHO`, `PENDENTE` → cinza
+  - `USADO` → amber (visual distinct do pendente)
+- Labels human-readable (ex.: "Pendente Doc." em vez de "PENDENTE_DOCUMENTACAO")
 
-### 3.2 Componentes
+### `<EmptyState>`
+- Ícone semântico (📋), título, mensagem, botão de retry opcional
 
-#### `<KpiCard />`
-- Grid superior com métricas: "Vendas do Dia", "Ingressos Vendidos", "Pessoas no Local".
-- Estilo: `bg-white rounded-xl shadow-sm border border-slate-100 p-6`.
-- Rótulos: `text-slate-500 text-sm font-medium`. Valores: `text-slate-900 text-3xl font-bold`.
+### `<ConfirmDialog>`
+- Modal de confirmação reutilizável
+- Variantes: `perigo` (botão vermelho) e `padrão` (botão verde)
+- Loading state no botão de confirmação
 
-#### `<SalesChart />`
-- Gráficos de vendas ao longo do tempo (Recharts ou Chart.js — **requer autorização** para instalar).
-- Preenchimento da área: gradiente suave do verde primário (`#00FF88` → transparente).
+### `<Card>`, `<Modal>`, `<Select>`, `<TextArea>`
+- Primitivos de layout com estilo dark consistente
 
-#### Tabelas de Lotes / Lista de Presença
-- Paginação ou virtualização (`@tanstack/react-virtual` — **requer autorização**) para listas grandes.
-- Colunas de status com badges semânticos (Verde = Validado, Cinza = Pendente).
-
-### 3.3 Buscador de Catálogo (Typeahead / Autocomplete)
-
-- **Uso:** Organizador busca shows/filmes da API externa.
-- **Comportamento:** Input que, após 3 caracteres, exibe dropdown com resultados da API (capa miniatura + título). Ao clicar, autopreenche dados do evento.
-
----
-
-## 4. Validator PWA (Portaria — App de Escaneamento)
-
-**Objetivo UI/UX:** Velocidade extrema, feedback à prova de erros, uso em condições adversas (sol forte ou escuro de balada).
-**Tema Principal:** Dark Mode Extremo com feedbacks em Full Screen.
-
-### 4.1 Estrutura de Layout (Mobile First)
-
-- **Viewport Principal:** Feed da câmera ocupa quase toda a tela, com "mira" (overlay guide) centralizada sinalizando onde posicionar o QR Code.
-- **Top Bar Simples:** Nome do evento logado e contador de check-ins (ex: "350/500").
-- **Botões Auxiliares:** Botões grandes (`min-h-[60px]`) para ligar lanterna (Flashlight API) ou alternar câmera.
-- **Modo Alternativo:** Campo de texto + botão "Digitar código manualmente" (fallback se câmera quebrar ou tela do cliente estiver trincada).
-
-### 4.2 Componentes
-
-#### `<Scanner />`
-- Utilizar `html5-qrcode` para decodificação de QR via câmera (**requer autorização** para instalar).
-- Ao detectar um código, **pausar o feed de vídeo imediatamente** para evitar leituras duplicadas.
-
-#### `<SuccessOverlay />`
-- Fundo verde vibrante (`bg-[#00FF88]`), ícone de Check gigante, texto "VALIDADE CONFIRMADA".
-- Cobertura de ~80% da tela por 2 segundos.
-- Efeito sonoro agudo (beep duplo).
-
-#### `<ErrorOverlay />`
-- Fundo vermelho intenso (`bg-red-500`), ícone de X gigante.
-- Texto: "INGRESSO INVÁLIDO" ou "JÁ UTILIZADO (às 22:45)".
-- Cobertura de ~80% da tela por 2 segundos.
-- Haptic feedback: `navigator.vibrate([200, 100, 200])` para alertar o segurança instantaneamente.
-
-#### `<PendingDocsOverlay />`
-- Fundo amarelo/laranja (`bg-[#F59E0B]`), ícone de alerta.
-- Texto: "NECESSÁRIA VERIFICAÇÃO DE DOCUMENTAÇÃO".
-- Exibe dados do ingresso (nome, categoria) e botões de confirmar/rejeitar.
-
-### 4.3 Boas Práticas Portaria
-
-- **Permissão de câmera:** Pedir de forma amigável: *"O Rolê Brasil Validador precisa acessar sua câmera para ler os QRs"*.
-- **Touch targets:** Qualquer botão deve ter no mínimo `min-h-[60px]` para clique rápido.
-- **Escuro de balada:** Tema extremamente escuro para economizar bateria e não ofuscar o operador.
+### `<QRScanner>`
+- Componente fullscreen que usa `html5-qrcode` para ler QR pela câmera
+- Mensagem amigável quando a câmera falha + auto-close após 2s
+- Callback `onScan(decodedText)` ao detectar
 
 ---
 
-## 5. Navegação e Rotas
+## 4. Hooks Compartilhados (`client/src/hooks/`)
 
-| Rota | Acesso | Tema |
-|------|--------|------|
-| `/` | Público / Cliente | Dark (B2C) |
-| `/evento/:id` | Público / Cliente | Dark (B2C) |
-| `/checkout/:id` | Cliente logado | Dark (B2C) |
-| `/meus-ingressos` | Cliente logado | Dark (B2C) |
-| `/admin/dashboard` | Organizador | Light (B2B) |
-| `/admin/evento/novo` | Organizador | Light (B2B) |
-| `/validador` | Portaria | Dark Extremo |
+| Hook | Propósito |
+|------|-----------|
+| `useDocumentTitle` | Define `document.title` por página com cleanup automático |
+| `useBeforeUnload` | Avisa antes de sair com mudanças não salvas |
 
 ---
 
-## 6. Boas Práticas Técnicas (React + Vite + Tailwind)
+## 5. Utility
 
-- **Gerenciamento de Estado:** Context API para carrinho (Reserva → Checkout → Sucesso), auth context para JWT.
-- **Token em `localStorage`**, toda chamada protegida envia `Authorization: Bearer <token>`.
-- **Role-gating no front é só UX** — esconder/mostrar botões por papel; autorização real é server-side.
-- **Responsividade:** Mapa de assentos em mobile deve usar `overflow: auto` dentro de container com dimensões fixas.
-- **Feedback de Pagamento:** Simular delay de 2s com spinner para realismo.
-- **Responsividade do Grid:** `grid-cols-1 md:grid-cols-2 lg:grid-cols-4` para cards de eventos.
+`formatarCentavos` em `client/src/utils/formatarCentavos.ts` — formata centavos como `R$ XX,XX` sem separador de milhar.
+
+---
+
+## 6. Layout e Navegação
+
+### Portal Unificado
+
+Um único shell (sidebar + header) serve todos os papéis. O papel ativo é controlado por `PortalContext`.
+
+### Rotas
+
+| Rota | Acesso |
+|------|--------|
+| `/` | Público |
+| `/login` | Público |
+| `/cadastro` | Público |
+| `/ingressos/compartilhar/:codigo` | Público (link de compartilhamento) |
+| `/portal` | Redirect para papel ativo |
+| `/portal/cliente` | CLIENT |
+| `/portal/cliente/evento/:id` | CLIENT |
+| `/portal/cliente/ingressos` | CLIENT |
+| `/portal/cliente/ingressos/:id` | CLIENT |
+| `/portal/cliente/favoritos` | CLIENT |
+| `/portal/organizador` | ORGANIZER |
+| `/portal/organizador/eventos` | ORGANIZER |
+| `/portal/organizador/eventos/novo` | ORGANIZER |
+| `/portal/organizador/eventos/:id` | ORGANIZER |
+| `/portal/organizador/eventos/:id/editar` | ORGANIZER |
+| `/portal/organizador/relatorios` | ORGANIZER |
+| `/portal/portaria` | PORTARIA |
+| `/portal/portaria/historico` | PORTARIA |
+
+### Sidebar (desktop)
+- Fixa à esquerda em `≥ lg` (`w-64`)
+- Links com ícone + texto, active state com `#00FF88`
+- Logo RB no topo
+
+### Sidebar (mobile)
+- Slide-over com backdrop escuro
+- Abre via botão hamburger no Header
+- Fecha ao clicar fora ou navegar
+
+### Header
+- Fundo `slate-950/80 backdrop-blur`
+- Título da página à esquerda
+- Botões de ação à direita (logout, etc.)
+- Portaria: botão fullscreen/kiosk
+
+---
+
+## 7. Páginas por Portal
+
+### Cliente
+
+- **InicioPage**: busca de eventos públicos com filtros (texto, cidade, estado) e paginação. Cards com poster placeholder, endereço, categorias, próxima sessão.
+- **DetalheEventoPage**: state machine de compra — INFO → ASSENTOS → RESERVA → CONFIRMAÇÃO. Mapa de assentos estilo teatro, categorias dinâmicas, timer 10 min, pagamento (PIX/cartão), chat integrado.
+- **IngressosPage**: lista de ingressos com filtros por status.
+- **DetalheIngressoPage**: QR code, código de 16 chars, cancelamento com confirmação.
+- **FavoritosPage**: grid de eventos favoritados com retry.
+
+### Organizador
+
+- **DashboardPage**: KPI cards (eventos, reservas, receita), eventos por status.
+- **EventosPage**: listagem com busca, filtro por status, poster placeholder, sessões pluralizadas.
+- **DetalheEventoPage**: métricas, categorias, sessões, ações com ConfirmDialog (Publicar/Cancelar/Excluir/Cancelar Sessão).
+- **NovoEventoPage**: form multi-step com busca TMDb, validações, beforeunload.
+- **EditarEventoPage**: form com proteção (se tem reservas, só edita descrição), beforeunload.
+- **RelatoriosPage**: métricas por evento (reservas por sessão com data/hora, ingressos por categoria).
+
+### Portaria
+
+- **ValidarPage**: input com aria-label + botão "Escanear QR Code". Evento (recomendado) dropdown. Resultado com Card colorido + StatusBadge. Confirmar/Rejeitar com ConfirmDialog para rejeição. Loading states separados.
+- **HistoricoPage**: busca por código + filtro por status + data/hora + observação + retry.
+
+---
+
+## 8. Heurísticas de Nielsen Aplicadas
+
+| Heurística | Implementação |
+|---|---|
+| Visibilidade do status | `StatusBadge` com labels human-readable |
+| Correspondência com o mundo real | Mensagens de erro amigáveis (não HTTP codes) |
+| Controle e liberdade do usuário | Botão Voltar, beforeunload, ConfirmDialog |
+| Consistência e padronização | Componentes compartilhados (Button, Input, Card, etc.) |
+| Prevenção de erros | Validação de data futura, sessões para publicar, limite 10 assentos |
+| Reconhecimento em vez de memória | Filtros e busca em todas as listas |
+| Flexibilidade e eficiência | Search + filter dropdowns em Eventos e Histórico |
+| Design minimalista | EmptyState semântico, apenas informação necessária |
+| Ajuda e documentação | Requisitos de senha visíveis, hint de CVV |
+| Tratamento de erros | Mensagens em cards coloridos, retry buttons |

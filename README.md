@@ -63,7 +63,7 @@ As migrations são escritas manualmente no SQL Editor do Supabase — **não** r
 |-----------|--------|
 | `20260815000000_init` | Aplicada |
 | `20260815000001_usuario_ativo` | Aplicada |
-| `20260815000002_organizador_fluxo` | Aplicada |
+| `20260815000002_organizador_fluxo` | Pendente |
 | `20260817000001_cliente_schema` | Pendente |
 | `20260817010000_portaria_schema` | Pendente |
 
@@ -121,7 +121,7 @@ O seed popula 4 contas e 1 evento publicado. Veja `TEST_DATA.md` para a lista co
 
 ### Problemas Conhecidos
 
-1. **Migrations pendentes**: `20260817000001_cliente_schema` e `20260817010000_portaria_schema` precisam ser aplicadas no SQL Editor do Supabase antes do deploy.
+1. **Migrations pendentes**: `20260815000002_organizador_fluxo`, `20260817000001_cliente_schema` e `20260817010000_portaria_schema` precisam ser aplicadas no SQL Editor do Supabase antes do deploy.
 2. **VITE_API_URL no Vercel**: a variável de ambiente `VITE_API_URL=https://role-brasil-production.up.railway.app/api` precisa ser setada no dashboard do Vercel.
 
 Validação automática (husky, instalado pelo `npm install`):
