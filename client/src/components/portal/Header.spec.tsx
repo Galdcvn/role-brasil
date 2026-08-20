@@ -53,20 +53,15 @@ describe('Header', () => {
     cleanup()
   })
 
-  it('displays user email', () => {
+  it('does not render email', () => {
     const { container, cleanup } = renderHeader(vi.fn(), ['CLIENT'])
-    expect(container.textContent).toContain('test@test.com')
+    expect(container.textContent).not.toContain('test@test.com')
     cleanup()
   })
 
-  it('calls logout when Sair button is clicked', async () => {
+  it('does not render logout button', () => {
     const { container, cleanup } = renderHeader(vi.fn(), ['CLIENT'])
-    const logoutBtn = Array.from(container.querySelectorAll('button')).find((b) =>
-      b.textContent?.includes('Sair'),
-    ) as HTMLButtonElement
-    expect(logoutBtn).toBeTruthy()
-    await act(async () => { logoutBtn.click() })
-    expect(localStorage.getItem('token')).toBeNull()
+    expect(container.textContent).not.toContain('Sair')
     cleanup()
   })
 
@@ -122,14 +117,6 @@ describe('Header', () => {
     const { container, cleanup } = renderHeader()
     const img = container.querySelector('img[alt="Rolê Brasil"]')
     expect(img).toBeTruthy()
-    cleanup()
-  })
-
-  it('hides email on small screens', () => {
-    const { container, cleanup } = renderHeader()
-    const emailSpan = container.querySelector('span.hidden.sm\\:block')
-    expect(emailSpan).toBeTruthy()
-    expect(emailSpan!.textContent).toContain('test@test.com')
     cleanup()
   })
 

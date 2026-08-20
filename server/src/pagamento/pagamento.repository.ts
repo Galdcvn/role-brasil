@@ -25,7 +25,7 @@ export class PagamentoRepository {
   ) {
     return this.prisma.$transaction(async (tx) => {
       const reserva = await tx.reserva.findFirst({
-        where: { id: reservaId },
+        where: { id: reservaId, status: 'PENDENTE' },
         include: { itens: true },
       });
       if (!reserva) {
@@ -84,7 +84,7 @@ export class PagamentoRepository {
   async processarRecusado(reservaId: number) {
     return this.prisma.$transaction(async (tx) => {
       const reserva = await tx.reserva.findFirst({
-        where: { id: reservaId },
+        where: { id: reservaId, status: 'PENDENTE' },
         include: { itens: true },
       });
       if (!reserva) {

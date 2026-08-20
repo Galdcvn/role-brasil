@@ -4,6 +4,7 @@ import { api } from '../../../api'
 import Card from '../../../components/ui/Card'
 import StatusBadge from '../../../components/ui/StatusBadge'
 import { useDocumentTitle } from '../../../hooks/useDocumentTitle'
+import { useToast } from '../../../contexts/ToastContext'
 
 interface Ingresso {
   id: number
@@ -41,6 +42,7 @@ function formatarPreco(centavos: number): string {
 export default function DetalheIngressoPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const toast = useToast()
   const [ingresso, setIngresso] = useState<Ingresso | null>(null)
   const [loading, setLoading] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
@@ -75,7 +77,8 @@ export default function DetalheIngressoPage() {
       setIngresso((prev) => prev ? { ...prev, status: 'CANCELADO' } : null)
       setConfirmado(false)
     } catch (e: unknown) {
-      setErro(e instanceof Error ? e.message : 'Erro ao cancelar')
+      toast.error(e instanceof Error ? e.message : 'Erro ao cancelar')
+      setConfirmado(false)
     } finally {
       setCancelando(false)
     }

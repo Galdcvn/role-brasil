@@ -145,13 +145,14 @@ export default function DetalheEventoPage() {
       variante: 'perigo',
       loading: false,
       onConfirmar: async () => {
+        setConfirmacao((prev) => (prev ? { ...prev, loading: true } : null))
         try {
           await api(`/sessoes/${sessaoId}/cancelar`, { method: 'POST' })
           const atualizado = await api<Evento>(`/eventos/${id}`)
           setEvento(atualizado)
           toast.success('Sessão cancelada')
         } catch (e: unknown) {
-          setErro(e instanceof Error ? e.message : 'Erro ao cancelar sessão')
+          toast.error(e instanceof Error ? e.message : 'Erro ao cancelar sessão')
         } finally {
           setConfirmacao(null)
         }

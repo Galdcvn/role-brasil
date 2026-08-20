@@ -161,15 +161,6 @@ describe('App', () => {
     cleanup()
   })
 
-  it('shows user email in header', () => {
-    mockFetch({ totalEventos: 0, eventosPorStatus: {}, totalReservas: 0, totalReceitaCentavos: 0, totalIngressos: 0 })
-    localStorage.setItem('token', criarTokenFake({ roles: ['ORGANIZER'], email: 'org@test.com' }))
-    const { container, cleanup } = renderAt(['/portal/organizador'])
-    expect(container.textContent).toContain('org@test.com')
-    expect(container.textContent).toContain('Sair')
-    cleanup()
-  })
-
   it('renders the cliente portal with InicioPage', () => {
     mockFetch({ eventos: [], total: 0, page: 1, limit: 12 })
     localStorage.setItem('token', criarTokenFake({ roles: ['CLIENT'] }))

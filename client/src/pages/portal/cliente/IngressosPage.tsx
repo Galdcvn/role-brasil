@@ -52,6 +52,11 @@ export default function IngressosPage() {
 
   useEffect(() => { carregar() }, [])
 
+  useEffect(() => {
+    const interval = setInterval(carregar, 30_000)
+    return () => clearInterval(interval)
+  }, [])
+
   const ingressosFiltrados = filtro
     ? ingressos.filter((i) => i.status === filtro)
     : ingressos

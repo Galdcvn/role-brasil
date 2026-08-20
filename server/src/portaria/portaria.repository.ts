@@ -73,7 +73,7 @@ export class PortariaRepository {
 
       return tx.ingresso.update({
         where: { id: ingressoId },
-        data: { comprovanteStatus: 'RECUSADO' },
+        data: { comprovanteStatus: 'RECUSADO', status: 'CANCELADO' },
       });
     });
   }

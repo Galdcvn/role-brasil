@@ -7,7 +7,7 @@ interface Props {
 }
 
 export default function Header({ onMenuClick }: Props) {
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
   const [emTelaCheia, setEmTelaCheia] = useState(false)
 
   const isPortaria = user?.roles?.includes('PORTARIA') ?? false
@@ -53,19 +53,6 @@ export default function Header({ onMenuClick }: Props) {
             )}
           </button>
         )}
-
-        <span className="hidden text-sm text-slate-400 sm:block">
-          {user?.email}
-        </span>
-        <button
-          onClick={logout}
-          className="flex h-8 items-center gap-1.5 rounded-lg px-3 text-xs font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-4 w-4">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
-          </svg>
-          <span className="hidden sm:inline">Sair</span>
-        </button>
       </div>
     </header>
   )

@@ -136,7 +136,7 @@ describe('PortariaRepository', () => {
     });
     expect(prismaMock.ingresso.update).toHaveBeenCalledWith({
       where: { id: 1 },
-      data: { comprovanteStatus: 'RECUSADO' },
+      data: { comprovanteStatus: 'RECUSADO', status: 'CANCELADO' },
     });
   });
 

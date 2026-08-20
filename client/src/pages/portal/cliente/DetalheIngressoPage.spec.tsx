@@ -7,6 +7,16 @@ import { PortalProvider } from '../../../contexts/PortalContext'
 import DetalheIngressoPage from './DetalheIngressoPage'
 import { criarTokenFake } from '../../../test-utils'
 
+const mockToastError = vi.fn()
+vi.mock('../../../contexts/ToastContext', () => ({
+  useToast: () => ({
+    success: vi.fn(),
+    error: mockToastError,
+    info: vi.fn(),
+  }),
+  ToastProvider: ({ children }: { children: React.ReactNode }) => children,
+}))
+
 function renderPage(entry: string) {
   localStorage.setItem('token', criarTokenFake({ roles: ['CLIENT'] }))
   const container = document.createElement('div')
@@ -191,7 +201,7 @@ describe('DetalheIngressoPage', () => {
     ) as HTMLButtonElement
     await act(async () => { confirmBtn.click() })
 
-    expect(container.textContent).toContain('Erro ao cancelar')
+    expect(mockToastError).toHaveBeenCalled()
     cleanup()
   })
 

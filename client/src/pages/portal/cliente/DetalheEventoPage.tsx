@@ -479,42 +479,68 @@ export default function DetalheEventoPage() {
                 </div>
 
                 <div className="space-y-1.5 overflow-x-auto">
-                  {assentos.map((fileira, idx) => {
-                    const pl = idx * 4
-                    return (
-                      <div key={fileira.fileira} className="flex items-center justify-center gap-1.5">
-                        <span className="w-5 shrink-0 text-center text-[10px] font-semibold text-slate-500">{fileira.fileira}</span>
-                        <div className="flex items-center gap-0.5" style={{ paddingLeft: pl, paddingRight: pl }}>
-                          {fileira.assentos.map((assento) => {
-                            const selecionado = itensSelecionados.some((i) => i.assentoSessaoId === assento.id)
-                            const indisponivel = assento.status !== 'DISPONIVEL'
-                            return (
-                              <button
-                                key={assento.id}
-                                onClick={() => !indisponivel && toggleAssento(assento)}
-                                disabled={indisponivel}
-                                title={`${assento.fileira}${assento.numero}`}
-                                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[10px] font-medium transition-all sm:h-8 sm:w-8 sm:rounded-lg sm:text-xs ${
-                                  indisponivel
-                                    ? 'cursor-not-allowed bg-slate-800/60 text-slate-700'
-                                    : selecionado
-                                      ? 'bg-[#00FF88] text-slate-950 shadow-[0_0_8px_rgba(0,255,136,0.3)]'
-                                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600 hover:scale-110'
-                                }`}
-                              >
-                                {assento.numero}
-                              </button>
-                            )
-                          })}
+                  {(() => {
+                    const limitePremium = Math.ceil(assentos.length / 2)
+                    return assentos.map((fileira, idx) => {
+                      const pl = idx * 4
+                      const isPremium = idx < limitePremium
+                      const showDivider = idx === limitePremium
+                      return (
+                        <div key={fileira.fileira}>
+                          {showDivider && (
+                            <div className="my-2 flex items-center gap-2">
+                              <div className="h-px flex-1 bg-slate-700" />
+                              <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-500">Economia</span>
+                              <div className="h-px flex-1 bg-slate-700" />
+                            </div>
+                          )}
+                          {idx === 0 && (
+                            <div className="mb-1 flex items-center gap-2">
+                              <div className="h-px flex-1 bg-amber-700/40" />
+                              <span className="text-[9px] font-semibold uppercase tracking-wider text-amber-500/70">Premium</span>
+                              <div className="h-px flex-1 bg-amber-700/40" />
+                            </div>
+                          )}
+                          <div className="flex items-center justify-center gap-1.5">
+                            <span className="w-5 shrink-0 text-center text-[10px] font-semibold text-slate-500">{fileira.fileira}</span>
+                            <div className="flex items-center gap-0.5" style={{ paddingLeft: pl, paddingRight: pl }}>
+                              {fileira.assentos.map((assento) => {
+                                const selecionado = itensSelecionados.some((i) => i.assentoSessaoId === assento.id)
+                                const indisponivel = assento.status !== 'DISPONIVEL'
+                                return (
+                                  <button
+                                    key={assento.id}
+                                    onClick={() => !indisponivel && toggleAssento(assento)}
+                                    disabled={indisponivel}
+                                    title={`${assento.fileira}${assento.numero}${isPremium ? ' (Premium)' : ''}`}
+                                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[10px] font-medium transition-all sm:h-8 sm:w-8 sm:rounded-lg sm:text-xs ${
+                                      indisponivel
+                                        ? 'cursor-not-allowed bg-slate-800/60 text-slate-700'
+                                        : selecionado
+                                          ? 'bg-[#00FF88] text-slate-950 shadow-[0_0_8px_rgba(0,255,136,0.3)]'
+                                          : isPremium
+                                            ? 'bg-amber-800/60 text-amber-200 hover:bg-amber-700/60 hover:scale-110'
+                                            : 'bg-slate-700 text-slate-300 hover:bg-slate-600 hover:scale-110'
+                                    }`}
+                                  >
+                                    {assento.numero}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                            <span className="w-5 shrink-0 text-center text-[10px] font-semibold text-slate-500">{fileira.fileira}</span>
+                          </div>
                         </div>
-                        <span className="w-5 shrink-0 text-center text-[10px] font-semibold text-slate-500">{fileira.fileira}</span>
-                      </div>
-                    )
-                  })}
+                      )
+                    })
+                  })()}
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 text-xs text-slate-400">
+              <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
+                <span className="flex items-center gap-1.5">
+                  <span className="inline-block h-3 w-3 rounded bg-amber-800/60" /> Premium
+                </span>
                 <span className="flex items-center gap-1.5">
                   <span className="inline-block h-3 w-3 rounded bg-slate-700" /> Disponível
                 </span>
@@ -590,7 +616,7 @@ export default function DetalheEventoPage() {
             <h3 className="mb-3 text-xs font-semibold text-slate-500">Método de Pagamento</h3>
             <div className="mb-4 flex gap-2">
               <button
-                onClick={() => setMetodoPagamento('PIX')}
+                onClick={() => { setMetodoPagamento('PIX'); setPagamentoErro(null) }}
                 className={`flex-1 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors ${
                   metodoPagamento === 'PIX'
                     ? 'border-[#00FF88] bg-[#00FF88]/10 text-[#00FF88]'
@@ -600,7 +626,7 @@ export default function DetalheEventoPage() {
                 PIX
               </button>
               <button
-                onClick={() => setMetodoPagamento('CARTAO')}
+                onClick={() => { setMetodoPagamento('CARTAO'); setPagamentoErro(null) }}
                 className={`flex-1 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors ${
                   metodoPagamento === 'CARTAO'
                     ? 'border-[#00FF88] bg-[#00FF88]/10 text-[#00FF88]'
