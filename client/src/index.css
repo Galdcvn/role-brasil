@@ -5,6 +5,10 @@
   --font-heading: "Space Grotesk", system-ui, sans-serif;
 }
 
+html {
+  overflow: hidden;
+}
+
 h1, h2, h3 {
   font-family: var(--font-heading);
 }
