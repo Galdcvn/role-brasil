@@ -141,6 +141,12 @@ npm run test:cov
 
 > Registro das decisões tomadas ao longo do desenvolvimento, com o contexto de cada uma. Inserida em ordem cronológica; decisões novas são adicionadas no topo.
 
+### 20/08/2026 — Quinto batch: pagamento UX + recusa de pagamento
+
+- **Pagamento recusado — toast**: Erro de pagamento agora exibe apenas toast (era mensagem inline + toast). Removido state `pagamentoErro` e seu elemento de renderização.
+- **Pagamento recusado — retry permitido**: Recusa de pagamento (CVV "000") não cancela mais a reserva no banco. Antes, `processarRecusado` setava status CANCELADO, bloqueando novo attempt. Agora retorna `{ status: 'RECUSADO' }` sem alterar a reserva.
+- **Migrations aplicadas**: 3 migrations pendentes (`organizador_fluxo`, `cliente_schema`, `portaria_schema`) aplicadas no Supabase — resolve 500 no POST /api/reservas.
+
 ### 20/08/2026 — Quarto batch: pagamento cartão 500 fix + Meu Perfil routing fix
 
 - **Pagamento cartão 500 (raiz real)**: `CartaoDto` não tinha nenhum decorador de validação. Com `whitelist: true` no `ValidationPipe`, os campos `nome`, `numero`, `validade`, `cvv` eram removidos antes de chegar ao service. `dto.cartao.numero.replace()` jogava `TypeError` → 500. Fix: `@IsString()` + `@IsNotEmpty()` em todos os 4 campos.

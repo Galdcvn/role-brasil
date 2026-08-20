@@ -7,10 +7,12 @@ import { PortalProvider } from '../../../contexts/PortalContext'
 import DetalheEventoPage from './DetalheEventoPage'
 import { criarTokenFake } from '../../../test-utils'
 
+const mockToastError = vi.fn()
+const mockToastSuccess = vi.fn()
 vi.mock('../../../contexts/ToastContext', () => ({
   useToast: () => ({
-    success: vi.fn(),
-    error: vi.fn(),
+    success: mockToastSuccess,
+    error: mockToastError,
     info: vi.fn(),
   }),
   ToastProvider: ({ children }: { children: React.ReactNode }) => children,
@@ -403,7 +405,7 @@ describe('DetalheEventoPage', () => {
     const pagarBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent?.includes('Pagar')) as HTMLButtonElement
     await act(async () => { pagarBtn.click() })
 
-    expect(container.textContent).toContain('Pagamento recusado')
+    expect(mockToastError).toHaveBeenCalled()
     cleanup()
   })
 
@@ -678,7 +680,7 @@ describe('DetalheEventoPage', () => {
     const pagarBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent?.includes('Pagar')) as HTMLButtonElement
     await act(async () => { pagarBtn.click() })
 
-    expect(container.textContent).toContain('Erro pagamento')
+    expect(mockToastError).toHaveBeenCalled()
     cleanup()
   })
 

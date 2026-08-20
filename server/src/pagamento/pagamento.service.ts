@@ -39,7 +39,6 @@ export class PagamentoService {
 
     const cvv = dto.cartao.cvv;
     if (cvv === '000') {
-      await this.pagamentoRepository.processarRecusado(dto.reservaId);
       return { status: 'RECUSADO' as const };
     }
 

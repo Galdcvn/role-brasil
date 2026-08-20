@@ -76,7 +76,7 @@ describe('PagamentoService', () => {
       },
     });
     expect(resultado.status).toBe('RECUSADO');
-    expect(repositoryMock.processarRecusado).toHaveBeenCalledWith(1);
+    expect(repositoryMock.processarRecusado).not.toHaveBeenCalled();
     expect(repositoryMock.processarAprovado).not.toHaveBeenCalled();
   });
 

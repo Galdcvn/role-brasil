@@ -133,7 +133,6 @@ export default function DetalheEventoPage() {
   const [metodoPagamento, setMetodoPagamento] = useState<'PIX' | 'CARTAO'>('PIX')
   const [cartao, setCartao] = useState({ nome: '', numero: '', validade: '', cvv: '' })
   const [pagamentoLoading, setPagamentoLoading] = useState(false)
-  const [pagamentoErro, setPagamentoErro] = useState<string | null>(null)
 
   const [ingressos, setIngressos] = useState<{ id: number; codigo: string }[]>([])
 
@@ -243,7 +242,6 @@ export default function DetalheEventoPage() {
       })
       setReserva(res)
       setEtapa('reserva')
-      setPagamentoErro(null)
     } catch (e: unknown) {
       setErro(e instanceof Error ? e.message : 'Erro ao criar reserva')
     } finally {
@@ -254,7 +252,6 @@ export default function DetalheEventoPage() {
   async function pagar() {
     if (!reserva) return
     setPagamentoLoading(true)
-    setPagamentoErro(null)
     try {
       const body: Record<string, unknown> = { reservaId: reserva.id, tipo: metodoPagamento }
       if (metodoPagamento === 'CARTAO') {
@@ -265,15 +262,14 @@ export default function DetalheEventoPage() {
         body: JSON.stringify(body),
       })
       if (res.status === 'RECUSADO') {
-        setPagamentoErro('Pagamento recusado. Verifique os dados do cartão.')
-        toast.error('Pagamento recusado')
+        toast.error('Pagamento recusado. Verifique os dados do cartão.')
         return
       }
       setIngressos(res.ingressos ?? [])
       setEtapa('confirmacao')
       toast.success('Pagamento aprovado!')
     } catch (e: unknown) {
-      setPagamentoErro(e instanceof Error ? e.message : 'Erro no pagamento')
+      toast.error(e instanceof Error ? e.message : 'Erro no pagamento')
     } finally {
       setPagamentoLoading(false)
     }
@@ -616,7 +612,7 @@ export default function DetalheEventoPage() {
             <h3 className="mb-3 text-xs font-semibold text-slate-500">Método de Pagamento</h3>
             <div className="mb-4 flex gap-2">
               <button
-                onClick={() => { setMetodoPagamento('PIX'); setPagamentoErro(null) }}
+                onClick={() => setMetodoPagamento('PIX')}
                 className={`flex-1 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors ${
                   metodoPagamento === 'PIX'
                     ? 'border-[#00FF88] bg-[#00FF88]/10 text-[#00FF88]'
@@ -626,7 +622,7 @@ export default function DetalheEventoPage() {
                 PIX
               </button>
               <button
-                onClick={() => { setMetodoPagamento('CARTAO'); setPagamentoErro(null) }}
+                onClick={() => setMetodoPagamento('CARTAO')}
                 className={`flex-1 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors ${
                   metodoPagamento === 'CARTAO'
                     ? 'border-[#00FF88] bg-[#00FF88]/10 text-[#00FF88]'
@@ -713,10 +709,6 @@ export default function DetalheEventoPage() {
                 <p className="font-mono text-xs text-[#00FF88]">PIX-{Math.random().toString(36).slice(2, 10).toUpperCase()}</p>
                 <p className="mt-2 text-xs text-slate-500">Aguardando confirmação...</p>
               </div>
-            )}
-
-            {pagamentoErro && (
-              <p className="mt-3 text-sm text-red-400">{pagamentoErro}</p>
             )}
 
             <div className="mt-4">
