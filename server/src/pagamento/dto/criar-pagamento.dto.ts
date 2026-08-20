@@ -1,10 +1,28 @@
-import { IsEnum, IsInt, IsOptional, ValidateNested } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 class CartaoDto {
+  @IsString()
+  @IsNotEmpty()
   nome!: string;
+
+  @IsString()
+  @IsNotEmpty()
   numero!: string;
+
+  @IsString()
+  @IsNotEmpty()
   validade!: string;
+
+  @IsString()
+  @IsNotEmpty()
   cvv!: string;
 }
 

@@ -141,6 +141,11 @@ npm run test:cov
 
 > Registro das decisões tomadas ao longo do desenvolvimento, com o contexto de cada uma. Inserida em ordem cronológica; decisões novas são adicionadas no topo.
 
+### 20/08/2026 — Quarto batch: pagamento cartão 500 fix + Meu Perfil routing fix
+
+- **Pagamento cartão 500 (raiz real)**: `CartaoDto` não tinha nenhum decorador de validação. Com `whitelist: true` no `ValidationPipe`, os campos `nome`, `numero`, `validade`, `cvv` eram removidos antes de chegar ao service. `dto.cartao.numero.replace()` jogava `TypeError` → 500. Fix: `@IsString()` + `@IsNotEmpty()` em todos os 4 campos.
+- **Meu Perfil routing**: `ProtectedRoute.tsx` não incluía `/portal/perfil` no allowlist de rotas por papel. Clique em "Meu Perfil" era bloqueado e redirecionava para a home de cada portal. Fix: `/portal/perfil` adicionado aos 3 papéis (CLIENT, ORGANIZER, PORTARIA).
+
 ### 20/08/2026 — Terceiro batch: 9 bugfixes de UX reportados em teste
 
 - **Organizador — cancel session spinner**: Botão "Cancelar Sessão" agora seta `loading: true` no state de confirmação antes da chamada API. O spinner aparece corretamente até a resposta.

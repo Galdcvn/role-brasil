@@ -2,9 +2,9 @@ import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 
 const ROTAS_POR_PAPEL: Record<string, string[]> = {
-  CLIENT: ['/portal/cliente', '/portal/cliente/evento', '/portal/cliente/favoritos', '/portal/cliente/ingressos'],
-  ORGANIZER: ['/portal/organizador', '/portal/organizador/eventos', '/portal/organizador/evento', '/portal/organizador/relatorios'],
-  PORTARIA: ['/portal/portaria'],
+  CLIENT: ['/portal/cliente', '/portal/cliente/evento', '/portal/cliente/favoritos', '/portal/cliente/ingressos', '/portal/perfil'],
+  ORGANIZER: ['/portal/organizador', '/portal/organizador/eventos', '/portal/organizador/evento', '/portal/organizador/relatorios', '/portal/perfil'],
+  PORTARIA: ['/portal/portaria', '/portal/perfil'],
 }
 
 function temAcesso(roles: string[], pathname: string): boolean {
