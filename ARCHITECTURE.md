@@ -80,9 +80,9 @@ Regras:
 ### Páginas do Portal do Cliente
 
 - **InicioPage** (`/portal/cliente`): busca de eventos públicos com filtros (texto, cidade, estado, data, preço) e paginação. Cards com poster, endereço, categorias, próxima sessão.
-- **DetalheEventoPage** (`/portal/cliente/evento/:id`): state machine de compra — INFO → ASSENTOS → RESERVA → CONFIRMAÇÃO. Info do evento, mapa de assentos estilo teatro (palco visual, curvatura progressiva, labels duplos), categorias dinâmicas filtradas por evento, timer de expiração (10 min), pagamento (PIX/cartão), confirmação. Favoritos toggle. Chat integrado para quem tem ingresso (polling 10s).
+- **DetalheEventoPage** (`/portal/cliente/evento/:id`): state machine de compra — INFO → ASSENTOS → RESERVA → CONFIRMAÇÃO. Info do evento, mapa de assentos estilo teatro com seções visuais (Premium — fileiras mais próximas ao palco, amber; Economia — fileiras traseiras, slate), palco visual, curvatura progressiva, labels duplos, categorias dinâmicas filtradas por evento, timer de expiração (10 min), pagamento (PIX/cartão), confirmação. Favoritos toggle. Chat integrado para quem tem ingresso (polling 10s).
 - **FavoritosPage** (`/portal/cliente/favoritos`): grid de eventos favoritados com poster, título, categorias, endereço, próxima sessão. Backend `GET /api/favoritos/eventos` retorna eventos completos.
-- **IngressosPage** (`/portal/cliente/ingressos`): lista de ingressos do cliente com filtros por status (EMITIDO, PENDENTE, TODOS).
+- **IngressosPage** (`/portal/cliente/ingressos`): lista de ingressos do cliente com filtros por status (EMITIDO, PENDENTE, TODOS). Polling automático a cada 30 segundos para refletir mudanças de status.
 - **DetalheIngressoPage** (`/portal/cliente/ingressos/:id`): detalhe do ingresso com QR code, código de 16 chars, cancelamento com confirmação dupla (até 7 dias antes do evento).
 
 ### Páginas do Portal do Organizador

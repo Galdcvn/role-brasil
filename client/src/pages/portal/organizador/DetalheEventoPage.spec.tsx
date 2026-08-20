@@ -7,10 +7,11 @@ import { PortalProvider } from '../../../contexts/PortalContext'
 import DetalheEventoPage from './DetalheEventoPage'
 import { criarTokenFake } from '../../../test-utils'
 
+const mockToastError = vi.fn()
 vi.mock('../../../contexts/ToastContext', () => ({
   useToast: () => ({
     success: vi.fn(),
-    error: vi.fn(),
+    error: mockToastError,
     info: vi.fn(),
   }),
   ToastProvider: ({ children }: { children: React.ReactNode }) => children,
@@ -183,7 +184,7 @@ describe('DetalheEventoPage interactions', () => {
     await act(async () => { cancelBtn?.click() })
     const confirmBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Sim, excluir') as HTMLButtonElement
     await act(async () => { confirmBtn?.click() })
-    expect(container.textContent).toContain('Erro ao cancelar sessão')
+    expect(mockToastError).toHaveBeenCalled()
     cleanup()
   })
 

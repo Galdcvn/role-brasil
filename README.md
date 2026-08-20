@@ -141,6 +141,18 @@ npm run test:cov
 
 > Registro das decisões tomadas ao longo do desenvolvimento, com o contexto de cada uma. Inserida em ordem cronológica; decisões novas são adicionadas no topo.
 
+### 20/08/2026 — Terceiro batch: 9 bugfixes de UX reportados em teste
+
+- **Organizador — cancel session spinner**: Botão "Cancelar Sessão" agora seta `loading: true` no state de confirmação antes da chamada API. O spinner aparece corretamente até a resposta.
+- **Pagamento 500 (segunda raiz)**: `processarAprovado` e `processarRecusado` agora filtram por `status: 'PENDENTE'` no `findFirst` — evita processar pagamentos que já foram processados.
+- **PIX error persistente**: Erro de PIX não mais persiste ao trocar método de pagamento. O state `pagamentoErro` é limpo ao clicar em PIX ou Cartão.
+- **Portaria rejeição refletida**: `rejeitarComprovante` agora seta `{ comprovanteStatus: 'RECUSADO', status: 'CANCELADO' }` — antes só setava `comprovanteStatus` e o client continuava mostrando o ingresso como ativo.
+- **Cancel ingresso → toast**: Erro de cancelamento de ingresso agora exibe toast em vez de redirecionar para tela de erro vermelho.
+- **Header sem email + logout no sidebar**: Email do usuário removido do Header. Botão "Sair" movido para o final da Sidebar — mais acessível em mobile.
+- **Premium/economy seat sections**: Mapa de assentos dividido em seções visuais: Premium (fileiras mais próximas ao palco, amber) e Economia (fileiras traseiras, slate). Divider com label separa as seções.
+- **Ingressos polling**: Lista de ingressos do cliente atualiza automaticamente a cada 30 segundos — reflete mudanças de status (confirmação na portaria, etc.) sem necessidade de F5.
+- **Testes atualizados**: Header, DetalheIngressoPage, App e portaria repository specs corrigidos para refletir as mudanças. 609 testes passando (283 server + 326 client).
+
 ### 20/08/2026 — Segundo batch: 25 melhorias de UX, segurança e robustez
 
 - **Pagamento 500 fix**: `processarAprovado` e `processarRecusado` agora usam `findFirst` em vez de `findUniqueOrThrow` + `NotFoundException` — evita 500 quando pagamento não existe.
