@@ -52,6 +52,7 @@ src/
 │   │   ├── organizador/ Dashboard, Eventos, DetalheEvento, NovoEvento, EditarEvento, Relatorios
 │   │   ├── cliente/     InicioPage, DetalheEventoPage, IngressosPage, DetalheIngressoPage, FavoritosPage
 │   │   └── portaria/    ValidarPage, HistoricoPage
+│   ├── MeuPerfilPage.tsx       (rota /portal/perfil — todos os papéis)
 │   ├── CompartilharIngressoPage.tsx   (rota pública /ingressos/compartilhar/:codigo)
 │   ├── LoginPage.tsx, RegistroPage.tsx, SelecaoPapelPage.tsx
 │   ├── HomePage.tsx
@@ -62,7 +63,8 @@ src/
 │   └── ui/              Button, Input, Card, StatusBadge, EmptyState
 ├── contexts/
 │   ├── AuthContext.tsx   Decodifica JWT, user { id, email, roles[] }
-│   └── PortalContext.tsx roleAtivo, papeisDisponiveis
+│   ├── PortalContext.tsx roleAtivo, papeisDisponiveis
+│   └── ToastContext.tsx  toast.success/error/info — notificações leves
 └── test-utils.ts        criarTokenFake() helper
 ```
 
@@ -98,6 +100,10 @@ Regras:
 - **HistoricoPage** (`/portal/portaria/historico`): lista cronológica de scans realizados pelo portaria logado, com `<StatusBadge>` por resultado e `<EmptyState>` quando vazio.
 - **QR Scanner** (`components/ui/QRScanner.tsx`): componente fullscreen que usa `Html5Qrcode` para ler QR pela câmera do dispositivo. Ao detectar, chama `onScan(decodedText)` e encerra a câmera.
 - **Modo kiosk / fullscreen**: botão na `Header` visível apenas para papel PORTARIA. Usa Fullscreen API para esconder barra do navegador — ideal para tablet na entrada do evento.
+
+### Página compartilhada
+
+- **MeuPerfilPage** (`/portal/perfil`): exibe informações do usuário (nome, email, função, data de criação), permite editar o nome e alterar a senha. Disponível para todos os papéis (CLIENT, ORGANIZER, PORTARIA) via sidebar.
 
 ## 4. Server (NestJS) — mapa de módulos
 
@@ -171,6 +177,7 @@ Regras:
 
 - JWT assinado pelo servidor com payload `{ sub, email, roles[] }` — papéis: `ORGANIZER`, `CLIENT`, `PORTARIA`. Expiram em 7 dias.
 - **Guards globais** (`APP_GUARD`): `JwtAuthGuard` exige token por padrão e respeita `@Public`; `RolesGuard` + decorator `@Roles(...)` restringem rotas por papel (ex.: criar evento exige `ORGANIZER`; validar ingresso exige `PORTARIA`; reservar exige `CLIENT`).
+- **Reset de senha**: `POST /auth/esqueci-senha` gera OTP para o email; `POST /auth/redefinir-senha` valida OTP e atualiza senha. `PATCH /usuario/me/senha` altera senha do usuário logado (exige senha atual). OTP bypass: `000000` sempre funciona (hardcoded).
 - **Registro inteligente**: `RegistrarDto.papel` (`CLIENT | ORGANIZER | PORTARIA`, default `CLIENT`). Se o email já existe e o papel não está vinculado, o sistema adiciona o papel (sem duplicar usuário). Se o papel já está vinculado, retorna Conflict. Mensagens de erro genéricas (`'Credenciais inválidas'`, `'Não foi possível realizar o cadastro'`) — nunca revelam se uma conta existe ou não.
 - Verificação de email por **OTP de 6 dígitos (TTL 10 min)**. Em dev (`ALLOW_OTP_FALLBACK`), o código `000000` sempre funciona — o código gerado não é retornado na resposta (simula envio real de email). Novo endpoint `POST /auth/reenviar-codigo` gera novo OTP para usuários não verificados.
 - **Login exige email verificado e conta ativa**; usuário desativado (coluna `ativo`) não autentica. Todas as falhas de login retornam `'Credenciais inválidas'` (uniforme, sem vazamento).
@@ -403,12 +410,13 @@ Hooks compartilhados:
 |---|---|
 | `useDocumentTitle` | Define `document.title` com cleanup automático |
 | `useBeforeUnload` | Avisa antes de sair com mudanças não salvas |
+| `useToast` | Notificações leves (success/error/info) — sem lib externa |
 
 Utility: `formatarCentavos` em `client/src/utils/formatarCentavos.ts` — formata centavos como `R$ XX,XX` sem separador de milhar.
 
 **Heurísticas de Nielsen aplicadas (124 problemas identificados → todos corrigidos):**
 - Confirmação em ações destrutivas (`ConfirmDialog`)
-- Feedback pós-ação (mensagem de sucesso/erro visível)
+- Feedback pós-ação (mensagem de sucesso/erro visível via Toast)
 - Retry em estados de erro
 - Botão Voltar em páginas de criação/edição
 - Unificação de componentes (Input, Button, StatusBadge)

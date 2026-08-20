@@ -7,6 +7,15 @@ import { PortalProvider } from '../../../contexts/PortalContext'
 import DetalheEventoPage from './DetalheEventoPage'
 import { criarTokenFake } from '../../../test-utils'
 
+vi.mock('../../../contexts/ToastContext', () => ({
+  useToast: () => ({
+    success: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+  }),
+  ToastProvider: ({ children }: { children: React.ReactNode }) => children,
+}))
+
 function renderPage(entry = '/portal/organizador/evento/1') {
   localStorage.setItem('token', criarTokenFake({ roles: ['ORGANIZER'] }))
   const container = document.createElement('div')

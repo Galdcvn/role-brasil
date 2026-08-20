@@ -34,24 +34,23 @@ const CARD_POR_STATUS: Record<string, string> = {
 
 interface ErroInfo {
   mensagem: string
-  icone: string
   cor: string
 }
 
 function classificarErro(msg: string): ErroInfo {
   if (msg.includes('já utilizado') || msg.includes('ja utilizado')) {
-    return { mensagem: msg, icone: '🔄', cor: 'border-orange-500/60 bg-orange-900/20' }
+    return { mensagem: msg, cor: 'border-orange-500/60 bg-orange-900/20' }
   }
   if (msg.includes('outro evento') || msg.includes('evento errado')) {
-    return { mensagem: msg, icone: '🎪', cor: 'border-amber-500/60 bg-amber-900/20' }
+    return { mensagem: msg, cor: 'border-amber-500/60 bg-amber-900/20' }
   }
   if (msg.includes('cancelado')) {
-    return { mensagem: msg, icone: '🚫', cor: 'border-red-500/60 bg-red-900/20' }
+    return { mensagem: msg, cor: 'border-red-500/60 bg-red-900/20' }
   }
   if (msg.includes('não encontrado') || msg.includes('nao encontrado')) {
-    return { mensagem: msg, icone: '❌', cor: 'border-red-500/60 bg-red-900/20' }
+    return { mensagem: msg, cor: 'border-red-500/60 bg-red-900/20' }
   }
-  return { mensagem: msg, icone: '⚠️', cor: 'border-red-500/60 bg-red-900/20' }
+  return { mensagem: msg, cor: 'border-red-500/60 bg-red-900/20' }
 }
 
 export default function ValidarPage() {
@@ -72,12 +71,12 @@ export default function ValidarPage() {
   useEffect(() => {
     api<EventoPortaria[]>('/eventos/publicos?limit=100')
       .then((res) => setEventos(res as unknown as EventoPortaria[]))
-      .catch(() => setErro({ mensagem: 'Não foi possível carregar a lista de eventos.', icone: '⚠️', cor: 'border-amber-500/60 bg-amber-900/20' }))
+      .catch(() => setErro({ mensagem: 'Não foi possível carregar a lista de eventos.', cor: 'border-amber-500/60 bg-amber-900/20' }))
   }, [])
 
   async function validarCodigo(codigoLimpo: string) {
     if (!codigoLimpo) {
-      setErro({ mensagem: 'Digite ou escaneie um código de ingresso.', icone: '⚠️', cor: 'border-amber-500/60 bg-amber-900/20' })
+      setErro({ mensagem: 'Digite ou escaneie um código de ingresso.', cor: 'border-amber-500/60 bg-amber-900/20' })
       return
     }
 
@@ -186,7 +185,9 @@ export default function ValidarPage() {
       {erro && (
         <Card className={erro.cor}>
           <div className="flex items-start gap-3">
-            <span className="text-2xl">{erro.icone}</span>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-6 w-6 shrink-0 text-red-400">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+            </svg>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-red-400">Erro</p>
               <p className="mt-0.5 text-sm text-slate-300">{erro.mensagem}</p>

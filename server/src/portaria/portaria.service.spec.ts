@@ -12,6 +12,7 @@ describe('PortariaService', () => {
     confirmarComprovante: jest.Mock;
     rejeitarComprovante: jest.Mock;
     registrarScan: jest.Mock;
+    setComprovantePendente: jest.Mock;
     listarHistorico: jest.Mock;
     listarHistoricoPorEvento: jest.Mock;
   };
@@ -46,6 +47,7 @@ describe('PortariaService', () => {
       confirmarComprovante: jest.fn(),
       rejeitarComprovante: jest.fn(),
       registrarScan: jest.fn(),
+      setComprovantePendente: jest.fn(),
       listarHistorico: jest.fn(),
       listarHistoricoPorEvento: jest.fn(),
     };

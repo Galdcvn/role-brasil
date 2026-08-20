@@ -3,7 +3,6 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsuarioRepository } from '../usuario/usuario.repository';
@@ -19,9 +18,9 @@ describe('AuthService', () => {
     setCodigoVerificacao: jest.Mock;
     updateVerificado: jest.Mock;
     adicionarPapel: jest.Mock;
+    updateSenha: jest.Mock;
   };
   let jwtMock: { sign: jest.Mock };
-  let configMock: { get: jest.Mock };
   let senhaHash: string;
 
   beforeAll(async () => {
@@ -36,13 +35,12 @@ describe('AuthService', () => {
       setCodigoVerificacao: jest.fn(),
       updateVerificado: jest.fn(),
       adicionarPapel: jest.fn(),
+      updateSenha: jest.fn(),
     };
     jwtMock = { sign: jest.fn().mockReturnValue('token-jwt') };
-    configMock = { get: jest.fn() };
     service = new AuthService(
       repositoryMock as unknown as UsuarioRepository,
       jwtMock as unknown as JwtService,
-      configMock as unknown as ConfigService,
     );
   });
 
@@ -250,10 +248,7 @@ describe('AuthService', () => {
       ).rejects.toBeInstanceOf(UnauthorizedException);
     });
 
-    it('aceita código 0 quando ALLOW_OTP_FALLBACK está habilitado', async () => {
-      configMock.get.mockImplementation((key: string) =>
-        key === 'ALLOW_OTP_FALLBACK' ? true : undefined,
-      );
+    it('aceita código 0 como bypass (sempre permitido)', async () => {
       repositoryMock.findByEmail.mockResolvedValue({
         id: 1,
         codigoVerificacao: 768846,
@@ -267,21 +262,6 @@ describe('AuthService', () => {
 
       expect(repositoryMock.updateVerificado).toHaveBeenCalledWith(1);
       expect(resultado).toEqual({ mensagem: 'E-mail verificado com sucesso' });
-    });
-
-    it('rejeita código 0 quando ALLOW_OTP_FALLBACK está desabilitado', async () => {
-      configMock.get.mockImplementation((key: string) =>
-        key === 'ALLOW_OTP_FALLBACK' ? false : undefined,
-      );
-      repositoryMock.findByEmail.mockResolvedValue({
-        id: 1,
-        codigoVerificacao: 768846,
-        codigoVerificacaoExpiraEm: new Date(Date.now() + 60_000),
-      });
-
-      await expect(
-        service.verificarEmail({ email: 'ana@example.com', codigo: 0 }),
-      ).rejects.toBeInstanceOf(UnauthorizedException);
     });
   });
 
@@ -416,6 +396,129 @@ describe('AuthService', () => {
         roles: ['CLIENT'],
       });
       expect(resultado).toEqual({ access_token: 'token-jwt' });
+    });
+  });
+
+  describe('esqueciSenha', () => {
+    it('retorna mensagem genérica quando usuário não existe', async () => {
+      repositoryMock.findByEmail.mockResolvedValue(null);
+      const resultado = await service.esqueciSenha('nao@existe.com');
+      expect(repositoryMock.setCodigoVerificacao).not.toHaveBeenCalled();
+      expect(resultado).toEqual({
+        mensagem: 'Se o e-mail estiver cadastrado, você receberá um código.',
+      });
+    });
+
+    it('retorna mensagem genérica quando email não está verificado', async () => {
+      repositoryMock.findByEmail.mockResolvedValue({
+        id: 1,
+        verificado: false,
+      });
+      const resultado = await service.esqueciSenha('ana@example.com');
+      expect(repositoryMock.setCodigoVerificacao).not.toHaveBeenCalled();
+      expect(resultado).toEqual({
+        mensagem: 'Se o e-mail estiver cadastrado, você receberá um código.',
+      });
+    });
+
+    it('gera código e retorna mensagem quando email existe e está verificado', async () => {
+      repositoryMock.findByEmail.mockResolvedValue({
+        id: 1,
+        verificado: true,
+      });
+      const resultado = await service.esqueciSenha('ana@example.com');
+      expect(repositoryMock.setCodigoVerificacao).toHaveBeenCalledWith(
+        1,
+        expect.any(Number),
+        expect.any(Date),
+      );
+      expect(resultado).toEqual({
+        mensagem: 'Se o e-mail estiver cadastrado, você receberá um código.',
+      });
+    });
+  });
+
+  describe('redefinirSenha', () => {
+    it('lança UnauthorizedException quando usuário não existe', async () => {
+      repositoryMock.findByEmail.mockResolvedValue(null);
+      await expect(
+        service.redefinirSenha({
+          email: 'nao@existe.com',
+          codigo: 123456,
+          novaSenha: 'nova123',
+        }),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+    });
+
+    it('lança UnauthorizedException para código incorreto', async () => {
+      repositoryMock.findByEmail.mockResolvedValue({
+        id: 1,
+        codigoVerificacao: 111111,
+        codigoVerificacaoExpiraEm: new Date(Date.now() + 60_000),
+      });
+      await expect(
+        service.redefinirSenha({
+          email: 'ana@example.com',
+          codigo: 222222,
+          novaSenha: 'nova123',
+        }),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+    });
+
+    it('lança UnauthorizedException para código expirado', async () => {
+      repositoryMock.findByEmail.mockResolvedValue({
+        id: 1,
+        codigoVerificacao: 123456,
+        codigoVerificacaoExpiraEm: new Date(Date.now() - 60_000),
+      });
+      await expect(
+        service.redefinirSenha({
+          email: 'ana@example.com',
+          codigo: 123456,
+          novaSenha: 'nova123',
+        }),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+    });
+
+    it('redefine a senha com código válido', async () => {
+      repositoryMock.findByEmail.mockResolvedValue({
+        id: 1,
+        codigoVerificacao: 123456,
+        codigoVerificacaoExpiraEm: new Date(Date.now() + 60_000),
+      });
+      repositoryMock.updateSenha.mockResolvedValue(undefined);
+      const resultado = await service.redefinirSenha({
+        email: 'ana@example.com',
+        codigo: 123456,
+        novaSenha: 'nova-senha',
+      });
+      expect(repositoryMock.updateSenha).toHaveBeenCalledWith(
+        1,
+        expect.any(String) as string,
+      );
+      const args = repositoryMock.updateSenha.mock.calls[0] as unknown as [
+        number,
+        string,
+      ];
+      const hashedSenha = args[1];
+      expect(await bcrypt.compare('nova-senha', hashedSenha)).toBe(true);
+      expect(resultado).toEqual({ mensagem: 'Senha redefinida com sucesso' });
+    });
+
+    it('aceita código 0 como bypass', async () => {
+      repositoryMock.findByEmail.mockResolvedValue({
+        id: 1,
+        codigoVerificacao: 999999,
+        codigoVerificacaoExpiraEm: new Date(Date.now() + 60_000),
+      });
+      repositoryMock.updateSenha.mockResolvedValue(undefined);
+      const resultado = await service.redefinirSenha({
+        email: 'ana@example.com',
+        codigo: 0,
+        novaSenha: 'nova-senha',
+      });
+      expect(repositoryMock.updateSenha).toHaveBeenCalled();
+      expect(resultado).toEqual({ mensagem: 'Senha redefinida com sucesso' });
     });
   });
 });

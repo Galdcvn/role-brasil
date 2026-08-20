@@ -5,6 +5,15 @@ import { MemoryRouter } from 'react-router-dom'
 import App from './App'
 import { criarTokenFake } from './test-utils'
 
+vi.mock('./contexts/ToastContext', () => ({
+  useToast: () => ({
+    success: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+  }),
+  ToastProvider: ({ children }: { children: React.ReactNode }) => children,
+}))
+
 function renderAt(initialEntries: string[]) {
   const container = document.createElement('div')
   document.body.appendChild(container)
@@ -173,9 +182,8 @@ describe('App', () => {
     mockFetch([])
     localStorage.setItem('token', criarTokenFake({ roles: ['CLIENT', 'ORGANIZER'] }))
     const { container, cleanup } = renderAt(['/portal/organizador/eventos'])
-    expect(container.textContent).toContain('Cliente')
-    expect(container.textContent).toContain('Organizador')
     expect(container.textContent).toContain('Dashboard')
+    expect(container.textContent).toContain('Início')
     cleanup()
   })
 

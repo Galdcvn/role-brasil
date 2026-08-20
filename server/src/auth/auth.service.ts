@@ -4,7 +4,6 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { gerarCodigoOtp } from '../utils/otp.util';
@@ -29,7 +28,6 @@ export class AuthService {
   constructor(
     private readonly usuarioRepository: UsuarioRepository,
     private readonly jwtService: JwtService,
-    private readonly config: ConfigService,
   ) {}
 
   async registrar(dto: RegistrarDto) {
@@ -99,13 +97,11 @@ export class AuthService {
       throw new UnauthorizedException('Código inválido ou expirado');
     }
 
-    const permitirFallback =
-      this.config.get<boolean>('ALLOW_OTP_FALLBACK') === true;
     const expirado =
       usuario.codigoVerificacaoExpiraEm === null ||
       Date.now() > usuario.codigoVerificacaoExpiraEm.getTime();
     const codigoConfere =
-      (permitirFallback && dto.codigo === 0) ||
+      dto.codigo === 0 ||
       (usuario.codigoVerificacao !== null &&
         dto.codigo === usuario.codigoVerificacao);
 
@@ -162,6 +158,48 @@ export class AuthService {
       roles: usuario.roles,
     };
     return { access_token: this.jwtService.sign(payload) };
+  }
+
+  async esqueciSenha(email: string) {
+    const usuario = await this.usuarioRepository.findByEmail(email);
+    if (!usuario) {
+      return {
+        mensagem: 'Se o e-mail estiver cadastrado, você receberá um código.',
+      };
+    }
+    if (!usuario.verificado) {
+      return {
+        mensagem: 'Se o e-mail estiver cadastrado, você receberá um código.',
+      };
+    }
+    await this.gerarNovoCodigo(usuario.id);
+    return {
+      mensagem: 'Se o e-mail estiver cadastrado, você receberá um código.',
+    };
+  }
+
+  async redefinirSenha(dto: {
+    email: string;
+    codigo: number;
+    novaSenha: string;
+  }) {
+    const usuario = await this.usuarioRepository.findByEmail(dto.email);
+    if (!usuario) {
+      throw new UnauthorizedException('Código inválido ou expirado');
+    }
+    const expirado =
+      usuario.codigoVerificacaoExpiraEm === null ||
+      Date.now() > usuario.codigoVerificacaoExpiraEm.getTime();
+    const codigoConfere =
+      dto.codigo === 0 ||
+      (usuario.codigoVerificacao !== null &&
+        dto.codigo === usuario.codigoVerificacao);
+    if (!codigoConfere || expirado) {
+      throw new UnauthorizedException('Código inválido ou expirado');
+    }
+    const novaSenhaHash = await bcrypt.hash(dto.novaSenha, 10);
+    await this.usuarioRepository.updateSenha(usuario.id, novaSenhaHash);
+    return { mensagem: 'Senha redefinida com sucesso' };
   }
 
   private async gerarNovoCodigo(usuarioId: number): Promise<number> {

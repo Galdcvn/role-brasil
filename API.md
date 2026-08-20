@@ -15,7 +15,7 @@
 
 ---
 
-## Auth (4 endpoints — todos públicos)
+## Auth (6 endpoints — públicos)
 
 | Método | Rota | Body | Descrição |
 |--------|------|------|-----------|
@@ -23,15 +23,18 @@
 | POST | `/auth/verificar-email` | `{ email, codigo }` | Verifica OTP de 6 dígitos (TTL 10 min). Dev: `000000` sempre funciona. |
 | POST | `/auth/reenviar-codigo` | `{ email }` | Gera novo OTP para usuários não verificados. |
 | POST | `/auth/login` | `{ email, senha }` | Retorna `{ access_token, user }`. Exige email verificado e conta ativa. |
+| POST | `/auth/esqueci-senha` | `{ email }` | Envia OTP para redefinição de senha. Retorna mensagem genérica sempre. |
+| POST | `/auth/redefinir-senha` | `{ email, codigo, novaSenha }` | Redefine senha com OTP. |
 
 ---
 
-## Usuário (3 endpoints — JWT)
+## Usuário (4 endpoints — JWT)
 
 | Método | Rota | Body | Descrição |
 |--------|------|------|-----------|
 | GET | `/usuario/me` | — | Dados do usuário logado. |
 | PATCH | `/usuario/me` | `{ nome?, email? }` | Atualiza perfil. |
+| PATCH | `/usuario/me/senha` | `{ senhaAtual, novaSenha }` | Altera senha (exige senha atual). |
 | PATCH | `/usuario/me/desativar` | — | Desativa conta (`ativo = false`). |
 
 ---
@@ -160,8 +163,8 @@
 
 | Módulo | Endpoints | Auth |
 |--------|-----------|------|
-| Auth | 4 | Público |
-| Usuário | 3 | JWT |
+| Auth | 6 | Público |
+| Usuário | 4 | JWT |
 | Catálogo | 1 | ORGANIZER |
 | Eventos (organizer) | 7 | ORGANIZER |
 | Eventos (público) | 2 | Público |
@@ -174,4 +177,4 @@
 | Mensagens | 4 | JWT |
 | Portaria | 5 | PORTARIA |
 | Estatísticas | 1 | ORGANIZER |
-| **Total** | **44** | |
+| **Total** | **46** | |

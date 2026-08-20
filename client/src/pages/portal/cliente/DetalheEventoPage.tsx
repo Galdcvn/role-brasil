@@ -5,6 +5,7 @@ import Card from '../../../components/ui/Card'
 import Button from '../../../components/ui/Button'
 import { useDocumentTitle } from '../../../hooks/useDocumentTitle'
 import { useBeforeUnload } from '../../../hooks/useBeforeUnload'
+import { useToast } from '../../../contexts/ToastContext'
 
 interface Endereco {
   rua: string
@@ -116,6 +117,7 @@ function TimerReserva({ expiraEm, onExpirou }: { expiraEm: string; onExpirou: ()
 export default function DetalheEventoPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const toast = useToast()
   const [evento, setEvento] = useState<Evento | null>(null)
   const [loading, setLoading] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
@@ -142,6 +144,9 @@ export default function DetalheEventoPage() {
   const chatRef = useRef<HTMLDivElement>(null)
 
   const [assentoLimiteMsg, setAssentoLimiteMsg] = useState(false)
+  const [loadingFavorito, setLoadingFavorito] = useState(false)
+  const [loadingReserva, setLoadingReserva] = useState(false)
+  const [loadingMensagem, setLoadingMensagem] = useState(false)
 
   useDocumentTitle(evento?.titulo ?? 'Carregando...')
   useBeforeUnload(etapa === 'reserva', 'Você tem uma reserva em andamento. Deseja sair?')
@@ -172,10 +177,14 @@ export default function DetalheEventoPage() {
   }, [id])
 
   async function toggleFavorito() {
+    setLoadingFavorito(true)
     try {
       const res = await api<{ favoritado: boolean }>(`/favoritos/${id}`, { method: 'POST' })
       setFavoritado(res.favoritado)
-    } catch {}
+      toast.success(res.favoritado ? 'Adicionado aos favoritos' : 'Removido dos favoritos')
+    } catch {} finally {
+      setLoadingFavorito(false)
+    }
   }
 
   async function iniciarCompra(sessao: Sessao) {
@@ -220,6 +229,7 @@ export default function DetalheEventoPage() {
 
   async function criarReserva() {
     if (!sessaoId || itensSelecionados.length === 0) return
+    setLoadingReserva(true)
     try {
       const res = await api<Reserva>('/reservas', {
         method: 'POST',
@@ -236,6 +246,8 @@ export default function DetalheEventoPage() {
       setPagamentoErro(null)
     } catch (e: unknown) {
       setErro(e instanceof Error ? e.message : 'Erro ao criar reserva')
+    } finally {
+      setLoadingReserva(false)
     }
   }
 
@@ -254,10 +266,12 @@ export default function DetalheEventoPage() {
       })
       if (res.status === 'RECUSADO') {
         setPagamentoErro('Pagamento recusado. Verifique os dados do cartão.')
+        toast.error('Pagamento recusado')
         return
       }
       setIngressos(res.ingressos ?? [])
       setEtapa('confirmacao')
+      toast.success('Pagamento aprovado!')
     } catch (e: unknown) {
       setPagamentoErro(e instanceof Error ? e.message : 'Erro no pagamento')
     } finally {
@@ -285,6 +299,7 @@ export default function DetalheEventoPage() {
   async function enviarMensagem(e: React.FormEvent) {
     e.preventDefault()
     if (!mensagemTexto.trim() || !id) return
+    setLoadingMensagem(true)
     try {
       const msg = await api<Mensagem>(`/eventos/${id}/mensagens`, {
         method: 'POST',
@@ -292,11 +307,14 @@ export default function DetalheEventoPage() {
       })
       setMensagens((prev) => [...prev, msg])
       setMensagemTexto('')
+      toast.success('Mensagem enviada')
       if (chatRef.current) {
         chatRef.current.scrollTop = chatRef.current.scrollHeight
       }
     } catch {
       setErro('Não foi possível enviar a mensagem. Tente novamente.')
+    } finally {
+      setLoadingMensagem(false)
     }
   }
 
@@ -357,7 +375,8 @@ export default function DetalheEventoPage() {
             <h1 className="text-2xl font-bold">{evento.titulo}</h1>
             <button
               onClick={toggleFavorito}
-              className="shrink-0 p-1 transition-colors"
+              disabled={loadingFavorito}
+              className="shrink-0 p-1 transition-colors disabled:opacity-40"
               aria-label={favoritado ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill={favoritado ? '#00FF88' : 'none'} viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`h-6 w-6 ${favoritado ? 'text-[#00FF88]' : 'text-slate-400'}`}>
@@ -417,7 +436,7 @@ export default function DetalheEventoPage() {
                   </div>
                   <button
                     onClick={() => iniciarCompra(s)}
-                    disabled={s.vagasDisponiveis === 0}
+                    disabled={s.vagasDisponiveis === 0 || loadingAssentos}
                     className="rounded-lg bg-[#00FF88] px-4 py-1.5 text-xs font-bold text-slate-950 transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     Comprar
@@ -533,7 +552,7 @@ export default function DetalheEventoPage() {
                     ))}
                   </div>
                   <div className="mt-3 border-t border-slate-800 pt-3">
-                    <Button onClick={criarReserva} className="w-auto px-6 py-2.5 text-xs">
+                    <Button onClick={criarReserva} loading={loadingReserva} className="w-auto px-6 py-2.5 text-xs">
                       Reservar ({itensSelecionados.length})
                     </Button>
                   </div>
@@ -636,15 +655,37 @@ export default function DetalheEventoPage() {
                     inputMode="numeric"
                     className="w-full rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2.5 text-sm text-white placeholder-slate-400 focus:border-[#00FF88] focus:outline-none"
                   />
-                  <p className="text-[10px] text-slate-600">Dica: CVV 000 simula recusa</p>
                 </div>
               </div>
             )}
 
             {metodoPagamento === 'PIX' && (
               <div className="rounded-lg bg-slate-800/50 p-4 text-center">
-                <p className="mb-2 text-sm text-slate-400">Pagamento via PIX</p>
-                <p className="text-xs text-slate-500">Aprovação instantânea após confirmação.</p>
+                <p className="mb-3 text-sm text-slate-400">Escaneie o QR Code abaixo</p>
+                <div className="mx-auto mb-3 flex h-40 w-40 items-center justify-center rounded-lg bg-white p-2">
+                  <svg viewBox="0 0 100 100" className="h-full w-full text-slate-900">
+                    <rect x="5" y="5" width="25" height="25" fill="currentColor" />
+                    <rect x="70" y="5" width="25" height="25" fill="currentColor" />
+                    <rect x="5" y="70" width="25" height="25" fill="currentColor" />
+                    <rect x="35" y="5" width="8" height="8" fill="currentColor" />
+                    <rect x="35" y="18" width="8" height="8" fill="currentColor" />
+                    <rect x="15" y="35" width="8" height="8" fill="currentColor" />
+                    <rect x="35" y="35" width="8" height="8" fill="currentColor" />
+                    <rect x="50" y="35" width="8" height="8" fill="currentColor" />
+                    <rect x="70" y="35" width="8" height="8" fill="currentColor" />
+                    <rect x="85" y="35" width="8" height="8" fill="currentColor" />
+                    <rect x="35" y="50" width="8" height="8" fill="currentColor" />
+                    <rect x="70" y="50" width="8" height="8" fill="currentColor" />
+                    <rect x="50" y="70" width="8" height="8" fill="currentColor" />
+                    <rect x="70" y="70" width="8" height="8" fill="currentColor" />
+                    <rect x="85" y="70" width="8" height="8" fill="currentColor" />
+                    <rect x="50" y="85" width="8" height="8" fill="currentColor" />
+                    <rect x="70" y="85" width="8" height="8" fill="currentColor" />
+                    <rect x="85" y="85" width="8" height="8" fill="currentColor" />
+                  </svg>
+                </div>
+                <p className="font-mono text-xs text-[#00FF88]">PIX-{Math.random().toString(36).slice(2, 10).toUpperCase()}</p>
+                <p className="mt-2 text-xs text-slate-500">Aguardando confirmação...</p>
               </div>
             )}
 
@@ -664,7 +705,11 @@ export default function DetalheEventoPage() {
       {etapa === 'confirmacao' && (
         <div className="space-y-4">
           <Card className="text-center">
-            <div className="mb-3 text-4xl">✅</div>
+            <div className="mb-3 flex justify-center text-4xl text-emerald-400">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-10 w-10">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+              </svg>
+            </div>
             <h2 className="mb-1 text-lg font-bold text-white">Ingressos Emitidos!</h2>
             <p className="mb-4 text-sm text-slate-400">Seus ingressos foram confirmados com sucesso.</p>
             <div className="space-y-2">
@@ -719,10 +764,10 @@ export default function DetalheEventoPage() {
                 />
                 <button
                   type="submit"
-                  disabled={!mensagemTexto.trim()}
+                  disabled={!mensagemTexto.trim() || loadingMensagem}
                   className="rounded-lg bg-[#00FF88] px-4 py-2 text-sm font-bold text-slate-950 transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-40"
                 >
-                  Enviar
+                  {loadingMensagem ? '...' : 'Enviar'}
                 </button>
               </form>
             </div>

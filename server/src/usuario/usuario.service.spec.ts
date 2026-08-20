@@ -1,3 +1,6 @@
+import { BadRequestException, NotFoundException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
+import { AlterarSenhaDto } from './dto/alterar-senha.dto';
 import { AtualizarUsuarioDto } from './dto/atualizar-usuario.dto';
 import { UsuarioRepository } from './usuario.repository';
 import { UsuarioService } from './usuario.service';
@@ -8,6 +11,8 @@ describe('UsuarioService', () => {
     findById: jest.Mock;
     update: jest.Mock;
     desativar: jest.Mock;
+    findByIdComSenha: jest.Mock;
+    updateSenha: jest.Mock;
   };
 
   beforeEach(() => {
@@ -15,6 +20,8 @@ describe('UsuarioService', () => {
       findById: jest.fn(),
       update: jest.fn(),
       desativar: jest.fn(),
+      findByIdComSenha: jest.fn(),
+      updateSenha: jest.fn(),
     };
     service = new UsuarioService(
       repositoryMock as unknown as UsuarioRepository,
@@ -47,5 +54,52 @@ describe('UsuarioService', () => {
 
     expect(repositoryMock.desativar).toHaveBeenCalledWith(7);
     expect(resultado).toEqual({ id: 7, ativo: false });
+  });
+
+  describe('alterarSenha', () => {
+    it('lança NotFoundException quando usuário não existe', async () => {
+      repositoryMock.findByIdComSenha.mockResolvedValue(null);
+      const dto: AlterarSenhaDto = {
+        senhaAtual: 'atual',
+        novaSenha: 'nova123',
+      };
+      await expect(service.alterarSenha(7, dto)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('lança BadRequestException quando senha atual está incorreta', async () => {
+      const hash = await bcrypt.hash('senha-correta', 10);
+      repositoryMock.findByIdComSenha.mockResolvedValue({ id: 7, senha: hash });
+      const dto: AlterarSenhaDto = {
+        senhaAtual: 'errada',
+        novaSenha: 'nova123',
+      };
+      await expect(service.alterarSenha(7, dto)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('atualiza a senha quando credenciais são válidas', async () => {
+      const hash = await bcrypt.hash('senha-atual', 10);
+      repositoryMock.findByIdComSenha.mockResolvedValue({ id: 7, senha: hash });
+      repositoryMock.updateSenha.mockResolvedValue(undefined);
+      const dto: AlterarSenhaDto = {
+        senhaAtual: 'senha-atual',
+        novaSenha: 'nova-senha',
+      };
+      const resultado = await service.alterarSenha(7, dto);
+      expect(repositoryMock.updateSenha).toHaveBeenCalledWith(
+        7,
+        expect.any(String) as string,
+      );
+      const args = repositoryMock.updateSenha.mock.calls[0] as unknown as [
+        number,
+        string,
+      ];
+      const hashedSenha = args[1];
+      expect(await bcrypt.compare('nova-senha', hashedSenha)).toBe(true);
+      expect(resultado).toEqual({ mensagem: 'Senha alterada com sucesso' });
+    });
   });
 });

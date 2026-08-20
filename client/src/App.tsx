@@ -21,6 +21,7 @@ import FavoritosPage from './pages/portal/cliente/FavoritosPage'
 import ValidarPage from './pages/portal/portaria/ValidarPage'
 import HistoricoPage from './pages/portal/portaria/HistoricoPage'
 import CompartilharIngressoPage from './pages/CompartilharIngressoPage'
+import MeuPerfilPage from './pages/portal/MeuPerfilPage'
 import NotFoundPage from './pages/NotFoundPage'
 
 function PortalIndex() {
@@ -56,6 +57,7 @@ function PortalRoutes() {
           <Route path="organizador/relatorios" element={<RelatoriosPage />} />
           <Route path="portaria" element={<ValidarPage />} />
           <Route path="portaria/historico" element={<HistoricoPage />} />
+          <Route path="perfil" element={<MeuPerfilPage />} />
           <Route path="*" element={<PortalNotFound />} />
         </Route>
       </Routes>

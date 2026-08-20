@@ -141,6 +141,26 @@ npm run test:cov
 
 > Registro das decisões tomadas ao longo do desenvolvimento, com o contexto de cada uma. Inserida em ordem cronológica; decisões novas são adicionadas no topo.
 
+### 20/08/2026 — Segundo batch: 25 melhorias de UX, segurança e robustez
+
+- **Pagamento 500 fix**: `processarAprovado` e `processarRecusado` agora usam `findFirst` em vez de `findUniqueOrThrow` + `NotFoundException` — evita 500 quando pagamento não existe.
+- **Portaria comprovanteStatus**: `confirmarComprovante`/`rejeitarComprovante` agora setam `comprovanteStatus` para `PENDENTE` durante o scan inicial — antes ficava `null` e o frontend não sabia que estava pendente.
+- **Portaria @Max(100)**: Limite de busca de eventos da portaria aumentado de 50 para 100 — o client usava `limit=100` e o backend rejeitava.
+- **Cancelamento de sessão com loading**: Botão "Cancelar Sessão" agora exibe spinner durante o processamento e o dialog permanece aberto até completar.
+- **Botões de ação desabilitados**: Todos os botões de ação (publicar, cancelar, excluir, etc.) ficam desabilitados enquanto `acaoLoading` está ativo — evita cliques duplos.
+- **Sidebar "Organização"**: Label "Organizador" renomeado para "Organização" em todos os 3 portais para consistência.
+- **TextArea rows fixo**: TextArea agora tem `rows=8`, `min-h-[200px]` e `resize-y` — antes cresciam infinitamente.
+- **Sessão hardcoded**: Fileiras=5 e assentos=20 são hardcoded no server — inputs de sessão removidos do frontend (simplificação).
+- **Loading em botões de ação**: Botões de favoritar, reservar, comprar e enviar mensagem agora exibem spinner durante processamento.
+- **CVV hint removido**: Dica "CVV 000 simula recusa" removida do checkout — details do mock não devem vazar para o cliente.
+- **PIX com QR fake**: "Aprovação instantânea" substituído por display de QR code SVG falso + código PIX aleatório + "Aguardando confirmação..." — mais realista.
+- **Sidebar role labels**: Labels de seção (`Organizador`, `Cliente`, `Portaria`) ocultos quando usuário tem múltiplos papéis — limpa visual.
+- **OTP bypass hardcoded**: `000000` sempre funciona sem precisar de env var `ALLOW_OTP_FALLBACK`. `ConfigService` removido do construtor do `AuthService`.
+- **Reset de senha**: Fluxo completo implementado: `POST /auth/esqueci-senha` (envia OTP) + `POST /auth/redefinir-senha` (email + código + nova senha). Server-side pronto.
+- **Meu Perfil**: Página `MeuPerfilPage.tsx` com visualização de dados, edição de nome e alteração de senha. Acessível de todos os 3 portais via sidebar.
+- **Toast notifications**: Sistema de toast customizado (`ToastContext`) — sem lib externa. `ToastProvider` no `main.tsx`, `useToast` nos componentes. Auto-dismiss em 4 segundos.
+- **Emojis → SVG icons**: Todos os emojis da Portaria e DetalheEvento do Cliente substituídos por ícones SVG inline (Heroicons style) — evita font rendering issues em mobile.
+
 ### 19/08/2026 — Auditoria UX completa: 124 problemas identificados e corrigidos
 
 - **Auditoria usando 10 Heurísticas de Nielsen**: análise completa dos 3 portais (Organizador, Cliente, Portaria) + Design System. 124 problemas identificados, classificados por severidade (Crítico/Alto/Médio/Baixo), agrupados em 32 itens de correção.
@@ -487,5 +507,9 @@ Implementação de todos os módulos backend que suportam o fluxo do cliente. Ca
 ## Uso de IA
 
 Todas as decisões de arquitetura e escopo deste projeto foram tomadas por mim (humano) e registradas acima. A IA foi usada como parada técnica: implementou as fatias aprovadas (autenticação/usuário e, depois, o módulo organizador), sempre dentro das regras e padrões fixados no projeto, e não decidiu escopo.
+
+Ferramentas utilizadas:
+- **OpenCode** (modelo Big Pickle): geração de código e decisões de arquitetura ao longo de todo o projeto.
+- **Gemini**: revisão de código e orientação de testes.
 
 Para garantir que a IA trabalhe dentro das regras e do contexto do projeto, o repositório inclui dois arquivos: **`AGENTS.md`** (processo de execução — stack, regras negativas, desenvolvimento modular, TDD com cobertura ≥ 85% e checkpoints de validação entre módulos) e **`ARCHITECTURE.md`** (conceito da arquitetura). Ambos são lidos e seguidos pelos agentes de IA durante o desenvolvimento.

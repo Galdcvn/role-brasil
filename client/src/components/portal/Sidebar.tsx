@@ -38,6 +38,15 @@ const SECOES: Record<string, { label: string; itens: { label: string; path: stri
           </svg>
         ),
       },
+      {
+        label: 'Meu Perfil',
+        path: '/portal/perfil',
+        icon: (
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+          </svg>
+        ),
+      },
     ],
   },
   ORGANIZER: {
@@ -70,6 +79,15 @@ const SECOES: Record<string, { label: string; itens: { label: string; path: stri
           </svg>
         ),
       },
+      {
+        label: 'Meu Perfil',
+        path: '/portal/perfil',
+        icon: (
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+          </svg>
+        ),
+      },
     ],
   },
   PORTARIA: {
@@ -93,13 +111,22 @@ const SECOES: Record<string, { label: string; itens: { label: string; path: stri
           </svg>
         ),
       },
+      {
+        label: 'Meu Perfil',
+        path: '/portal/perfil',
+        icon: (
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+          </svg>
+        ),
+      },
     ],
   },
 }
 
 const LABELS_PAPEL: Record<string, string> = {
   CLIENT: 'Cliente',
-  ORGANIZER: 'Organizador',
+  ORGANIZER: 'Organização',
   PORTARIA: 'Portaria',
 }
 
@@ -132,11 +159,14 @@ export default function Sidebar({ aberta, onFechar }: Props) {
 
             return (
               <div key={papel} className="mb-4">
-                <p className="mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  {LABELS_PAPEL[papel] ?? papel}
-                </p>
+                {papeisDisponiveis.length <= 1 && (
+                  <p className="mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    {LABELS_PAPEL[papel] ?? papel}
+                  </p>
+                )}
                 <ul className="space-y-0.5">
                   {secao.itens.map((item) => {
+                    const isPerfil = item.path === '/portal/perfil'
                     const isActive =
                       item.path === '/portal/cliente' || item.path === '/portal/organizador' || item.path === '/portal/portaria'
                         ? location.pathname === item.path
@@ -144,6 +174,7 @@ export default function Sidebar({ aberta, onFechar }: Props) {
 
                     return (
                       <li key={item.path}>
+                        {isPerfil && <div className="my-2 border-t border-slate-800" />}
                         <Link
                           to={item.path}
                           onClick={onFechar}

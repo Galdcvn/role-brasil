@@ -13,11 +13,13 @@ describe('UsuarioRepository', () => {
   let txMock: {
     papel: { findFirst: jest.Mock; create: jest.Mock };
     usuario: { create: jest.Mock };
+    papeisUsuario: { create: jest.Mock };
   };
   beforeEach(() => {
     txMock = {
       papel: { findFirst: jest.fn(), create: jest.fn() },
       usuario: { create: jest.fn() },
+      papeisUsuario: { create: jest.fn() },
     };
     prismaMock = {
       $transaction: jest.fn((fn: (tx: unknown) => Promise<unknown>) =>
@@ -157,6 +159,67 @@ describe('UsuarioRepository', () => {
         data: { ativo: false },
         select: expect.any(Object) as object,
       });
+    });
+  });
+  describe('adicionarPapel', () => {
+    it('adiciona papel quando já existe', async () => {
+      txMock.papel.findFirst.mockResolvedValue({
+        id: 5,
+        nome: NOME_PAPEL_CLIENT,
+      });
+      txMock.papeisUsuario.create.mockResolvedValue({
+        usuarioId: 1,
+        papelId: 5,
+      });
+      const resultado = await repository.adicionarPapel(1, NOME_PAPEL_CLIENT);
+      expect(txMock.papel.create).not.toHaveBeenCalled();
+      expect(txMock.papeisUsuario.create).toHaveBeenCalledWith({
+        data: { usuarioId: 1, papelId: 5 },
+      });
+      expect(resultado).toEqual({ usuarioId: 1, papelId: 5 });
+    });
+    it('cria o papel quando não existe', async () => {
+      txMock.papel.findFirst.mockResolvedValue(null);
+      txMock.papel.create.mockResolvedValue({
+        id: 9,
+        nome: NOME_PAPEL_ORGANIZER,
+      });
+      txMock.papeisUsuario.create.mockResolvedValue({
+        usuarioId: 1,
+        papelId: 9,
+      });
+      await repository.adicionarPapel(1, NOME_PAPEL_ORGANIZER);
+      expect(txMock.papel.create).toHaveBeenCalledWith({
+        data: { nome: NOME_PAPEL_ORGANIZER },
+      });
+      expect(txMock.papeisUsuario.create).toHaveBeenCalledWith({
+        data: { usuarioId: 1, papelId: 9 },
+      });
+    });
+  });
+  describe('findByIdComSenha', () => {
+    it('retorna id e senha do usuário', async () => {
+      prismaMock.usuario.findUnique.mockResolvedValue({
+        id: 7,
+        senha: 'hash',
+      });
+      const resultado = await repository.findByIdComSenha(7);
+      expect(prismaMock.usuario.findUnique).toHaveBeenCalledWith({
+        where: { id: 7 },
+        select: { id: true, senha: true },
+      });
+      expect(resultado).toEqual({ id: 7, senha: 'hash' });
+    });
+  });
+  describe('updateSenha', () => {
+    it('atualiza a senha do usuário', async () => {
+      prismaMock.usuario.update.mockResolvedValue({ id: 7 });
+      const resultado = await repository.updateSenha(7, 'novo-hash');
+      expect(prismaMock.usuario.update).toHaveBeenCalledWith({
+        where: { id: 7 },
+        data: { senha: 'novo-hash' },
+      });
+      expect(resultado).toEqual({ id: 7 });
     });
   });
 });

@@ -57,6 +57,7 @@ export class PortariaService {
     }
 
     if (ingresso.categoria === 'MEIA' || ingresso.categoria === 'GRATUIDADE') {
+      await this.portariaRepository.setComprovantePendente(ingresso.id);
       await this.registrarScan(
         usuarioId,
         ingresso.id,

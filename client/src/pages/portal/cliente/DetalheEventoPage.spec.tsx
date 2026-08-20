@@ -7,6 +7,15 @@ import { PortalProvider } from '../../../contexts/PortalContext'
 import DetalheEventoPage from './DetalheEventoPage'
 import { criarTokenFake } from '../../../test-utils'
 
+vi.mock('../../../contexts/ToastContext', () => ({
+  useToast: () => ({
+    success: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+  }),
+  ToastProvider: ({ children }: { children: React.ReactNode }) => children,
+}))
+
 function renderPage(entry: string) {
   localStorage.setItem('token', criarTokenFake({ roles: ['CLIENT'] }))
   const container = document.createElement('div')
@@ -306,7 +315,7 @@ describe('DetalheEventoPage', () => {
 
     expect(container.textContent).toContain('PIX')
     expect(container.textContent).toContain('Cartão')
-    expect(container.textContent).toContain('Pagamento via PIX')
+    expect(container.textContent).toContain('Escaneie o QR Code')
     cleanup()
   })
 
@@ -720,7 +729,7 @@ describe('DetalheEventoPage', () => {
     const pixBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'PIX') as HTMLButtonElement
     act(() => pixBtn.click())
 
-    expect(container.textContent).toContain('Pagamento via PIX')
+    expect(container.textContent).toContain('Escaneie o QR Code')
     cleanup()
   })
 

@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Patch, Req } from '@nestjs/common';
 import { Request } from 'express';
 import { UsuarioAutenticado } from '../auth/types/autenticado';
+import { AlterarSenhaDto } from './dto/alterar-senha.dto';
 import { AtualizarUsuarioDto } from './dto/atualizar-usuario.dto';
 import { UsuarioService } from './usuario.service';
 
@@ -21,6 +22,14 @@ export class UsuarioController {
     @Body() dto: AtualizarUsuarioDto,
   ) {
     return this.usuarioService.atualizarPerfil(req.user.sub, dto);
+  }
+
+  @Patch('me/senha')
+  async alterarSenha(
+    @Req() req: RequestComUsuario,
+    @Body() dto: AlterarSenhaDto,
+  ) {
+    return this.usuarioService.alterarSenha(req.user.sub, dto);
   }
 
   @Patch('me/desativar')

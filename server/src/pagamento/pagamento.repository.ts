@@ -1,5 +1,5 @@
 import { randomBytes } from 'crypto';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -24,10 +24,13 @@ export class PagamentoRepository {
     codigoPix?: string,
   ) {
     return this.prisma.$transaction(async (tx) => {
-      const reserva = await tx.reserva.findUniqueOrThrow({
+      const reserva = await tx.reserva.findFirst({
         where: { id: reservaId },
         include: { itens: true },
       });
+      if (!reserva) {
+        throw new NotFoundException('Reserva não encontrada');
+      }
 
       await tx.pagamento.create({
         data: {
@@ -80,10 +83,13 @@ export class PagamentoRepository {
 
   async processarRecusado(reservaId: number) {
     return this.prisma.$transaction(async (tx) => {
-      const reserva = await tx.reserva.findUniqueOrThrow({
+      const reserva = await tx.reserva.findFirst({
         where: { id: reservaId },
         include: { itens: true },
       });
+      if (!reserva) {
+        throw new NotFoundException('Reserva não encontrada');
+      }
 
       await tx.reserva.update({
         where: { id: reservaId },

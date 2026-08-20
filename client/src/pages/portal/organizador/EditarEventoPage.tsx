@@ -5,6 +5,7 @@ import Button from '../../../components/ui/Button'
 import Input from '../../../components/ui/Input'
 import { useDocumentTitle } from '../../../hooks/useDocumentTitle'
 import { useBeforeUnload } from '../../../hooks/useBeforeUnload'
+import { useToast } from '../../../contexts/ToastContext'
 
 interface Categoria {
   nome: string
@@ -43,6 +44,7 @@ const ESTADOS_UF = [
 export default function EditarEventoPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const toast = useToast()
   const [loading, setLoading] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
@@ -127,6 +129,7 @@ export default function EditarEventoPage() {
       }
       body.descricao = descricao.trim() || null
       await api(`/eventos/${id}`, { method: 'PATCH', body: JSON.stringify(body) })
+      toast.success('Evento salvo com sucesso')
       navigate(`/portal/organizador/evento/${id}`)
     } catch (e: unknown) {
       setErro(e instanceof Error ? e.message : 'Erro desconhecido')
@@ -210,8 +213,8 @@ export default function EditarEventoPage() {
           placeholder="Descrição"
           value={descricao}
           onChange={(e) => setDescricao(e.target.value)}
-          rows={3}
-          className="w-full rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm text-white placeholder-slate-400 transition-colors focus:border-[#00FF88] focus:outline-none"
+          rows={8}
+          className="w-full min-h-[200px] resize-y rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm text-white placeholder-slate-400 transition-colors focus:border-[#00FF88] focus:outline-none"
         />
 
         {!temReservas && (

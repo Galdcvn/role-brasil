@@ -5,7 +5,7 @@ describe('PagamentoRepository', () => {
   let repository: PagamentoRepository;
   let txMock: {
     pagamento: { create: jest.Mock };
-    reserva: { findUniqueOrThrow: jest.Mock; update: jest.Mock };
+    reserva: { findFirst: jest.Mock; update: jest.Mock };
     assentosSessao: { update: jest.Mock };
     ingresso: { create: jest.Mock };
   };
@@ -17,7 +17,7 @@ describe('PagamentoRepository', () => {
   beforeEach(() => {
     txMock = {
       pagamento: { create: jest.fn() },
-      reserva: { findUniqueOrThrow: jest.fn(), update: jest.fn() },
+      reserva: { findFirst: jest.fn(), update: jest.fn() },
       assentosSessao: { update: jest.fn() },
       ingresso: { create: jest.fn() },
     };
@@ -49,7 +49,7 @@ describe('PagamentoRepository', () => {
   });
 
   it('processarAprovado cria pagamento, atualiza reserva e gera ingressos', async () => {
-    txMock.reserva.findUniqueOrThrow.mockResolvedValue({
+    txMock.reserva.findFirst.mockResolvedValue({
       id: 1,
       usuarioId: 7,
       subtotalCentavos: 2000,
@@ -75,7 +75,7 @@ describe('PagamentoRepository', () => {
   });
 
   it('processarRecusado cancela reserva e libera assentos', async () => {
-    txMock.reserva.findUniqueOrThrow.mockResolvedValue({
+    txMock.reserva.findFirst.mockResolvedValue({
       id: 1,
       itens: [{ assentoSessaoId: 10 }],
     });

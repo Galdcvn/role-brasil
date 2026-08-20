@@ -5,6 +5,7 @@ import { Public } from '../common/decorators/public.decorator';
 import { AuthService, UsuarioLogado } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { ReenviarCodigoDto } from './dto/reenviar-codigo.dto';
+import { RedefinirSenhaDto } from './dto/redefinir-senha.dto';
 import { RegistrarDto } from './dto/registrar.dto';
 import { VerificarEmailDto } from './dto/verificar-email.dto';
 
@@ -28,6 +29,16 @@ export class AuthController {
   @Post('reenviar-codigo')
   reenviarCodigo(@Body() dto: ReenviarCodigoDto) {
     return this.authService.reenviarCodigo(dto.email);
+  }
+
+  @Post('esqueci-senha')
+  esqueciSenha(@Body() dto: ReenviarCodigoDto) {
+    return this.authService.esqueciSenha(dto.email);
+  }
+
+  @Post('redefinir-senha')
+  redefinirSenha(@Body() dto: RedefinirSenhaDto) {
+    return this.authService.redefinirSenha(dto);
   }
 
   @Post('login')

@@ -123,6 +123,20 @@ export class UsuarioRepository {
     });
   }
 
+  findByIdComSenha(id: number) {
+    return this.prisma.usuario.findUnique({
+      where: { id },
+      select: { id: true, senha: true },
+    });
+  }
+
+  updateSenha(id: number, senha: string) {
+    return this.prisma.usuario.update({
+      where: { id },
+      data: { senha },
+    });
+  }
+
   desativar(id: number) {
     return this.prisma.usuario.update({
       where: { id },

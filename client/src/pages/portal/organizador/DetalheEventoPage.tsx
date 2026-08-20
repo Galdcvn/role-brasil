@@ -6,6 +6,7 @@ import Button from '../../../components/ui/Button'
 import StatusBadge from '../../../components/ui/StatusBadge'
 import ConfirmDialog from '../../../components/ui/ConfirmDialog'
 import { useDocumentTitle } from '../../../hooks/useDocumentTitle'
+import { useToast } from '../../../contexts/ToastContext'
 
 interface Sessao {
   id: number
@@ -67,16 +68,15 @@ function formatarData(iso: string): string {
 export default function DetalheEventoPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const toast = useToast()
   const [evento, setEvento] = useState<Evento | null>(null)
   const [loading, setLoading] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
   const [acaoLoading, setAcaoLoading] = useState<string | null>(null)
   const [novaSessaoData, setNovaSessaoData] = useState('')
-  const [novaSessaoFileiras, setNovaSessaoFileiras] = useState(5)
-  const [novaSessaoAssentos, setNovaSessaoAssentos] = useState(20)
   const [sessaoErro, setSessaoErro] = useState<string | null>(null)
   const [criandoSessao, setCriandoSessao] = useState(false)
-  const [confirmacao, setConfirmacao] = useState<{ titulo: string; mensagem: string; variante: 'perigo' | 'padrao'; onConfirmar: () => void } | null>(null)
+  const [confirmacao, setConfirmacao] = useState<{ titulo: string; mensagem: string; variante: 'perigo' | 'padrao'; onConfirmar: () => void; loading?: boolean } | null>(null)
 
   useDocumentTitle(evento?.titulo ?? 'Carregando...')
 
@@ -97,6 +97,7 @@ export default function DetalheEventoPage() {
       }
       const atualizado = await api<Evento>(`/eventos/${id}`)
       setEvento(atualizado)
+      toast.success('Ação realizada com sucesso')
     } catch (e: unknown) {
       setErro(e instanceof Error ? e.message : 'Erro desconhecido')
     } finally {
@@ -122,13 +123,14 @@ export default function DetalheEventoPage() {
         method: 'POST',
         body: JSON.stringify({
           dataHora: `${novaSessaoData}:00${tz}`,
-          fileiras: novaSessaoFileiras,
-          assentosPorFileira: novaSessaoAssentos,
+          fileiras: 5,
+          assentosPorFileira: 20,
         }),
       })
       setNovaSessaoData('')
       const atualizado = await api<Evento>(`/eventos/${id}`)
       setEvento(atualizado)
+      toast.success('Sessão criada com sucesso')
     } catch (e: unknown) {
       setSessaoErro(e instanceof Error ? e.message : 'Erro')
     } finally {
@@ -141,14 +143,17 @@ export default function DetalheEventoPage() {
       titulo: 'Cancelar sessão',
       mensagem: 'Tem certeza que deseja cancelar esta sessão? Esta ação não pode ser desfeita.',
       variante: 'perigo',
+      loading: false,
       onConfirmar: async () => {
-        setConfirmacao(null)
         try {
           await api(`/sessoes/${sessaoId}/cancelar`, { method: 'POST' })
           const atualizado = await api<Evento>(`/eventos/${id}`)
           setEvento(atualizado)
+          toast.success('Sessão cancelada')
         } catch (e: unknown) {
           setErro(e instanceof Error ? e.message : 'Erro ao cancelar sessão')
+        } finally {
+          setConfirmacao(null)
         }
       },
     })
@@ -301,7 +306,8 @@ export default function DetalheEventoPage() {
                     {s.status === 'ATIVA' && (
                       <button
                         onClick={() => cancelarSessao(s.id)}
-                        className="text-xs text-red-400 hover:text-red-300"
+                        disabled={acaoLoading !== null}
+                        className="text-xs text-red-400 hover:text-red-300 disabled:opacity-40"
                       >
                         Cancelar
                       </button>
@@ -319,35 +325,12 @@ export default function DetalheEventoPage() {
               type="datetime-local"
               value={novaSessaoData}
               onChange={(e) => setNovaSessaoData(e.target.value)}
-              className="flex-1 rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm text-white focus:border-[#00FF88] focus:outline-none"
+              disabled={acaoLoading !== null}
+              className="flex-1 rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm text-white focus:border-[#00FF88] focus:outline-none disabled:opacity-40"
             />
-            <Button type="submit" loading={criandoSessao} className="w-auto px-4 py-2 text-xs">
+            <Button type="submit" loading={criandoSessao} disabled={acaoLoading !== null} className="w-auto px-4 py-2 text-xs">
               Adicionar
             </Button>
-          </div>
-          <div className="flex gap-2">
-            <label className="flex items-center gap-1.5 text-xs text-slate-400">
-              Fileiras
-              <input
-                type="number"
-                min={1}
-                max={26}
-                value={novaSessaoFileiras}
-                onChange={(e) => setNovaSessaoFileiras(Number(e.target.value))}
-                className="w-14 rounded-lg border border-slate-700 bg-slate-800/60 px-2 py-1.5 text-sm text-white focus:border-[#00FF88] focus:outline-none"
-              />
-            </label>
-            <label className="flex items-center gap-1.5 text-xs text-slate-400">
-              Assentos/fileira
-              <input
-                type="number"
-                min={1}
-                max={100}
-                value={novaSessaoAssentos}
-                onChange={(e) => setNovaSessaoAssentos(Number(e.target.value))}
-                className="w-14 rounded-lg border border-slate-700 bg-slate-800/60 px-2 py-1.5 text-sm text-white focus:border-[#00FF88] focus:outline-none"
-              />
-            </label>
           </div>
         </form>
         {sessaoErro && <p className="mt-2 text-xs text-red-400">{sessaoErro}</p>}
@@ -370,6 +353,7 @@ export default function DetalheEventoPage() {
               )
             }}
             loading={acaoLoading === 'publicar'}
+            disabled={acaoLoading !== null}
             className="w-auto px-6 py-2 text-xs"
           >
             Publicar
@@ -384,6 +368,7 @@ export default function DetalheEventoPage() {
               'POST',
             )}
             loading={acaoLoading === 'cancelar'}
+            disabled={acaoLoading !== null}
             className="w-auto bg-red-600 px-6 py-2 text-xs shadow-red-600/20 hover:bg-red-500"
           >
             Cancelar Evento
@@ -398,6 +383,7 @@ export default function DetalheEventoPage() {
               'DELETE',
             )}
             loading={acaoLoading === 'excluir'}
+            disabled={acaoLoading !== null}
             className="w-auto bg-red-600 px-6 py-2 text-xs shadow-red-600/20 hover:bg-red-500"
           >
             Excluir
@@ -410,6 +396,7 @@ export default function DetalheEventoPage() {
           titulo={confirmacao.titulo}
           mensagem={confirmacao.mensagem}
           variante={confirmacao.variante}
+          loading={confirmacao.loading}
           confirmarLabel={confirmacao.variante === 'perigo' ? 'Sim, excluir' : 'Confirmar'}
           onConfirmar={confirmacao.onConfirmar}
           onCancelar={() => setConfirmacao(null)}

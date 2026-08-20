@@ -5,6 +5,7 @@ import Button from '../../../components/ui/Button'
 import Input from '../../../components/ui/Input'
 import { useDocumentTitle } from '../../../hooks/useDocumentTitle'
 import { useBeforeUnload } from '../../../hooks/useBeforeUnload'
+import { useToast } from '../../../contexts/ToastContext'
 
 interface ResultadoTmdb {
   id: number
@@ -27,6 +28,7 @@ const ESTADOS_UF = [
 
 export default function NovoEventoPage() {
   const navigate = useNavigate()
+  const toast = useToast()
   useDocumentTitle('Criar Evento')
 
   const [busca, setBusca] = useState('')
@@ -136,6 +138,7 @@ export default function NovoEventoPage() {
         method: 'POST',
         body: JSON.stringify(body),
       })
+      toast.success('Evento criado com sucesso')
       navigate(`/portal/organizador/evento/${criado.id}`)
     } catch (e: unknown) {
       setErro(e instanceof Error ? e.message : 'Erro desconhecido')

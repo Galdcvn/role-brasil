@@ -78,6 +78,13 @@ export class PortariaRepository {
     });
   }
 
+  async setComprovantePendente(ingressoId: number) {
+    return this.prisma.ingresso.update({
+      where: { id: ingressoId },
+      data: { comprovanteStatus: 'PENDENTE' },
+    });
+  }
+
   registrarScan(dados: {
     portariaId: number;
     ingressoId: number;
